@@ -197,7 +197,26 @@ def _call_claude(client, model: str, max_tokens: int, prompt: str) -> str:
     return message.content[0].text
 
 
-def _synthesize_summary(client, model: str, parciales: list[str], logger: logging.Logger) -> str:
+def _call_gemini(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
+    """Llama a Google Gemini vía REST (gratuito en AI Studio, sin paquete adicional)."""
+    import requests as _req
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
+        f":generateContent?key={api_key}"
+    )
+    body = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "maxOutputTokens": min(max_tokens, 8192),
+            "temperature": 0.1,
+        },
+    }
+    resp = _req.post(url, json=body, timeout=120)
+    resp.raise_for_status()
+    return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+
+
+def _synthesize_summary(call_fn, parciales: list[str], logger: logging.Logger) -> str:
     """Funde los resúmenes por lote en uno solo y coherente (1 llamada corta)."""
     base = "\n\n".join(p for p in parciales if p)
     if not base:
@@ -209,7 +228,7 @@ def _synthesize_summary(client, model: str, parciales: list[str], logger: loggin
             "ejecutivo en español, máximo 3 párrafos, sin inventar datos ni repetir información:\n\n"
             + base
         )
-        return _call_claude(client, model, 1500, prompt).strip()
+        return call_fn(prompt).strip()
     except Exception as e:  # noqa: BLE001
         logger.warning("No se pudo sintetizar el resumen; se usa la concatenación. (%s)", e)
         return base
@@ -217,28 +236,39 @@ def _synthesize_summary(client, model: str, parciales: list[str], logger: loggin
 
 def extract_opportunities(search_results: list[dict], config: dict, logger: logging.Logger,
                           force_offline: bool = False) -> dict:
-    api_key = None if force_offline else get_env("ANTHROPIC_API_KEY")
+    anthropic_key = None if force_offline else get_env("ANTHROPIC_API_KEY")
+    gemini_key    = None if force_offline else get_env("GEMINI_API_KEY")
 
-    if not api_key:
+    if not anthropic_key and not gemini_key:
         if not force_offline:
-            logger.warning("No hay ANTHROPIC_API_KEY. Extracción en modo OFFLINE (simulado).")
+            logger.warning(
+                "No hay ANTHROPIC_API_KEY ni GEMINI_API_KEY. Extracción en modo OFFLINE (simulado)."
+            )
         return _offline_extract(logger)
 
-    try:
-        import anthropic
-    except ImportError as e:
-        raise RuntimeError("Falta el paquete 'anthropic'. Instala requirements.txt.") from e
-
-    client = anthropic.Anthropic(api_key=api_key)
-    modelo = config.get("modelo", {})
-    model = modelo.get("extraccion", "claude-sonnet-4-5")
-    max_tokens = int(modelo.get("max_tokens", 16000))
+    modelo     = config.get("modelo", {})
+    max_tokens = int(modelo.get("max_tokens", 8192))
     batch_size = max(1, int(modelo.get("batch_size", 25)))
 
+    # ── Elegir proveedor IA ──────────────────────────────────────────────────
+    if anthropic_key:
+        try:
+            import anthropic
+        except ImportError as e:
+            raise RuntimeError("Falta el paquete 'anthropic'. Instala requirements.txt.") from e
+        client     = anthropic.Anthropic(api_key=anthropic_key)
+        model_name = modelo.get("extraccion", "claude-sonnet-4-5")
+        call_fn    = lambda p: _call_claude(client, model_name, max_tokens, p)
+        logger.info("Proveedor IA: Claude (%s)", model_name)
+    else:
+        model_name = modelo.get("extraccion_gemini", "gemini-2.0-flash")
+        call_fn    = lambda p: _call_gemini(gemini_key, model_name, max_tokens, p)
+        logger.info("Proveedor IA: Gemini (%s) — capa gratuita", model_name)
+
     base_prompt = EXTRACTION_PROMPT.format(tipos_apoyo=", ".join(TIPOS_APOYO))
-    batches = list(_chunks(search_results, batch_size))
-    logger.info("Analizando %d resultados con %s en %d lote(s) de hasta %d...",
-                len(search_results), model, len(batches), batch_size)
+    batches     = list(_chunks(search_results, batch_size))
+    logger.info("Analizando %d resultados en %d lote(s) de hasta %d...",
+                len(search_results), len(batches), batch_size)
 
     all_opps: list[dict] = []
     all_desc: list[dict] = []
@@ -246,9 +276,9 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
     for n, batch in enumerate(batches, 1):
         prompt = base_prompt + _format_results(batch)
         try:
-            raw = _call_claude(client, model, max_tokens, prompt)
+            raw = call_fn(prompt)
         except Exception as e:  # noqa: BLE001 — un lote no debe tumbar el resto
-            logger.error("Lote %d/%d falló en la llamada a Claude: %s", n, len(batches), e)
+            logger.error("Lote %d/%d falló: %s", n, len(batches), e)
             continue
         data = _parse_json(raw, logger)
         opps = data.get("oportunidades", []) or []
@@ -259,11 +289,7 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
             parciales.append(data["resumen_ejecutivo"])
         logger.info("  Lote %d/%d: %d oportunidades, %d descartadas.", n, len(batches), len(opps), len(desc))
 
-    if len(batches) > 1:
-        resumen = _synthesize_summary(client, model, parciales, logger)
-    else:
-        resumen = parciales[0] if parciales else ""
+    resumen = _synthesize_summary(call_fn, parciales, logger) if len(batches) > 1 else (parciales[0] if parciales else "")
 
-    logger.info("Claude devolvió %d oportunidades y %d descartadas (total).",
-                len(all_opps), len(all_desc))
+    logger.info("Devolvió %d oportunidades y %d descartadas (total).", len(all_opps), len(all_desc))
     return {"oportunidades": all_opps, "descartadas": all_desc, "resumen_ejecutivo": resumen}

@@ -13,9 +13,10 @@
 
   "modelo": {
     "extraccion": "claude-sonnet-4-5",
-    "max_tokens": 16000,
+    "extraccion_gemini": "gemini-2.0-flash",
+    "max_tokens": 8192,
     "batch_size": 25,
-    "nota": "Modelo de Claude para extraer/estructurar. 'batch_size' = resultados por llamada (evita truncar el JSON cuando hay muchos resultados)."
+    "nota": "Si hay ANTHROPIC_API_KEY usa Claude; si hay GEMINI_API_KEY usa Gemini (gratis). 'batch_size' = resultados por llamada."
   },
 
   "correo": {
