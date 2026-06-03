@@ -84,11 +84,20 @@ def _opp_rows(opps: list[dict], max_rows: int = 8) -> str:
     rows = []
     for i, o in enumerate(opps[:max_rows]):
         bg = "#ffffff" if i % 2 == 0 else "#F1F8F1"
+        nombre = _t(o.get("nombre", ""), 55)
+        url = str(o.get("url_oficial", "") or o.get("url_secundaria", "") or "").strip()
+        if url.startswith("http"):
+            nombre_cell = (
+                f'<a href="{_e(url)}" target="_blank" '
+                f'style="color:#1B5E20;font-weight:bold;text-decoration:none;'
+                f'border-bottom:1px dotted #388E3C;">{_e(nombre)}</a>'
+            )
+        else:
+            nombre_cell = f'<strong style="color:#1B5E20;">{_e(nombre)}</strong>'
         rows.append(
             f'<tr style="background:{bg};">'
             f'<td style="padding:8px 6px 8px 10px;color:#999;font-size:11px;">{i + 1}</td>'
-            f'<td style="padding:8px 6px;font-size:12px;font-weight:bold;color:#1B5E20;">'
-            f'{_e(_t(o.get("nombre", ""), 55))}</td>'
+            f'<td style="padding:8px 6px;font-size:12px;">{nombre_cell}</td>'
             f'<td style="padding:8px 6px;font-size:11px;color:#555;">'
             f'{_e(_t(o.get("entidad_financiadora", ""), 28))}</td>'
             f'<td style="padding:8px 6px;font-size:11px;color:#555;text-align:center;white-space:nowrap;">'
