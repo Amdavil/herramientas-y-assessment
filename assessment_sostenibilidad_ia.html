@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assessment de Sostenibilidad e IA</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #647084;
+      --line: #d9e1ea;
+      --soft: #f5f7fa;
+      --panel: #ffffff;
+      --navy: #1f4e79;
+      --blue: #2f75b5;
+      --teal: #16817a;
+      --green: #5f8d3e;
+      --amber: #c47f1b;
+      --red: #b54a4a;
+      --lav: #6b5ca5;
+      --focus: #0f766e;
+      --shadow: 0 10px 30px rgba(23, 32, 51, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: #eef3f7;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: var(--blue); }
+
+    button.primary {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    button.ghost {
+      background: transparent;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      background: #f9fbfd;
+      border-right: 1px solid var(--line);
+      padding: 20px 18px;
+    }
+
+    main {
+      min-width: 0;
+      padding: 22px;
+    }
+
+    .brand {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .status-box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress {
+      height: 9px;
+      background: #dbe5ef;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--teal), var(--blue));
+      transition: width .2s ease;
+    }
+
+    .score-large {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .gauge {
+      width: 88px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--teal) 0deg, #dce6ef 0deg);
+    }
+
+    .gauge strong {
+      display: grid;
+      place-items: center;
+      width: 68px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #fff;
+      font-size: 20px;
+    }
+
+    .score-large small {
+      color: var(--muted);
+      display: block;
+      line-height: 1.35;
+      margin-top: 4px;
+    }
+
+    .filters {
+      display: grid;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .filters label {
+      display: grid;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    select, input[type="search"], textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--ink);
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      min-width: 112px;
+    }
+
+    .tab.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .question-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .question-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .question-head {
+      display: grid;
+      grid-template-columns: 80px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .code {
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .meta {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .meta strong {
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .meta span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .pill {
+      border-radius: 999px;
+      background: #e8eef5;
+      padding: 5px 8px;
+      color: var(--navy);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .levels {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px 14px;
+    }
+
+    .level {
+      min-height: 112px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      gap: 7px;
+      align-content: start;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .level:hover {
+      border-color: var(--blue);
+      background: #f7fbff;
+    }
+
+    .level input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--navy);
+    }
+
+    .level strong {
+      font-size: 13px;
+    }
+
+    .level span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .level.selected {
+      border-color: var(--focus);
+      box-shadow: inset 0 0 0 2px rgba(15, 118, 110, .12);
+      background: #f1fbf8;
+    }
+
+    .notes {
+      padding: 0 14px 14px;
+    }
+
+    .notes textarea {
+      min-height: 54px;
+      resize: vertical;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      min-height: 106px;
+      display: grid;
+      align-content: space-between;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metric strong {
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: minmax(340px, 1fr) minmax(340px, 1fr);
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .panel p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    canvas {
+      width: 100%;
+      height: 360px;
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      background: #f0f4f8;
+      color: var(--navy);
+      font-size: 12px;
+    }
+
+    .risk-high { color: var(--red); font-weight: 800; }
+    .risk-mid { color: var(--amber); font-weight: 800; }
+    .risk-low { color: var(--teal); font-weight: 800; }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      padding: 24px;
+      text-align: center;
+      background: #fff;
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .report-grid { grid-template-columns: 1fr; }
+      .levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 700px) {
+      main { padding: 14px; }
+      .topbar, .toolbar { grid-template-columns: 1fr; display: grid; }
+      .actions { justify-content: stretch; }
+      .actions button, .tab { width: 100%; }
+      .dashboard { grid-template-columns: 1fr; }
+      .question-head { grid-template-columns: 1fr; }
+      .levels { grid-template-columns: 1fr; }
+      canvas { height: 300px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      aside, .topbar, .toolbar, .question-list, .no-print { display: none !important; }
+      main { padding: 0; }
+      .section { display: block; }
+      .section:not(#report) { display: none; }
+      .panel, .metric { box-shadow: none; break-inside: avoid; }
+      .print-only { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <h1>Assessment Sostenibilidad + IA</h1>
+        <p>Herramienta práctica para medir madurez, priorizar brechas y visualizar el estado de implementación organizacional.</p>
+      </div>
+
+      <div class="status-box">
+        <div class="score-large">
+          <div class="gauge" id="gauge"><strong id="scoreGauge">0.0</strong></div>
+          <div>
+            <strong id="maturityLabel">Sin evaluar</strong>
+            <small id="maturityText">Responde las preguntas para generar el diagnóstico.</small>
+          </div>
+        </div>
+        <div>
+          <div class="progress-row">
+            <span>Avance</span>
+            <strong id="progressText">0 / 44</strong>
+          </div>
+          <div class="progress"><span id="progressBar"></span></div>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label>
+          Esfera
+          <select id="pillarFilter"></select>
+        </label>
+        <label>
+          Segmento
+          <select id="segmentFilter"></select>
+        </label>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:#b54a4a"></span><span>1. Ausente o no gestionado</span></div>
+        <div class="legend-item"><span class="dot" style="background:#c47f1b"></span><span>2. Acciones puntuales</span></div>
+        <div class="legend-item"><span class="dot" style="background:#2f75b5"></span><span>3. Gestión parcial</span></div>
+        <div class="legend-item"><span class="dot" style="background:#16817a"></span><span>4. Gestión integrada</span></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div class="tabs" role="tablist" aria-label="Vistas del assessment">
+          <button class="tab active" data-view="assessment">Evaluación</button>
+          <button class="tab" data-view="report">Reporte</button>
+        </div>
+        <div class="actions">
+          <button id="fillDemo" class="ghost" type="button">Simular respuestas</button>
+          <button id="clearAll" class="ghost" type="button">Limpiar</button>
+          <button id="printReport" class="primary" type="button">Imprimir reporte</button>
+        </div>
+      </div>
+
+      <section id="assessment" class="section active">
+        <div class="toolbar">
+          <input id="searchBox" type="search" placeholder="Buscar por código, aspecto, segmento o esfera">
+          <button id="showGaps" type="button">Ver no respondidas</button>
+        </div>
+        <div id="questionList" class="question-list"></div>
+      </section>
+
+      <section id="report" class="section">
+        <div class="print-only">
+          <h1>Reporte de assessment de sostenibilidad e inteligencia artificial</h1>
+        </div>
+        <div class="dashboard">
+          <div class="metric"><span>Puntaje general</span><strong id="metricScore">0.0 / 4.0</strong></div>
+          <div class="metric"><span>Nivel de madurez</span><strong id="metricMaturity">Sin evaluar</strong></div>
+          <div class="metric"><span>Preguntas respondidas</span><strong id="metricAnswered">0 / 44</strong></div>
+          <div class="metric"><span>Brecha promedio</span><strong id="metricGap">4.0</strong></div>
+        </div>
+
+        <div class="report-grid">
+          <div class="panel">
+            <h2>Radar por esferas</h2>
+            <p>Compara el puntaje promedio de cada esfera frente al máximo esperado.</p>
+            <canvas id="pillarRadar" width="760" height="420"></canvas>
+          </div>
+          <div class="panel">
+            <h2>Radar de inteligencia artificial</h2>
+            <p>Detalle de madurez para los aspectos de IA aplicada a la organización.</p>
+            <canvas id="aiRadar" width="760" height="420"></canvas>
+          </div>
+          <div class="panel">
+            <h2>Segmentos con mayor brecha</h2>
+            <p>Promedio por segmento. Los valores más bajos indican mayor prioridad de intervención.</p>
+            <canvas id="segmentRadar" width="760" height="420"></canvas>
+          </div>
+          <div class="panel">
+            <h2>Lectura ejecutiva</h2>
+            <p id="executiveSummary">Responde el assessment para generar conclusiones.</p>
+            <table>
+              <thead>
+                <tr><th>Prioridad</th><th>Brecha</th><th>Recomendación</th></tr>
+              </thead>
+              <tbody id="recommendations"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:14px">
+          <h2>Brechas priorizadas por aspecto</h2>
+          <p>Lista ordenada por mayor brecha frente al nivel 4 de implementación.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Cód</th>
+                <th>Esfera</th>
+                <th>Segmento</th>
+                <th>Aspecto</th>
+                <th>Puntaje</th>
+                <th>Brecha</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody id="gapTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      ["EGP","ECONÓMICO Y GOBERNANZA","Gobernanza organizacional","Propósito superior"],
+      ["EGM","ECONÓMICO Y GOBERNANZA","Gobernanza organizacional","Materialidad"],
+      ["EGG","ECONÓMICO Y GOBERNANZA","Gobernanza organizacional","Enfoque de gestión"],
+      ["EGOD","ECONÓMICO Y GOBERNANZA","Gobernanza organizacional","Máximo órgano directivo"],
+      ["ESGR","ECONÓMICO Y GOBERNANZA","Sistema de gestión sostenible","Gestión de riesgos administrativos"],
+      ["ESGT","ECONÓMICO Y GOBERNANZA","Sistema de gestión sostenible","Gestión tecnológica"],
+      ["ESPS","ECONÓMICO Y GOBERNANZA","Sistema de gestión sostenible","Enfoque sobre el producto/servicio"],
+      ["EMS","ECONÓMICO Y GOBERNANZA","Marketing y suministro","Gestión cadena de suministro"],
+      ["EMM","ECONÓMICO Y GOBERNANZA","Marketing y suministro","Gestión y proyección de mercados"],
+      ["EMC","ECONÓMICO Y GOBERNANZA","Marketing y suministro","Gestión enfoque de cliente"],
+      ["EEPF","ECONÓMICO Y GOBERNANZA","Aseguramiento económico","Planeación financiera"],
+      ["EEGC","ECONÓMICO Y GOBERNANZA","Aseguramiento económico","Gestión contable"],
+      ["EEFC","ECONÓMICO Y GOBERNANZA","Aseguramiento económico","Flujo de caja"],
+      ["EEGI","ECONÓMICO Y GOBERNANZA","Aseguramiento económico","Gestión de impuestos"],
+      ["MAGI","MEDIO AMBIENTE","Gestión ambiental organizacional","Procesos, aspectos e impactos"],
+      ["MAGL","MEDIO AMBIENTE","Gestión ambiental organizacional","Seguimiento legal ambiental"],
+      ["MAGC","MEDIO AMBIENTE","Gestión ambiental organizacional","Promoción de la cultura ambiental"],
+      ["MARA","MEDIO AMBIENTE","Recursos naturales ambientales","Uso eficiente del agua"],
+      ["MARV","MEDIO AMBIENTE","Recursos naturales ambientales","Aguas residuales"],
+      ["MARR","MEDIO AMBIENTE","Recursos naturales ambientales","Residuos sólidos"],
+      ["MARB","MEDIO AMBIENTE","Recursos naturales ambientales","Biodiversidad"],
+      ["MAEC","MEDIO AMBIENTE","Energías y emisiones","Cambio climático"],
+      ["MAEA","MEDIO AMBIENTE","Energías y emisiones","Emisión de contaminantes"],
+      ["MAER","MEDIO AMBIENTE","Energías y emisiones","Ruido"],
+      ["MAEE","MEDIO AMBIENTE","Energías y emisiones","Eficiencia energética"],
+      ["RSRD","RESPONSABILIDAD SOCIAL","Respeto y responsabilidad","Gestión de los derechos humanos"],
+      ["RSRV","RESPONSABILIDAD SOCIAL","Respeto y responsabilidad","Valores, ética y transparencia"],
+      ["RSRI","RESPONSABILIDAD SOCIAL","Respeto y responsabilidad","Inclusión social y equidad de género"],
+      ["RSSI","RESPONSABILIDAD SOCIAL","Relacionamiento stakeholders","Identificación de stakeholders"],
+      ["RSSR","RESPONSABILIDAD SOCIAL","Relacionamiento stakeholders","Relacionamiento"],
+      ["RSRA","RESPONSABILIDAD SOCIAL","Relacionamiento stakeholders","Rendición de cuentas"],
+      ["RSCC","RESPONSABILIDAD SOCIAL","Capital humano","Clima laboral"],
+      ["RSCF","RESPONSABILIDAD SOCIAL","Capital humano","Formación y proyección profesional"],
+      ["RSCS","RESPONSABILIDAD SOCIAL","Capital humano","Seguridad y salud en el trabajo"],
+      ["IAEG","INTELIGENCIA ARTIFICIAL","Estrategia y gobierno de IA","Estrategia de IA alineada al propósito"],
+      ["IAGI","INTELIGENCIA ARTIFICIAL","Estrategia y gobierno de IA","Gobierno, roles y responsabilidades de IA"],
+      ["IACU","INTELIGENCIA ARTIFICIAL","Estrategia y gobierno de IA","Priorización de casos de uso"],
+      ["IADG","INTELIGENCIA ARTIFICIAL","Datos, tecnología y operación","Calidad y gobierno de datos"],
+      ["IATI","INTELIGENCIA ARTIFICIAL","Datos, tecnología y operación","Infraestructura e integración tecnológica"],
+      ["IAAP","INTELIGENCIA ARTIFICIAL","Datos, tecnología y operación","Automatización y rediseño de procesos"],
+      ["IAVI","INTELIGENCIA ARTIFICIAL","Datos, tecnología y operación","Medición de valor e indicadores de IA"],
+      ["IARS","INTELIGENCIA ARTIFICIAL","Ética, riesgo y adopción","Gestión de riesgos, privacidad y seguridad"],
+      ["IAET","INTELIGENCIA ARTIFICIAL","Ética, riesgo y adopción","Ética, transparencia y uso responsable"],
+      ["IACH","INTELIGENCIA ARTIFICIAL","Ética, riesgo y adopción","Gestión del cambio y capacidades digitales"]
+    ].map((row, index) => ({ id: index + 1, code: row[0], pillar: row[1], segment: row[2], aspect: row[3] }));
+
+    const LEVELS = [
+      { value: 4, title: "Nivel 4", text: "Gestión integrada, documentada, medida y mejorada. Existe evidencia, responsables e indicadores." },
+      { value: 3, title: "Nivel 3", text: "Práctica implementada parcialmente. Hay avances, pero el seguimiento o despliegue aún no es integral." },
+      { value: 2, title: "Nivel 2", text: "Acciones puntuales o reactivas. La gestión depende de personas, proyectos o necesidades aisladas." },
+      { value: 1, title: "Nivel 1", text: "No existe gestión formal, evidencia suficiente ni responsables definidos para este aspecto." }
+    ];
+
+    const AI_LEVELS = {
+      IAEG: ["Estrategia aprobada, alineada a propósito y planeación corporativa.", "Lineamientos o iniciativas alineadas a algunos objetivos estratégicos.", "Exploración puntual sin estrategia formal ni priorización consistente.", "Sin visión, estrategia o lineamientos de IA."],
+      IAGI: ["Gobierno de IA con roles, criterios de decisión y supervisión directiva.", "Responsables o comités para algunas iniciativas de IA.", "Responsabilidades asignadas caso por caso.", "Sin roles ni gobierno de IA definidos."],
+      IACU: ["Portafolio priorizado por valor, factibilidad, riesgo e impacto.", "Priorización parcial por beneficio y factibilidad.", "Selección aislada por oportunidad o presión operativa.", "Sin identificación ni priorización de casos de uso."],
+      IADG: ["Datos gobernados con calidad, trazabilidad, seguridad y responsables.", "Prácticas de datos para algunos procesos críticos.", "Datos dispersos con controles limitados.", "Sin condiciones mínimas de gobierno de datos."],
+      IATI: ["Arquitectura escalable, segura e integrada para operar IA.", "Herramientas y plataformas para algunos proyectos.", "Herramientas aisladas con baja integración.", "Sin infraestructura o herramientas para IA."],
+      IAAP: ["Procesos rediseñados con IA, controles humanos y medición de beneficios.", "Automatizaciones con seguimiento parcial.", "Uso de IA en tareas puntuales.", "Sin uso de IA para automatizar u optimizar procesos."],
+      IAVI: ["Indicadores de valor, desempeño, riesgos e impactos ESG.", "Medición parcial de eficiencia o reducción de tiempos.", "Beneficios reconocidos sin indicadores consistentes.", "Sin medición de valor o impacto de IA."],
+      IARS: ["Riesgos de IA identificados, evaluados y controlados integralmente.", "Controles de privacidad, seguridad o cumplimiento en algunas iniciativas.", "Revisión reactiva o limitada de riesgos.", "Sin gestión de riesgos asociados a IA."],
+      IAET: ["Principios de IA responsable, explicabilidad y supervisión humana.", "Lineamientos éticos básicos para algunos usos.", "Discusión informal sin criterios aprobados.", "Sin criterios de ética, transparencia o uso responsable."],
+      IACH: ["Formación, rediseño de roles y gestión del cambio para adopción.", "Capacitaciones o adopción para algunos equipos.", "Uso informal sin plan de capacidades.", "Sin formación ni gestión del cambio para IA."]
+    };
+
+    const STORAGE_KEY = "assessment-sostenibilidad-ia-v1";
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"scores":{},"notes":{}}');
+    let viewOnlyMissing = false;
+
+    const byId = id => document.getElementById(id);
+    const mean = values => values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    const fmt = value => Number(value || 0).toFixed(1);
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function levelText(question, value) {
+      if (AI_LEVELS[question.code]) {
+        return AI_LEVELS[question.code][4 - value];
+      }
+      return LEVELS.find(level => level.value === value).text;
+    }
+
+    function maturity(score) {
+      if (!score) return ["Sin evaluar", "Responde las preguntas para generar el diagnóstico."];
+      if (score < 1.8) return ["Incipiente", "La gestión es principalmente reactiva. Conviene definir responsables, evidencias mínimas y un plan de cierre de brechas."];
+      if (score < 2.6) return ["Básico", "Existen acciones puntuales. La prioridad es convertirlas en procesos repetibles con indicadores y gobierno."];
+      if (score < 3.3) return ["En desarrollo", "La organización tiene prácticas relevantes, pero requiere estandarización, medición y despliegue transversal."];
+      return ["Integrado", "La gestión muestra madurez alta. El foco debe estar en mejora continua, trazabilidad e innovación responsable."];
+    }
+
+    function groupedAverage(key, items = QUESTIONS) {
+      const map = new Map();
+      items.forEach(q => {
+        const score = Number(state.scores[q.code]);
+        if (!score) return;
+        const label = q[key];
+        if (!map.has(label)) map.set(label, []);
+        map.get(label).push(score);
+      });
+      return [...map.entries()].map(([label, scores]) => ({ label, score: mean(scores), count: scores.length }));
+    }
+
+    function populateFilters() {
+      const pillars = ["Todas", ...new Set(QUESTIONS.map(q => q.pillar))];
+      byId("pillarFilter").innerHTML = pillars.map(p => `<option value="${p}">${p}</option>`).join("");
+      updateSegmentFilter();
+    }
+
+    function updateSegmentFilter() {
+      const pillar = byId("pillarFilter").value;
+      const pool = pillar === "Todas" ? QUESTIONS : QUESTIONS.filter(q => q.pillar === pillar);
+      const segments = ["Todos", ...new Set(pool.map(q => q.segment))];
+      byId("segmentFilter").innerHTML = segments.map(s => `<option value="${s}">${s}</option>`).join("");
+    }
+
+    function filteredQuestions() {
+      const pillar = byId("pillarFilter").value || "Todas";
+      const segment = byId("segmentFilter").value || "Todos";
+      const term = byId("searchBox").value.trim().toLowerCase();
+      return QUESTIONS.filter(q => {
+        const matchesPillar = pillar === "Todas" || q.pillar === pillar;
+        const matchesSegment = segment === "Todos" || q.segment === segment;
+        const haystack = `${q.code} ${q.pillar} ${q.segment} ${q.aspect}`.toLowerCase();
+        const matchesTerm = !term || haystack.includes(term);
+        const matchesMissing = !viewOnlyMissing || !state.scores[q.code];
+        return matchesPillar && matchesSegment && matchesTerm && matchesMissing;
+      });
+    }
+
+    function renderQuestions() {
+      const list = byId("questionList");
+      const questions = filteredQuestions();
+      if (!questions.length) {
+        list.innerHTML = `<div class="empty">No hay preguntas para los filtros seleccionados.</div>`;
+        return;
+      }
+
+      list.innerHTML = questions.map(q => {
+        const selected = Number(state.scores[q.code]);
+        return `
+          <article class="question-card" data-code="${q.code}">
+            <div class="question-head">
+              <div class="code">${q.id}. ${q.code}</div>
+              <div class="meta">
+                <strong>${q.aspect}</strong>
+                <span>${q.pillar} · ${q.segment}</span>
+              </div>
+              <span class="pill">${selected ? selected + " / 4" : "Pendiente"}</span>
+            </div>
+            <div class="levels">
+              ${LEVELS.map(level => `
+                <label class="level ${selected === level.value ? "selected" : ""}">
+                  <input type="radio" name="${q.code}" value="${level.value}" ${selected === level.value ? "checked" : ""}>
+                  <strong>${level.title}: ${level.value}</strong>
+                  <span>${levelText(q, level.value)}</span>
+                </label>
+              `).join("")}
+            </div>
+            <div class="notes">
+              <textarea data-note="${q.code}" placeholder="Evidencia, hallazgo o acción recomendada">${state.notes[q.code] || ""}</textarea>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function updateSummary() {
+      const scores = QUESTIONS.map(q => Number(state.scores[q.code])).filter(Boolean);
+      const avg = mean(scores);
+      const answered = scores.length;
+      const [label, text] = maturity(avg);
+      const degrees = Math.round((avg / 4) * 360);
+      byId("scoreGauge").textContent = fmt(avg);
+      byId("gauge").style.background = `conic-gradient(var(--teal) ${degrees}deg, #dce6ef ${degrees}deg)`;
+      byId("maturityLabel").textContent = label;
+      byId("maturityText").textContent = text;
+      byId("progressText").textContent = `${answered} / ${QUESTIONS.length}`;
+      byId("progressBar").style.width = `${Math.round((answered / QUESTIONS.length) * 100)}%`;
+      byId("metricScore").textContent = `${fmt(avg)} / 4.0`;
+      byId("metricMaturity").textContent = label;
+      byId("metricAnswered").textContent = `${answered} / ${QUESTIONS.length}`;
+      byId("metricGap").textContent = fmt(4 - avg);
+      byId("executiveSummary").textContent = text;
+      renderGapTable();
+      renderRecommendations();
+      renderCharts();
+    }
+
+    function renderGapTable() {
+      const rows = QUESTIONS
+        .map(q => ({ ...q, score: Number(state.scores[q.code] || 0), note: state.notes[q.code] || "" }))
+        .filter(q => q.score)
+        .sort((a, b) => (4 - b.score) - (4 - a.score) || a.pillar.localeCompare(b.pillar));
+
+      byId("gapTable").innerHTML = rows.length ? rows.map(q => {
+        const gap = 4 - q.score;
+        const cls = gap >= 2 ? "risk-high" : gap >= 1 ? "risk-mid" : "risk-low";
+        return `<tr>
+          <td>${q.code}</td>
+          <td>${q.pillar}</td>
+          <td>${q.segment}</td>
+          <td>${q.aspect}</td>
+          <td>${q.score}</td>
+          <td class="${cls}">${gap}</td>
+          <td>${q.note ? q.note.replace(/</g, "&lt;") : ""}</td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="7">Aún no hay respuestas para calcular brechas.</td></tr>`;
+    }
+
+    function renderRecommendations() {
+      const segmentScores = groupedAverage("segment")
+        .sort((a, b) => a.score - b.score)
+        .slice(0, 5);
+
+      byId("recommendations").innerHTML = segmentScores.length ? segmentScores.map((item, index) => {
+        const gap = 4 - item.score;
+        const cls = gap >= 2 ? "risk-high" : gap >= 1 ? "risk-mid" : "risk-low";
+        const action = gap >= 2
+          ? "Definir responsables, evidencias mínimas, metas y plan de acción trimestral."
+          : gap >= 1
+          ? "Estandarizar prácticas, medir desempeño y ampliar despliegue."
+          : "Mantener seguimiento, auditoría interna y mejora continua.";
+        return `<tr><td>${index + 1}. ${item.label}</td><td class="${cls}">${fmt(gap)}</td><td>${action}</td></tr>`;
+      }).join("") : `<tr><td colspan="3">Completa al menos una respuesta para generar recomendaciones.</td></tr>`;
+    }
+
+    function drawRadar(canvas, data, options = {}) {
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const cssWidth = canvas.clientWidth || 760;
+      const cssHeight = canvas.clientHeight || 420;
+      canvas.width = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(cssHeight * dpr);
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+      const labels = data.map(d => d.label);
+      const values = data.map(d => d.score);
+      const cx = cssWidth / 2;
+      const cy = cssHeight / 2 + 12;
+      const radius = Math.min(cssWidth, cssHeight) * .32;
+      const max = 4;
+
+      if (!data.length) {
+        ctx.fillStyle = "#647084";
+        ctx.textAlign = "center";
+        ctx.font = "14px Segoe UI, Arial";
+        ctx.fillText("Sin datos suficientes", cx, cy);
+        return;
+      }
+
+      function point(i, value) {
+        const angle = (-Math.PI / 2) + (i * 2 * Math.PI / labels.length);
+        const r = radius * (value / max);
+        return [cx + Math.cos(angle) * r, cy + Math.sin(angle) * r];
+      }
+
+      ctx.strokeStyle = "#d9e1ea";
+      ctx.fillStyle = "#647084";
+      ctx.lineWidth = 1;
+      ctx.font = "11px Segoe UI, Arial";
+
+      for (let ring = 1; ring <= 4; ring++) {
+        ctx.beginPath();
+        labels.forEach((_, i) => {
+          const [x, y] = point(i, ring);
+          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        });
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      labels.forEach((label, i) => {
+        const [x, y] = point(i, 4.35);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        const [ax, ay] = point(i, 4);
+        ctx.lineTo(ax, ay);
+        ctx.stroke();
+
+        ctx.textAlign = x < cx - 20 ? "right" : x > cx + 20 ? "left" : "center";
+        ctx.textBaseline = y < cy ? "bottom" : "top";
+        const short = label.length > 24 ? label.slice(0, 22) + "..." : label;
+        ctx.fillText(short, x, y);
+      });
+
+      ctx.beginPath();
+      values.forEach((value, i) => {
+        const [x, y] = point(i, value);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = options.fill || "rgba(22,129,122,.20)";
+      ctx.strokeStyle = options.stroke || "#16817a";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+
+      values.forEach((value, i) => {
+        const [x, y] = point(i, value);
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = options.stroke || "#16817a";
+        ctx.fill();
+        ctx.fillStyle = "#172033";
+        ctx.font = "11px Segoe UI, Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(fmt(value), x, y - 12);
+      });
+    }
+
+    function renderCharts() {
+      const pillars = groupedAverage("pillar");
+      const ai = QUESTIONS.filter(q => q.pillar === "INTELIGENCIA ARTIFICIAL" && state.scores[q.code])
+        .map(q => ({ label: q.aspect, score: Number(state.scores[q.code]) }));
+      const segments = groupedAverage("segment")
+        .sort((a, b) => a.score - b.score)
+        .slice(0, 10);
+
+      drawRadar(byId("pillarRadar"), pillars, { stroke: "#1f4e79", fill: "rgba(31,78,121,.18)" });
+      drawRadar(byId("aiRadar"), ai, { stroke: "#6b5ca5", fill: "rgba(107,92,165,.18)" });
+      drawRadar(byId("segmentRadar"), segments, { stroke: "#c47f1b", fill: "rgba(196,127,27,.18)" });
+    }
+
+    function bindEvents() {
+      document.addEventListener("change", event => {
+        const radio = event.target.closest("input[type='radio']");
+        if (radio) {
+          state.scores[radio.name] = Number(radio.value);
+          save();
+          renderQuestions();
+          updateSummary();
+        }
+      });
+
+      document.addEventListener("input", event => {
+        if (event.target.matches("[data-note]")) {
+          state.notes[event.target.dataset.note] = event.target.value;
+          save();
+          updateSummary();
+        }
+      });
+
+      byId("pillarFilter").addEventListener("change", () => {
+        updateSegmentFilter();
+        renderQuestions();
+      });
+      byId("segmentFilter").addEventListener("change", renderQuestions);
+      byId("searchBox").addEventListener("input", renderQuestions);
+
+      byId("showGaps").addEventListener("click", () => {
+        viewOnlyMissing = !viewOnlyMissing;
+        byId("showGaps").classList.toggle("primary", viewOnlyMissing);
+        byId("showGaps").textContent = viewOnlyMissing ? "Ver todas" : "Ver no respondidas";
+        renderQuestions();
+      });
+
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+          tab.classList.add("active");
+          byId(tab.dataset.view).classList.add("active");
+          updateSummary();
+        });
+      });
+
+      byId("clearAll").addEventListener("click", () => {
+        if (!confirm("¿Limpiar todas las respuestas y notas guardadas?")) return;
+        state = { scores: {}, notes: {} };
+        save();
+        renderQuestions();
+        updateSummary();
+      });
+
+      byId("fillDemo").addEventListener("click", () => {
+        QUESTIONS.forEach(q => {
+          const base = q.pillar === "INTELIGENCIA ARTIFICIAL" ? 2 : 3;
+          const variation = (q.id % 4 === 0) ? -1 : (q.id % 7 === 0 ? 1 : 0);
+          state.scores[q.code] = Math.max(1, Math.min(4, base + variation));
+        });
+        save();
+        renderQuestions();
+        updateSummary();
+      });
+
+      byId("printReport").addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+        document.querySelector('[data-view="report"]').classList.add("active");
+        byId("report").classList.add("active");
+        updateSummary();
+        setTimeout(() => window.print(), 100);
+      });
+
+      window.addEventListener("resize", () => updateSummary());
+    }
+
+    populateFilters();
+    bindEvents();
+    renderQuestions();
+    updateSummary();
+  </script>
+</body>
+</html>
