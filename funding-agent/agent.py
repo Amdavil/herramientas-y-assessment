@@ -106,6 +106,12 @@ def main() -> int:
 
     if args.no_email:
         logger.info("--no-email: se omite el correo.")
+    elif len(valid) == 0:
+        logger.warning(
+            "0 oportunidades válidas encontradas — correo omitido para no enviar informe vacío. "
+            "Revisa los logs de extracción: si todos los lotes fallaron, "
+            "verifica que GROQ_API_KEY / ANTHROPIC_API_KEY estén configuradas correctamente."
+        )
     else:
         attachments = [rep["md_path"], rep.get("pdf_path"), db["excel_path"]]
         email_draft.handle_email(stats, config, attachments, logger, today,
