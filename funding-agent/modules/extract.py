@@ -201,8 +201,8 @@ def _call_groq(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
     """Llama a Groq con reintentos automáticos si hay rate-limit (429).
     Respeta el header Retry-After que Groq devuelve con el tiempo exacto."""
     import time as _time, requests as _req
-    _time.sleep(3)  # pausa base entre lotes
-    for attempt in range(5):
+    _time.sleep(13)  # llama-3.1-8b-instant: 20K TPM → ~1 llamada/13s
+    for attempt in range(3):
         resp = _req.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -215,12 +215,12 @@ def _call_groq(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
             timeout=120,
         )
         if resp.status_code == 429:
-            wait = float(resp.headers.get("retry-after", "45"))
-            _time.sleep(wait + 2)   # esperar lo que Groq pide + 2s de buffer
+            wait = float(resp.headers.get("retry-after", "20"))
+            _time.sleep(wait + 3)
             continue
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
-    resp.raise_for_status()  # agota reintentos → propagar error
+    resp.raise_for_status()
 
 
 def _call_gemini(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
