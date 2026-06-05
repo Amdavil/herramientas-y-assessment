@@ -115,7 +115,7 @@ def _format_results(search_results: list[dict]) -> str:
     text = ""
     for i, r in enumerate(search_results, 1):
         text += f"\n[{i}]\nTÍTULO: {r.get('title', 'N/A')}\nURL: {r.get('url', 'N/A')}\n"
-        text += f"CONTENIDO: {(r.get('content') or '')[:800]}\n---\n"
+        text += f"CONTENIDO: {(r.get('content') or '')[:400]}\n---\n"
     return text
 
 
@@ -199,7 +199,8 @@ def _call_claude(client, model: str, max_tokens: int, prompt: str) -> str:
 
 def _call_groq(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
     """Llama a Groq (gratuito, muy rápido) — API compatible con OpenAI."""
-    import requests as _req
+    import time as _time, requests as _req
+    _time.sleep(2.5)  # Groq free tier: máx 30 req/min → esperar ~2.5s entre llamadas
     resp = _req.post(
         "https://api.groq.com/openai/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
