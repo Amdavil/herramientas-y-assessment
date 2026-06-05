@@ -270,24 +270,45 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
     max_tokens = int(modelo.get("max_tokens", 8192))
     batch_size = max(1, int(modelo.get("batch_size", 25)))
 
-    # ── Elegir proveedor IA (prioridad: Claude > Groq > Gemini) ─────────────
+    # ── Construir cadena de proveedores con fallback automático ─────────────
+    providers: list[tuple[str, object]] = []
     if anthropic_key:
         try:
-            import anthropic
-        except ImportError as e:
-            raise RuntimeError("Falta el paquete 'anthropic'. Instala requirements.txt.") from e
-        client     = anthropic.Anthropic(api_key=anthropic_key)
-        model_name = modelo.get("extraccion", "claude-sonnet-4-5")
-        call_fn    = lambda p: _call_claude(client, model_name, max_tokens, p)
-        logger.info("Proveedor IA: Claude (%s)", model_name)
-    elif groq_key:
-        model_name = modelo.get("extraccion_groq", "llama-3.3-70b-versatile")
-        call_fn    = lambda p: _call_groq(groq_key, model_name, max_tokens, p)
-        logger.info("Proveedor IA: Groq (%s) — capa gratuita", model_name)
-    else:
-        model_name = modelo.get("extraccion_gemini", "gemini-2.0-flash")
-        call_fn    = lambda p: _call_gemini(gemini_key, model_name, max_tokens, p)
-        logger.info("Proveedor IA: Gemini (%s) — capa gratuita", model_name)
+            import anthropic as _anthropic
+            _client = _anthropic.Anthropic(api_key=anthropic_key)
+            _mn = modelo.get("extraccion", "claude-sonnet-4-5")
+            providers.append(("Claude", lambda p, c=_client, m=_mn: _call_claude(c, m, max_tokens, p)))
+        except ImportError:
+            pass
+    if groq_key:
+        _mn = modelo.get("extraccion_groq", "llama-3.3-70b-versatile")
+        providers.append(("Groq", lambda p, k=groq_key, m=_mn: _call_groq(k, m, max_tokens, p)))
+    if gemini_key:
+        _mn = modelo.get("extraccion_gemini", "gemini-2.0-flash")
+        providers.append(("Gemini", lambda p, k=gemini_key, m=_mn: _call_gemini(k, m, max_tokens, p)))
+
+    if not providers:
+        return _offline_extract(logger)
+
+    # Seleccionar proveedor activo; si falla por billing/auth, pasar al siguiente
+    _BILLING_MARKERS = ("credit balance", "insufficient_quota", "billing", "quota", "unauthorized", "401", "403")
+
+    def _is_billing_or_auth(exc: Exception) -> bool:
+        return any(m in str(exc).lower() for m in _BILLING_MARKERS)
+
+    def _pick_provider(batch_prompt: str) -> tuple[str, object, str]:
+        """Intenta proveedores en orden; devuelve (nombre, call_fn, primera_respuesta)."""
+        for pname, pfn in providers:
+            try:
+                resp = pfn(batch_prompt)
+                logger.info("Proveedor IA activo: %s", pname)
+                return pname, pfn, resp
+            except Exception as e:
+                if _is_billing_or_auth(e):
+                    logger.warning("Proveedor %s sin créditos/acceso (%s) — probando siguiente...", pname, type(e).__name__)
+                else:
+                    raise
+        raise RuntimeError("Ningún proveedor IA disponible (revisa las API keys y créditos).")
 
     base_prompt = EXTRACTION_PROMPT.format(tipos_apoyo=", ".join(TIPOS_APOYO))
     batches     = list(_chunks(search_results, batch_size))
@@ -297,11 +318,16 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
     all_opps: list[dict] = []
     all_desc: list[dict] = []
     parciales: list[str] = []
+    active_fn: object | None = None   # proveedor que funcionó, reutilizar en lotes siguientes
+
     for n, batch in enumerate(batches, 1):
         prompt = base_prompt + _format_results(batch)
         try:
-            raw = call_fn(prompt)
-        except Exception as e:  # noqa: BLE001 — un lote no debe tumbar el resto
+            if active_fn is None:
+                pname, active_fn, raw = _pick_provider(prompt)
+            else:
+                raw = active_fn(prompt)
+        except Exception as e:  # noqa: BLE001
             logger.error("Lote %d/%d falló: %s", n, len(batches), e)
             continue
         data = _parse_json(raw, logger)
