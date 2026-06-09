@@ -1,18 +1,26 @@
 {
-  "descripcion": "Consultas de búsqueda bilingües (ES/EN) para detectar oportunidades de atracción de recursos. Reducidas a 12 queries (24 créditos/run) para optimizar el plan gratuito de Tavily (1000 créditos/mes ≈ 41 runs). Edita libremente.",
+  "descripcion": "20 consultas bilingües (ES/EN) optimizadas para 2 corridas/semana (lunes y viernes). 20 queries × 2 créditos = 40/run × 8 runs/mes = 320 créditos/mes — dentro del plan gratuito de Tavily (1000/mes).",
 
   "queries_es": [
     "economía circular convocatorias Colombia 2026",
     "cooperación internacional reciclaje Colombia convocatoria",
     "fondos climáticos economía circular Colombia 2026",
-    "cooperación para recicladores Colombia inclusión"
+    "cooperación para recicladores Colombia inclusión",
+    "financiación economía circular América Latina grants",
+    "innovación envases empaques reciclaje convocatoria",
+    "premio innovación ambiental Colombia América Latina",
+    "responsabilidad extendida del productor REP financiación proyectos"
   ],
 
   "queries_en": [
     "circular economy grants Colombia",
     "recycling funding opportunities Latin America",
     "climate finance Colombia circular economy",
-    "plastic waste innovation challenge 2026"
+    "plastic waste innovation challenge 2026",
+    "packaging circularity grants",
+    "waste management grants Latin America",
+    "inclusive recycling funding waste pickers",
+    "ecodesign recyclability funding call Colombia"
   ],
 
   "queries_por_fuente": [
