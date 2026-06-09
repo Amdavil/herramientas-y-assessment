@@ -288,12 +288,13 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
             providers.append(("Claude", lambda p, c=_client, m=_mn: _call_claude(c, m, max_tokens, p)))
         except ImportError:
             pass
-    if groq_key:
-        _mn = modelo.get("extraccion_groq", "llama-3.3-70b-versatile")
-        providers.append(("Groq", lambda p, k=groq_key, m=_mn: _call_groq(k, m, max_tokens, p)))
+    # Gemini antes que Groq: 1M TPM vs 20K TPM — mucho más estable para uso diario
     if gemini_key:
         _mn = modelo.get("extraccion_gemini", "gemini-2.0-flash")
         providers.append(("Gemini", lambda p, k=gemini_key, m=_mn: _call_gemini(k, m, max_tokens, p)))
+    if groq_key:
+        _mn = modelo.get("extraccion_groq", "llama-3.1-8b-instant")
+        providers.append(("Groq", lambda p, k=groq_key, m=_mn: _call_groq(k, m, max_tokens, p)))
 
     if not providers:
         return _offline_extract(logger)
