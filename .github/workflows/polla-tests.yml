@@ -1,0 +1,19 @@
+name: Polla — pruebas automáticas
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'tests/polla/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Ejecutar pruebas de la polla
+        run: node tests/polla/run-tests.mjs

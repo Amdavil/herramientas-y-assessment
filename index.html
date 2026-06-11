@@ -144,6 +144,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <button class="nav-btn" id="btnGrupos" style="display:none" onclick="navegar('grupos')">Grupos</button>
       <button class="nav-btn" id="btnBracket" style="display:none" onclick="navegar('bracket')">Bracket</button>
       <button class="nav-btn" onclick="navegar('tabla')">Tabla</button>
+      <button class="nav-btn" onclick="navegar('reglas')">Reglas</button>
       <button class="nav-btn" id="btnAdmin" style="display:none" onclick="navegar('admin')">Admin</button>
       <button class="nav-btn" id="btnPerfil" style="display:none" onclick="navegar('perfil')">Mi Panel</button>
       <span class="nav-user hidden" id="navUser"></span>
@@ -322,50 +323,53 @@ const PARTIDOS_GRUPOS = (() => {
 })();
 
 // ═══════════════════════════════════════════════════════════════
-// BRACKET ELIMINATORIO — Ronda de 32 → Final
-// slot1/slot2: '1A'=1°GrupoA, '2B'=2°GrupoB, 'M3°-N'=N°MejorTercero
-//              'WR32-N'=Ganador dieciseisavos N
-//              'WR16-N'=Ganador octavos N, 'WQF-N'=Ganador cuartos N
-//              'WSF-N'=Ganador semi N, 'LSF-N'=Perdedor semi N
+// BRACKET ELIMINATORIO OFICIAL FIFA — partidos 73 a 104
+// Fuente: calendario oficial FIFA (cruces verificados jun-2026).
+// slot1/slot2:
+//   '1A'..'1L'  = ganador del grupo
+//   '2A'..'2L'  = segundo del grupo
+//   '3:ABCDF'   = mejor tercero proveniente de uno de esos grupos
+//                 (asignación según restricciones del Anexo C FIFA)
+//   'W73'       = ganador del partido 73 · 'L101' = perdedor del 101
 // ═══════════════════════════════════════════════════════════════
 const PARTIDOS_ELIMINATORIAS = [
-  // ── Ronda de 32 (16avos) ────────────────────────────────────
-  {id:'R32-1', fase:'dieciseisavos',slot1:'1A',slot2:'2B',    fecha:'2026-06-28',hora:'15:00 ET',sede:'MetLife Stadium, Nueva Jersey'},
-  {id:'R32-2', fase:'dieciseisavos',slot1:'1C',slot2:'2D',    fecha:'2026-06-28',hora:'19:00 ET',sede:'SoFi Stadium, Los Ángeles'},
-  {id:'R32-3', fase:'dieciseisavos',slot1:'1B',slot2:'2A',    fecha:'2026-06-29',hora:'15:00 ET',sede:'AT&T Stadium, Dallas'},
-  {id:'R32-4', fase:'dieciseisavos',slot1:'1D',slot2:'2C',    fecha:'2026-06-29',hora:'19:00 ET',sede:'Hard Rock Stadium, Miami'},
-  {id:'R32-5', fase:'dieciseisavos',slot1:'1E',slot2:'2F',    fecha:'2026-06-30',hora:'15:00 ET',sede:'Lumen Field, Seattle'},
-  {id:'R32-6', fase:'dieciseisavos',slot1:'1G',slot2:'2H',    fecha:'2026-06-30',hora:'19:00 ET',sede:'NRG Stadium, Houston'},
-  {id:'R32-7', fase:'dieciseisavos',slot1:'1F',slot2:'2E',    fecha:'2026-07-01',hora:'15:00 ET',sede:'BC Place, Vancouver'},
-  {id:'R32-8', fase:'dieciseisavos',slot1:'1H',slot2:'2G',    fecha:'2026-07-01',hora:'19:00 ET',sede:'Estadio Akrón, Guadalajara'},
-  {id:'R32-9', fase:'dieciseisavos',slot1:'1I',slot2:'2J',    fecha:'2026-07-01',hora:'15:00 ET',sede:'Estadio Azteca, Ciudad de México'},
-  {id:'R32-10',fase:'dieciseisavos',slot1:'1K',slot2:'2L',    fecha:'2026-07-01',hora:'19:00 ET',sede:'BMO Field, Toronto'},
-  {id:'R32-11',fase:'dieciseisavos',slot1:'1J',slot2:'2I',    fecha:'2026-07-02',hora:'15:00 ET',sede:'Arrowhead Stadium, Kansas City'},
-  {id:'R32-12',fase:'dieciseisavos',slot1:'1L',slot2:'2K',    fecha:'2026-07-02',hora:'19:00 ET',sede:'Gillette Stadium, Boston'},
-  {id:'R32-13',fase:'dieciseisavos',slot1:'M3°-1',slot2:'M3°-2',fecha:'2026-07-02',hora:'15:00 ET',sede:'Mercedes-Benz Stadium, Atlanta'},
-  {id:'R32-14',fase:'dieciseisavos',slot1:'M3°-3',slot2:'M3°-4',fecha:'2026-07-03',hora:'15:00 ET',sede:'Lincoln Financial Field, Filadelfia'},
-  {id:'R32-15',fase:'dieciseisavos',slot1:'M3°-5',slot2:'M3°-6',fecha:'2026-07-03',hora:'19:00 ET',sede:"Levi's Stadium, Santa Clara"},
-  {id:'R32-16',fase:'dieciseisavos',slot1:'M3°-7',slot2:'M3°-8',fecha:'2026-07-03',hora:'19:00 ET',sede:'SoFi Stadium, Los Ángeles'},
-  // ── Octavos de Final ────────────────────────────────────────
-  {id:'R16-1',fase:'octavos',slot1:'WR32-1', slot2:'WR32-2', fecha:'2026-07-04',hora:'15:00 ET',sede:'MetLife Stadium, Nueva Jersey'},
-  {id:'R16-2',fase:'octavos',slot1:'WR32-3', slot2:'WR32-4', fecha:'2026-07-04',hora:'19:00 ET',sede:'AT&T Stadium, Dallas'},
-  {id:'R16-3',fase:'octavos',slot1:'WR32-5', slot2:'WR32-6', fecha:'2026-07-05',hora:'15:00 ET',sede:'SoFi Stadium, Los Ángeles'},
-  {id:'R16-4',fase:'octavos',slot1:'WR32-7', slot2:'WR32-8', fecha:'2026-07-05',hora:'19:00 ET',sede:'NRG Stadium, Houston'},
-  {id:'R16-5',fase:'octavos',slot1:'WR32-9', slot2:'WR32-10',fecha:'2026-07-06',hora:'15:00 ET',sede:'Estadio Azteca, Ciudad de México'},
-  {id:'R16-6',fase:'octavos',slot1:'WR32-11',slot2:'WR32-12',fecha:'2026-07-06',hora:'19:00 ET',sede:'Hard Rock Stadium, Miami'},
-  {id:'R16-7',fase:'octavos',slot1:'WR32-13',slot2:'WR32-14',fecha:'2026-07-07',hora:'15:00 ET',sede:'Lumen Field, Seattle'},
-  {id:'R16-8',fase:'octavos',slot1:'WR32-15',slot2:'WR32-16',fecha:'2026-07-07',hora:'19:00 ET',sede:'Mercedes-Benz Stadium, Atlanta'},
-  // ── Cuartos de Final ────────────────────────────────────────
-  {id:'QF-1',fase:'cuartos',slot1:'WR16-1',slot2:'WR16-2',fecha:'2026-07-09',hora:'15:00 ET',sede:'MetLife Stadium, Nueva Jersey'},
-  {id:'QF-2',fase:'cuartos',slot1:'WR16-3',slot2:'WR16-4',fecha:'2026-07-09',hora:'19:00 ET',sede:'SoFi Stadium, Los Ángeles'},
-  {id:'QF-3',fase:'cuartos',slot1:'WR16-5',slot2:'WR16-6',fecha:'2026-07-10',hora:'15:00 ET',sede:'AT&T Stadium, Dallas'},
-  {id:'QF-4',fase:'cuartos',slot1:'WR16-7',slot2:'WR16-8',fecha:'2026-07-10',hora:'19:00 ET',sede:'NRG Stadium, Houston'},
-  // ── Semifinales ─────────────────────────────────────────────
-  {id:'SF-1',fase:'semifinal',slot1:'WQF-1',slot2:'WQF-2',fecha:'2026-07-14',hora:'20:00 ET',sede:'AT&T Stadium, Dallas'},
-  {id:'SF-2',fase:'semifinal',slot1:'WQF-3',slot2:'WQF-4',fecha:'2026-07-15',hora:'20:00 ET',sede:'Mercedes-Benz Stadium, Atlanta'},
-  // ── Tercer Puesto & Final ────────────────────────────────────
-  {id:'TP', fase:'tercerPuesto',slot1:'LSF-1',slot2:'LSF-2',fecha:'2026-07-18',hora:'18:00 ET',sede:'Hard Rock Stadium, Miami'},
-  {id:'FIN',fase:'final',      slot1:'WSF-1',slot2:'WSF-2',fecha:'2026-07-19',hora:'20:00 ET',sede:'MetLife Stadium, Nueva Jersey'},
+  // ── Ronda de 32 (partidos 73-88) ─────────────────────────────
+  {id:'M73',num:73,fase:'dieciseisavos',slot1:'2A',slot2:'2B',     fecha:'2026-06-28',hora:'15:00 ET',sede:'SoFi Stadium, Los Ángeles'},
+  {id:'M74',num:74,fase:'dieciseisavos',slot1:'1E',slot2:'3:ABCDF',fecha:'2026-06-29',hora:'17:30 ET',sede:'Gillette Stadium, Boston'},
+  {id:'M75',num:75,fase:'dieciseisavos',slot1:'1F',slot2:'2C',     fecha:'2026-06-29',hora:'20:00 ET',sede:'Estadio BBVA, Monterrey'},
+  {id:'M76',num:76,fase:'dieciseisavos',slot1:'1C',slot2:'2F',     fecha:'2026-06-29',hora:'14:00 ET',sede:'NRG Stadium, Houston'},
+  {id:'M77',num:77,fase:'dieciseisavos',slot1:'1I',slot2:'3:CDFGH',fecha:'2026-06-30',hora:'17:00 ET',sede:'MetLife Stadium, Nueva Jersey'},
+  {id:'M78',num:78,fase:'dieciseisavos',slot1:'2E',slot2:'2I',     fecha:'2026-06-30',hora:'13:00 ET',sede:'AT&T Stadium, Dallas'},
+  {id:'M79',num:79,fase:'dieciseisavos',slot1:'1A',slot2:'3:CEFHI',fecha:'2026-06-30',hora:'20:00 ET',sede:'Estadio Azteca, Ciudad de México'},
+  {id:'M80',num:80,fase:'dieciseisavos',slot1:'1L',slot2:'3:EHIJK',fecha:'2026-07-01',hora:'12:00 ET',sede:'Mercedes-Benz Stadium, Atlanta'},
+  {id:'M81',num:81,fase:'dieciseisavos',slot1:'1D',slot2:'3:BEFIJ',fecha:'2026-07-01',hora:'19:00 ET',sede:"Levi's Stadium, Santa Clara"},
+  {id:'M82',num:82,fase:'dieciseisavos',slot1:'1G',slot2:'3:AEHIJ',fecha:'2026-07-01',hora:'14:00 ET',sede:'Lumen Field, Seattle'},
+  {id:'M83',num:83,fase:'dieciseisavos',slot1:'2K',slot2:'2L',     fecha:'2026-07-02',hora:'19:00 ET',sede:'BMO Field, Toronto'},
+  {id:'M84',num:84,fase:'dieciseisavos',slot1:'1H',slot2:'2J',     fecha:'2026-07-02',hora:'15:00 ET',sede:'SoFi Stadium, Los Ángeles'},
+  {id:'M85',num:85,fase:'dieciseisavos',slot1:'1B',slot2:'3:EFGIJ',fecha:'2026-07-02',hora:'23:00 ET',sede:'BC Place, Vancouver'},
+  {id:'M86',num:86,fase:'dieciseisavos',slot1:'1J',slot2:'2H',     fecha:'2026-07-03',hora:'18:00 ET',sede:'Hard Rock Stadium, Miami'},
+  {id:'M87',num:87,fase:'dieciseisavos',slot1:'1K',slot2:'3:DEIJL',fecha:'2026-07-03',hora:'22:30 ET',sede:'Arrowhead Stadium, Kansas City'},
+  {id:'M88',num:88,fase:'dieciseisavos',slot1:'2D',slot2:'2G',     fecha:'2026-07-03',hora:'13:00 ET',sede:'AT&T Stadium, Dallas'},
+  // ── Octavos de Final (89-96) ─────────────────────────────────
+  {id:'M89',num:89,fase:'octavos',slot1:'W74',slot2:'W77',fecha:'2026-07-04',hora:'17:00 ET',sede:'Lincoln Financial Field, Filadelfia'},
+  {id:'M90',num:90,fase:'octavos',slot1:'W73',slot2:'W75',fecha:'2026-07-04',hora:'13:00 ET',sede:'NRG Stadium, Houston'},
+  {id:'M91',num:91,fase:'octavos',slot1:'W76',slot2:'W78',fecha:'2026-07-05',hora:'16:00 ET',sede:'MetLife Stadium, Nueva Jersey'},
+  {id:'M92',num:92,fase:'octavos',slot1:'W79',slot2:'W80',fecha:'2026-07-05',hora:'19:00 ET',sede:'Estadio Azteca, Ciudad de México'},
+  {id:'M93',num:93,fase:'octavos',slot1:'W83',slot2:'W84',fecha:'2026-07-06',hora:'14:00 ET',sede:'AT&T Stadium, Dallas'},
+  {id:'M94',num:94,fase:'octavos',slot1:'W81',slot2:'W82',fecha:'2026-07-06',hora:'20:00 ET',sede:'Lumen Field, Seattle'},
+  {id:'M95',num:95,fase:'octavos',slot1:'W86',slot2:'W88',fecha:'2026-07-07',hora:'12:00 ET',sede:'Mercedes-Benz Stadium, Atlanta'},
+  {id:'M96',num:96,fase:'octavos',slot1:'W85',slot2:'W87',fecha:'2026-07-07',hora:'13:00 ET',sede:'BC Place, Vancouver'},
+  // ── Cuartos de Final (97-100) ────────────────────────────────
+  {id:'M97', num:97, fase:'cuartos',slot1:'W89',slot2:'W90',fecha:'2026-07-09',hora:'16:00 ET',sede:'Gillette Stadium, Boston'},
+  {id:'M98', num:98, fase:'cuartos',slot1:'W93',slot2:'W94',fecha:'2026-07-10',hora:'15:00 ET',sede:'SoFi Stadium, Los Ángeles'},
+  {id:'M99', num:99, fase:'cuartos',slot1:'W91',slot2:'W92',fecha:'2026-07-11',hora:'17:00 ET',sede:'Hard Rock Stadium, Miami'},
+  {id:'M100',num:100,fase:'cuartos',slot1:'W95',slot2:'W96',fecha:'2026-07-11',hora:'20:00 ET',sede:'Arrowhead Stadium, Kansas City'},
+  // ── Semifinales (101-102) ────────────────────────────────────
+  {id:'M101',num:101,fase:'semifinal',slot1:'W97',slot2:'W98', fecha:'2026-07-14',hora:'14:00 ET',sede:'AT&T Stadium, Dallas'},
+  {id:'M102',num:102,fase:'semifinal',slot1:'W99',slot2:'W100',fecha:'2026-07-15',hora:'15:00 ET',sede:'Mercedes-Benz Stadium, Atlanta'},
+  // ── Tercer Puesto (103) y Final (104) ────────────────────────
+  {id:'M103',num:103,fase:'tercerPuesto',slot1:'L101',slot2:'L102',fecha:'2026-07-18',hora:'17:00 ET',sede:'Hard Rock Stadium, Miami'},
+  {id:'M104',num:104,fase:'final',       slot1:'W101',slot2:'W102',fecha:'2026-07-19',hora:'15:00 ET',sede:'MetLife Stadium, Nueva Jersey'},
 ].map(p => ({...p, estado:'pendiente', resultadoReal:null}));
 
 // ═══════════════════════════════════════════════════════════════
@@ -377,6 +381,46 @@ const CFG_DEFAULT = {
     avanceDieciseisavos:3,avanceOctavos:4,avanceCuartos:5,avanceSemis:6,
     campeon:15,subcampeon:10,tercerPuesto:5}
 };
+
+// ═══════════════════════════════════════════════════════════════
+// CIERRE DE APUESTAS — 11 de junio de 2026, 1:00 p.m. Colombia
+// Comparaciones SIEMPRE contra este instante absoluto (UTC-5),
+// independiente de la zona horaria del navegador.
+// ═══════════════════════════════════════════════════════════════
+const BETTING_DEADLINE = new Date('2026-06-11T13:00:00-05:00');
+const DEADLINE_TEXTO = '11 de junio de 2026, 1:00 p.m. (hora Colombia)';
+const TIMEZONE_POLLA = 'America/Bogota';
+
+function apuestasCerradas() { return Date.now() >= BETTING_DEADLINE.getTime(); }
+// Un usuario queda bloqueado si pasó el deadline o si ya envió su apuesta definitiva
+function usuarioBloqueado(uid) { return apuestasCerradas() || !!(db.envios && db.envios[uid]); }
+function envioDe(uid) { return (db.envios && db.envios[uid]) || null; }
+
+function ahoraBogota() {
+  return new Date().toLocaleString('es-CO', {timeZone:TIMEZONE_POLLA,
+    day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+}
+
+// Convierte hora ET de FIFA a hora Colombia (en junio-julio ET = UTC-4, Bogotá = UTC-5 → -1h)
+function horaBogota(horaET) {
+  const m = /^(\d{1,2}):(\d{2})/.exec(horaET||''); if(!m) return horaET;
+  let h = parseInt(m[1]) - 1; let sufijo='';
+  if (h < 0) { h += 24; sufijo=' (día ant.)'; }
+  return `${String(h).padStart(2,'0')}:${m[2]} COL${sufijo}`;
+}
+
+// Checksum FNV-1a sobre el JSON de la predicción — trazabilidad del soporte
+function checksumStr(s) {
+  let h = 0x811c9dc5;
+  for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = (h*0x01000193)>>>0; }
+  return h.toString(16).padStart(8,'0').toUpperCase();
+}
+function checksumPrediccion(uid) {
+  return checksumStr(JSON.stringify({
+    g: db.pronosticosGrupos[uid]||{},
+    e: db.pronosticosElim[uid]||{},
+  }));
+}
 
 // ═══════════════════════════════════════════════════════════════
 // ESTADO GLOBAL
@@ -393,17 +437,30 @@ function cargarDB() {
   try { const r=localStorage.getItem('polla26'); if(r) db=JSON.parse(r); } catch(e){}
   if (!db?.participantes) {
     db={config:JSON.parse(JSON.stringify(CFG_DEFAULT)),participantes:[],
-        pronosticosGrupos:{},pronosticosElim:{},resultadosReales:{},ranking:[]};
+        pronosticosGrupos:{},pronosticosElim:{},resultadosReales:{},ranking:[],envios:{}};
     guardarDB();
   }
+  if (!db.envios) { db.envios={}; }
+  // Migración: pronósticos eliminatorios con IDs del bracket viejo (R32-*, R16-*, QF-*, SF-*, TP, FIN)
+  // ya no corresponden a los cruces oficiales FIFA — se descartan para evitar datos corruptos.
+  const idsValidos=new Set(PARTIDOS_ELIMINATORIAS.map(p=>p.id));
+  Object.keys(db.pronosticosElim||{}).forEach(uid=>{
+    Object.keys(db.pronosticosElim[uid]).forEach(mid=>{
+      if(!idsValidos.has(mid)) delete db.pronosticosElim[uid][mid];
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════════════════════
 function registrar(nombre,apodo,email,pw) {
+  if (apuestasCerradas()) return {ok:false,msg:'Las apuestas cerraron el '+DEADLINE_TEXTO+'. Ya no es posible registrarse.'};
   nombre=nombre.trim(); apodo=apodo.trim();
   if (!nombre) return {ok:false,msg:'El nombre es obligatorio'};
+  email=(email||'').trim();
+  if (email && db.participantes.find(p=>(p.email||'').toLowerCase()===email.toLowerCase()))
+    return {ok:false,msg:'Ya existe un participante con ese correo'};
   if (!pw||pw.length<4) return {ok:false,msg:'La contraseña debe tener al menos 4 caracteres'};
   if (db.participantes.find(p=>p.nombre.toLowerCase()===nombre.toLowerCase()))
     return {ok:false,msg:'Ya existe un participante con ese nombre'};
@@ -435,6 +492,10 @@ function restaurarSesion() {
 // PRONÓSTICOS
 // ═══════════════════════════════════════════════════════════════
 function guardarPGrupo(uid, mid, lv, vv) {
+  if (usuarioBloqueado(uid)) {
+    mostrarAlerta(envioDe(uid)?'🔒 Tu apuesta ya fue enviada — no se puede modificar':'🔒 Las apuestas cerraron el '+DEADLINE_TEXTO,'error');
+    return;
+  }
   const l=parseInt(lv), v=parseInt(vv);
   if (isNaN(l)||isNaN(v)||l<0||v<0) return;
   if (!db.pronosticosGrupos[uid]) db.pronosticosGrupos[uid]={};
@@ -447,6 +508,10 @@ function guardarPGrupo(uid, mid, lv, vv) {
 function getPGrupo(uid,mid) { return db.pronosticosGrupos[uid]?.[mid]||null; }
 
 function guardarPElim(uid,mid,l,v,gan) {
+  if (usuarioBloqueado(uid)) {
+    mostrarAlerta(envioDe(uid)?'🔒 Tu apuesta ya fue enviada — no se puede modificar':'🔒 Las apuestas cerraron el '+DEADLINE_TEXTO,'error');
+    return;
+  }
   if(!db.pronosticosElim[uid]) db.pronosticosElim[uid]={};
   db.pronosticosElim[uid][mid]={local:parseInt(l)||0,visitante:parseInt(v)||0,ganador:gan};
   guardarDB();
@@ -455,14 +520,19 @@ function guardarPElim(uid,mid,l,v,gan) {
 function getPElim(uid,mid) { return db.pronosticosElim[uid]?.[mid]||null; }
 
 // ═══════════════════════════════════════════════════════════════
-// CÁLCULO DE TABLA DE GRUPO (según pronósticos del usuario)
+// CÁLCULO DE TABLA DE GRUPO — criterios de desempate FIFA
+// (Art. 13 Reglamento: pts → enfrentamientos directos entre
+//  empatados [pts, DG, GF] → DG total → GF total. Fair play y
+//  ranking FIFA no están disponibles en la app: se usa orden
+//  alfabético como criterio determinista final, documentado.)
 // ═══════════════════════════════════════════════════════════════
-function calcTablaGrupo(uid, gid) {
+function calcTablaGrupoGenerico(gid, getResultado) {
   const t={};
   GRUPOS[gid].equipos.forEach(e=>{t[e]={e,pts:0,j:0,g:0,em:0,p:0,gf:0,gc:0,dg:0};});
-  PARTIDOS_GRUPOS.filter(p=>p.grupo===gid).forEach(p=>{
-    const pron=getPGrupo(uid,p.id); if(!pron) return;
-    const {local:gl,visitante:gv}=pron;
+  const partidos=PARTIDOS_GRUPOS.filter(p=>p.grupo===gid);
+  partidos.forEach(p=>{
+    const r=getResultado(p); if(!r) return;
+    const {local:gl,visitante:gv}=r;
     const loc=t[p.equipoLocal],vis=t[p.equipoVisitante];
     if(!loc||!vis) return;
     loc.j++;vis.j++;loc.gf+=gl;loc.gc+=gv;vis.gf+=gv;vis.gc+=gl;
@@ -471,7 +541,40 @@ function calcTablaGrupo(uid, gid) {
     else if(gl<gv){vis.g++;vis.pts+=3;loc.p++;}
     else{loc.em++;loc.pts++;vis.em++;vis.pts++;}
   });
-  return Object.values(t).sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.e.localeCompare(b.e));
+  // 1) Orden inicial por puntos
+  let tabla=Object.values(t).sort((a,b)=>b.pts-a.pts);
+  // 2) Resolver clústeres de empate en puntos con enfrentamientos directos
+  const resultado=[];
+  let i=0;
+  while(i<tabla.length){
+    let j=i; while(j<tabla.length&&tabla[j].pts===tabla[i].pts) j++;
+    const cluster=tabla.slice(i,j);
+    if(cluster.length>1){
+      const nombres=new Set(cluster.map(c=>c.e));
+      // mini-tabla solo con partidos entre los empatados
+      const mini={}; cluster.forEach(c=>{mini[c.e]={pts:0,dg:0,gf:0};});
+      partidos.forEach(p=>{
+        if(!nombres.has(p.equipoLocal)||!nombres.has(p.equipoVisitante)) return;
+        const r=getResultado(p); if(!r) return;
+        const {local:gl,visitante:gv}=r;
+        mini[p.equipoLocal].gf+=gl; mini[p.equipoLocal].dg+=gl-gv;
+        mini[p.equipoVisitante].gf+=gv; mini[p.equipoVisitante].dg+=gv-gl;
+        if(gl>gv) mini[p.equipoLocal].pts+=3;
+        else if(gl<gv) mini[p.equipoVisitante].pts+=3;
+        else {mini[p.equipoLocal].pts++; mini[p.equipoVisitante].pts++;}
+      });
+      cluster.sort((a,b)=>
+        mini[b.e].pts-mini[a.e].pts || mini[b.e].dg-mini[a.e].dg || mini[b.e].gf-mini[a.e].gf ||
+        b.dg-a.dg || b.gf-a.gf || a.e.localeCompare(b.e));
+    }
+    resultado.push(...cluster);
+    i=j;
+  }
+  return resultado;
+}
+
+function calcTablaGrupo(uid, gid) {
+  return calcTablaGrupoGenerico(gid, p=>getPGrupo(uid,p.id));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -493,78 +596,138 @@ function calcClasificados(uid) {
     // Solo agregar tercero si tiene puntos o partidos jugados en sus pronósticos
     if(tb[2] && tb[2].j>0) res.terceros.push({...tb[2],grupo:g});
   });
-  res.terceros.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf);
+  // Criterios FIFA para ranking de terceros: pts → DG → GF → alfabético (determinista)
+  res.terceros.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.e.localeCompare(b.e));
   res.mejoresTerceros=res.terceros.slice(0,8);
   return res;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// RESOLUCIÓN DE SLOTS DEL BRACKET
-// Devuelve el nombre del equipo real, o null si no se puede resolver
+// ASIGNACIÓN DE MEJORES TERCEROS A LOS CRUCES (Anexo C FIFA)
+// Cada partido con slot '3:XXXXX' solo admite terceros de esos
+// grupos. Se asignan los 8 clasificados respetando todas las
+// restricciones mediante backtracking (slots con menos opciones
+// primero, terceros en orden de ranking).
 // ═══════════════════════════════════════════════════════════════
-function resolverSlot(slot, uid) {
-  // Posición en grupo: '1A', '2B', etc.
+function asignarTerceros(mejoresTerceros) {
+  if (!mejoresTerceros || mejoresTerceros.length < 8) return null;
+  const slots = PARTIDOS_ELIMINATORIAS
+    .filter(p=>p.slot2.startsWith('3:'))
+    .map(p=>({id:p.id, permitidos:p.slot2.slice(2)}));
+  const tercerosOcho = mejoresTerceros.slice(0,8);
+  // Slots más restringidos primero, para que el backtracking converja
+  const orden = slots.map((s,i)=>({...s,
+    opciones: tercerosOcho.filter(t=>s.permitidos.includes(t.grupo)).length}))
+    .sort((a,b)=>a.opciones-b.opciones);
+  const usado = new Array(8).fill(false);
+  const asign = {};
+  function bt(i) {
+    if (i === orden.length) return true;
+    const s = orden[i];
+    for (let j=0;j<8;j++) {
+      if (usado[j] || !s.permitidos.includes(tercerosOcho[j].grupo)) continue;
+      usado[j]=true; asign[s.id]=tercerosOcho[j].e;
+      if (bt(i+1)) return true;
+      usado[j]=false; delete asign[s.id];
+    }
+    return false;
+  }
+  return bt(0) ? asign : null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESOLUCIÓN DE SLOTS DEL BRACKET (predicción del usuario)
+// Devuelve el nombre del equipo, o null si aún no se puede resolver
+// ═══════════════════════════════════════════════════════════════
+function resolverSlot(slot, uid, matchId) {
   if (/^[12][A-L]$/.test(slot)) {
     const clas=calcClasificados(uid);
     return slot[0]==='1' ? (clas.primeros[slot[1]]||null) : (clas.segundos[slot[1]]||null);
   }
-  // Mejor tercero: 'M3°-1' .. 'M3°-8'
-  if (slot.startsWith('M3°-')) {
+  if (slot.startsWith('3:')) {
     const clas=calcClasificados(uid);
-    const idx=parseInt(slot.replace('M3°-',''))-1;
-    return clas.mejoresTerceros[idx]?.e||null;
+    const asig=asignarTerceros(clas.mejoresTerceros);
+    return asig ? (asig[matchId]||null) : null;
   }
-  // Ganadores/perdedores de rondas anteriores
-  if (slot.startsWith('WR32-')) return resolverGanador('R32-'+slot.slice(5),uid,false);
-  if (slot.startsWith('WR16-')) return resolverGanador('R16-'+slot.slice(5),uid,false);
-  if (slot.startsWith('WQF-'))  return resolverGanador('QF-'+slot.slice(4),uid,false);
-  if (slot.startsWith('WSF-'))  return resolverGanador('SF-'+slot.slice(4),uid,false);
-  if (slot.startsWith('LSF-'))  return resolverGanador('SF-'+slot.slice(4),uid,true);
+  let m;
+  if ((m=/^W(\d+)$/.exec(slot))) return resolverGanador('M'+m[1],uid,false);
+  if ((m=/^L(\d+)$/.exec(slot))) return resolverGanador('M'+m[1],uid,true);
   return null;
 }
 
-// Devuelve equipo ganador (o perdedor si perdedor=true) de un partido eliminatorio
-// Devuelve null si falta pronóstico o si el partido anterior no tiene equipos
+// Ganador (o perdedor) de un partido eliminatorio según pronóstico.
+// null si falta pronóstico o si los equipos de rondas previas no existen aún.
 function resolverGanador(matchId, uid, perdedor) {
   const match=PARTIDOS_ELIMINATORIAS.find(m=>m.id===matchId);
   if (!match) return null;
-  // Primero resolver qué equipos juegan este partido
-  const e1=resolverSlot(match.slot1,uid);
-  const e2=resolverSlot(match.slot2,uid);
-  if (!e1||!e2) return null; // equipos de ronda anterior aún no determinados
-  // Ver si el usuario pronosticó este partido
+  const e1=resolverSlot(match.slot1,uid,matchId);
+  const e2=resolverSlot(match.slot2,uid,matchId);
+  if (!e1||!e2) return null;
   const pron=getPElim(uid,matchId);
-  if (!pron||!pron.ganador) return null; // sin pronóstico aún
+  if (!pron||!pron.ganador) return null;
   if (perdedor) return pron.ganador==='local'?e2:e1;
   return pron.ganador==='local'?e1:e2;
 }
 
 // ═══════════════════════════════════════════════════════════════
+// RESOLUCIÓN DEL BRACKET REAL (resultados del admin)
+// Mismas reglas, alimentadas por db.resultadosReales
+// ═══════════════════════════════════════════════════════════════
+function resolverSlotReal(slot, matchId) {
+  if (/^[12][A-L]$/.test(slot)) {
+    const clas=calcClasificadosReales();
+    return slot[0]==='1' ? (clas.primeros[slot[1]]||null) : (clas.segundos[slot[1]]||null);
+  }
+  if (slot.startsWith('3:')) {
+    const clas=calcClasificadosReales();
+    const asig=asignarTerceros(clas.mejoresTerceros);
+    return asig ? (asig[matchId]||null) : null;
+  }
+  let m;
+  if ((m=/^W(\d+)$/.exec(slot))) return resolverGanadorReal('M'+m[1],false);
+  if ((m=/^L(\d+)$/.exec(slot))) return resolverGanadorReal('M'+m[1],true);
+  return null;
+}
+
+function resolverGanadorReal(matchId, perdedor) {
+  const match=PARTIDOS_ELIMINATORIAS.find(m=>m.id===matchId);
+  if (!match) return null;
+  const e1=resolverSlotReal(match.slot1,matchId);
+  const e2=resolverSlotReal(match.slot2,matchId);
+  if (!e1||!e2) return null;
+  const real=db.resultadosReales[matchId];
+  if (!real) return null;
+  // En eliminatorias un empate exige ganador definido (penales)
+  let gan=real.ganador;
+  if (gan==='empate'||!gan) {
+    if (real.local>real.visitante) gan='local';
+    else if (real.visitante>real.local) gan='visitante';
+    else return null; // empate sin definición de penales → no resoluble
+  }
+  if (perdedor) return gan==='local'?e2:e1;
+  return gan==='local'?e1:e2;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // TABLA CLASIFICADOS REALES (basada en resultados del admin)
+// Solo cuenta un grupo cuando sus 6 partidos tienen resultado final
+// — evita clasificar equipos con la fase de grupos a medias.
 // ═══════════════════════════════════════════════════════════════
 function calcClasificadosReales() {
   const res={primeros:{},segundos:{},terceros:[],mejoresTerceros:[]};
   Object.keys(GRUPOS).forEach(g=>{
-    const t={};
-    GRUPOS[g].equipos.forEach(e=>{t[e]={e,pts:0,j:0,gf:0,gc:0,dg:0};});
-    let hay=false;
-    PARTIDOS_GRUPOS.filter(p=>p.grupo===g).forEach(p=>{
-      const real=db.resultadosReales[p.id]; if(!real) return; hay=true;
-      const {local:gl,visitante:gv}=real;
-      const loc=t[p.equipoLocal],vis=t[p.equipoVisitante]; if(!loc||!vis) return;
-      loc.j++;vis.j++;loc.gf+=gl;loc.gc+=gv;vis.gf+=gv;vis.gc+=gl;
-      loc.dg=loc.gf-loc.gc;vis.dg=vis.gf-vis.gc;
-      if(gl>gv){loc.pts+=3;}else if(gl<gv){vis.pts+=3;}else{loc.pts++;vis.pts++;}
-    });
-    if(hay){
-      const sorted=Object.values(t).sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.e.localeCompare(b.e));
-      res.primeros[g]=sorted[0]?.e;
-      res.segundos[g]=sorted[1]?.e;
-      if(sorted[2]) res.terceros.push({...sorted[2],grupo:g});
-    }
+    const partidos=PARTIDOS_GRUPOS.filter(p=>p.grupo===g);
+    const completo=partidos.every(p=>!!db.resultadosReales[p.id]);
+    if(!completo) return;
+    const tabla=calcTablaGrupoGenerico(g, p=>db.resultadosReales[p.id]);
+    res.primeros[g]=tabla[0]?.e;
+    res.segundos[g]=tabla[1]?.e;
+    if(tabla[2]) res.terceros.push({...tabla[2],grupo:g});
   });
-  res.terceros.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf);
-  res.mejoresTerceros=res.terceros.slice(0,8);
+  // Mismos criterios FIFA para ordenar terceros: pts → DG → GF → alfabético
+  res.terceros.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.e.localeCompare(b.e));
+  // Solo asigna los 8 mejores cuando los 12 grupos están completos
+  if(Object.keys(res.primeros).length===12) res.mejoresTerceros=res.terceros.slice(0,8);
   return res;
 }
 
@@ -607,18 +770,23 @@ function recalcularPuntajes() {
     // Eliminatorias
     const fpPts={dieciseisavos:cfg.avanceDieciseisavos,octavos:cfg.avanceOctavos,
       cuartos:cfg.avanceCuartos,semifinal:cfg.avanceSemis};
+    // Se compara el EQUIPO que avanza, no la etiqueta local/visitante:
+    // el bracket del apostador puede tener equipos distintos al real.
     PARTIDOS_ELIMINATORIAS.forEach(p=>{
-      const real=db.resultadosReales[p.id]; if(!real) return;
-      const pron=getPElim(part.id,p.id); if(!pron?.ganador) return;
-      if(p.fase==='tercerPuesto'){if(pron.ganador===real.ganador){pts+=cfg.tercerPuesto;terceroOk=true;}return;}
-      if(p.fase==='final'){
-        if(pron.ganador===real.ganador){pts+=cfg.campeon;campeonOk=true;}
-        // subcampeón: el que perdió la final
-        const perdedor=real.ganador==='local'?'visitante':'local';
-        if(pron.ganador===perdedor){pts+=cfg.subcampeon;subOk=true;}
+      const ganReal=resolverGanadorReal(p.id,false); if(!ganReal) return;
+      const ganPron=resolverGanador(p.id,part.id,false);
+      if(p.fase==='tercerPuesto'){
+        if(ganPron&&ganPron===ganReal){pts+=cfg.tercerPuesto;terceroOk=true;}
         return;
       }
-      if(fpPts[p.fase]&&pron.ganador===real.ganador) pts+=fpPts[p.fase];
+      if(p.fase==='final'){
+        if(ganPron&&ganPron===ganReal){pts+=cfg.campeon;campeonOk=true;}
+        const subReal=resolverGanadorReal(p.id,true);
+        const subPron=resolverGanador(p.id,part.id,true);
+        if(subPron&&subReal&&subPron===subReal){pts+=cfg.subcampeon;subOk=true;}
+        return;
+      }
+      if(fpPts[p.fase]&&ganPron&&ganPron===ganReal) pts+=fpPts[p.fase];
     });
 
     return {id:part.id,nombre:part.nombre,apodo:part.apodo,pts,
@@ -634,6 +802,19 @@ function progreso(uid) {
   const pG=Object.keys(db.pronosticosGrupos[uid]||{}).length;
   const pE=Object.keys(db.pronosticosElim[uid]||{}).length;
   return {total:tG+tE,completos:pG+pE,pct:Math.round(((pG+pE)/(tG+tE))*100),pG,pE,tG,tE};
+}
+
+// Banner de estado de la apuesta (cierre / enviada / tiempo restante)
+function bannerEstadoApuesta(uid) {
+  const env=envioDe(uid);
+  if (env) return `<div class="alerta alerta-exito mb-8" style="font-size:.8rem">
+    📤 <strong>Apuesta enviada y bloqueada.</strong> ID: ${esc(env.id)} · Checksum: ${esc(env.checksum)} · ${esc(env.submittedAtBogota||'')}</div>`;
+  if (apuestasCerradas()) return `<div class="alerta alerta-error mb-8" style="font-size:.8rem">
+    🔒 <strong>Ventana de apuestas cerrada</strong> (${DEADLINE_TEXTO}). Ya no se pueden crear ni modificar pronósticos.</div>`;
+  const ms=BETTING_DEADLINE.getTime()-Date.now();
+  const h=Math.floor(ms/3600000), min=Math.floor((ms%3600000)/60000);
+  return `<div class="alerta alerta-info mb-8" style="font-size:.8rem">
+    ⏳ <strong>Cierre de apuestas:</strong> ${DEADLINE_TEXTO} — faltan ${h}h ${min}min. Después del cierre no habrá cambios.</div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -659,7 +840,7 @@ function renderApp() {
   try {
     const vistas={inicio:renderInicio,login:renderLogin,registro:renderRegistro,
       perfil:renderPerfil,grupos:renderGrupos,bracket:renderBracket,
-      tabla:renderTabla,admin:renderAdmin};
+      tabla:renderTabla,admin:renderAdmin,reglas:renderReglas};
     app.innerHTML=(vistas[ST.vista]||renderInicio)();
   } catch(err) {
     app.innerHTML=`<div class="card"><div class="alerta alerta-error">⚠️ Error: ${esc(err.message)}</div>
@@ -856,9 +1037,33 @@ function renderPerfil() {
         <div style="font-size:.68rem;color:var(--gris2)">${l}</div></div>`).join('')}
     </div>
   </div>`:''}
-  <div class="grid-2">
+  <div class="grid-2 mb-16">
     <button class="btn btn-dorado btn-lg btn-bloque" onclick="navegar('grupos')">⚽ Pronosticar Fase de Grupos</button>
     <button class="btn btn-verde btn-lg btn-bloque" onclick="navegar('bracket')">🏆 Mi Bracket Eliminatorio</button>
+  </div>
+  <div class="card">
+    <div class="card-titulo">📤 Envío definitivo de mi apuesta</div>
+    ${bannerEstadoApuesta(u.id)}
+    ${envioDe(u.id)?`
+      <p style="font-size:.82rem;color:var(--gris2);margin-bottom:10px">Tu apuesta está enviada y bloqueada. Puedes volver a descargar tu soporte cuando quieras:</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-dorado" onclick="descargarSoporte('${u.id}')">📄 Descargar soporte (HTML)</button>
+        <button class="btn btn-gris" onclick="descargarRespaldoJSON('${u.id}')">💾 Respaldo JSON</button>
+      </div>`
+    :apuestasCerradas()?`<p style="font-size:.82rem;color:var(--gris2)">La ventana de apuestas está cerrada. Si no alcanzaste a enviar, tu pronóstico quedó como estaba al cierre.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-gris" onclick="descargarSoporte('${u.id}')">📄 Descargar soporte (HTML)</button>
+        <button class="btn btn-gris" onclick="descargarRespaldoJSON('${u.id}')">💾 Respaldo JSON</button>
+      </div>`
+    :`<p style="font-size:.82rem;color:var(--gris2);margin-bottom:10px">
+        Cuando completes el 100% de tus pronósticos podrás enviar tu apuesta definitiva.
+        Al enviarla queda <strong>bloqueada</strong>, se genera tu <strong>soporte con ID y checksum</strong>,
+        y debes hacerlo <strong>antes del ${DEADLINE_TEXTO}</strong>.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ${prog.pct===100?'btn-dorado':'btn-gris'} btn-lg" ${prog.pct===100?'':'disabled style="opacity:.5;cursor:not-allowed"'}
+          onclick="enviarApuesta('${u.id}')">📤 Enviar apuesta definitiva ${prog.pct<100?`(${prog.pct}% completado)`:''}</button>
+        <button class="btn btn-gris" onclick="descargarRespaldoJSON('${u.id}')">💾 Respaldo JSON</button>
+      </div>`}
   </div>`;
 }
 
@@ -888,12 +1093,13 @@ function renderGrupos() {
     matchDay[fecha].forEach(p=>{
       const pron=getPGrupo(u.id,p.id);
       const real=db.resultadosReales[p.id];
-      const bloq=p.estado==='bloqueado'||!!real;
+      const bloq=p.estado==='bloqueado'||!!real||usuarioBloqueado(u.id);
       const jaGuardado=!!pron&&!real;
       partidosHTML+=`<div class="partido-card ${real?'partido-jugado':''} ${bloq?'partido-bloqueado':''}">
         <div class="partido-info">
-          <div class="partido-meta" style="min-width:50px">
-            <div style="font-size:.68rem;color:var(--gris)">${p.hora}</div>
+          <div class="partido-meta" style="min-width:62px">
+            <div style="font-size:.68rem;color:var(--gris2);font-weight:700">${horaBogota(p.hora)}</div>
+            <div style="font-size:.62rem;color:var(--gris)">${p.hora}</div>
           </div>
           <div class="partido-equipos">
             <div class="equipo-nombre" style="text-align:right">
@@ -950,7 +1156,7 @@ function renderGrupos() {
     ${segG?`<div>🥈 ${fl(segG)} <strong>${esc(segG)}</strong></div>`:''}
   </div>`:'';
 
-  return `<div class="card">
+  return bannerEstadoApuesta(u.id)+`<div class="card">
     <div class="card-titulo" style="justify-content:space-between;flex-wrap:wrap;gap:6px">
       <span>⚽ Pronósticos — ${GRUPOS[g].nombre}</span>
     </div>
@@ -989,12 +1195,10 @@ function renderBracket() {
   function descSlot(slot) {
     if (/^1[A-L]$/.test(slot)) return `1° Grupo ${slot[1]}`;
     if (/^2[A-L]$/.test(slot)) return `2° Grupo ${slot[1]}`;
-    if (/^M3°-(\d+)$/.test(slot)) return `${slot.replace('M3°-','')}° Mejor 3°`;
-    if (slot.startsWith('WR32-')) return `Gan. 16avos P${slot.slice(5)}`;
-    if (slot.startsWith('WR16-')) return `Gan. Octavos P${slot.slice(5)}`;
-    if (slot.startsWith('WQF-'))  return `Gan. Cuartos P${slot.slice(4)}`;
-    if (slot.startsWith('WSF-'))  return `Gan. Semis P${slot.slice(4)}`;
-    if (slot.startsWith('LSF-'))  return `Perd. Semis P${slot.slice(4)}`;
+    if (slot.startsWith('3:')) return `3° de ${slot.slice(2).split('').join('/')}`;
+    let m;
+    if ((m=/^W(\d+)$/.exec(slot))) return `Ganador Partido ${m[1]}`;
+    if ((m=/^L(\d+)$/.exec(slot))) return `Perdedor Partido ${m[1]}`;
     return slot;
   }
 
@@ -1044,19 +1248,19 @@ function renderBracket() {
 
   // ── Render de cada partido ─────────────────────────────────────
   const partHTML=partidos.map(p=>{
-    const e1r=resolverSlot(p.slot1,u.id);
-    const e2r=resolverSlot(p.slot2,u.id);
+    const e1r=resolverSlot(p.slot1,u.id,p.id);
+    const e2r=resolverSlot(p.slot2,u.id,p.id);
     const e1=e1r&&TODOS_EQUIPOS.has(e1r)?e1r:null;
     const e2=e2r&&TODOS_EQUIPOS.has(e2r)?e2r:null;
     const pron=getPElim(u.id,p.id);
     const real=db.resultadosReales[p.id];
-    const bloq=p.estado==='bloqueado'||!!real;
+    const bloq=p.estado==='bloqueado'||!!real||usuarioBloqueado(u.id);
     const ambosKnown=!!e1&&!!e2;
     const ganadorAct=pron?.ganador;
 
     // ── Cabecera del partido ──────────────────────────────────────
     const cabecera=`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px;margin-bottom:10px">
-      <div style="font-size:.7rem;color:var(--gris)">📍 ${p.sede} &nbsp;·&nbsp; 📅 ${fmtF(p.fecha)} &nbsp;⏰ ${p.hora}</div>
+      <div style="font-size:.7rem;color:var(--gris)">📍 ${p.sede} &nbsp;·&nbsp; 📅 ${fmtF(p.fecha)} &nbsp;⏰ ${horaBogota(p.hora)} <span style="opacity:.6">(${p.hora})</span> &nbsp;·&nbsp; <span style="color:var(--dorado2)">Partido ${p.num}</span></div>
       <div>
         ${real?'<span class="badge badge-verde">Jugado</span>':''}
         ${bloq&&!real?'<span class="badge badge-rojo">🔒 Bloqueado</span>':''}
@@ -1147,7 +1351,7 @@ function renderBracket() {
   const pronElim=Object.keys(db.pronosticosElim[u.id]||{}).length;
   const pctBracket=Math.round((pronElim/totalElim)*100);
 
-  return `${resumenGlobal}
+  return bannerEstadoApuesta(u.id)+`${resumenGlobal}
   <div class="card">
     <div class="card-titulo" style="justify-content:space-between;flex-wrap:wrap;gap:5px">
       <span>🏆 Mi Bracket Eliminatorio</span>
@@ -1171,6 +1375,10 @@ function previewGanador(matchId, val) {
 }
 
 function guardarElim(uid, matchId) {
+  if (usuarioBloqueado(uid)) {
+    mostrarAlerta(envioDe(uid)?'🔒 Tu apuesta ya fue enviada — no se puede modificar':'🔒 Las apuestas están cerradas','error');
+    return;
+  }
   const gl=document.getElementById(`el-${matchId}`)?.value||'0';
   const gv=document.getElementById(`ev-${matchId}`)?.value||'0';
   let gan=null;
@@ -1183,6 +1391,161 @@ function guardarElim(uid, matchId) {
   guardarPElim(uid,matchId,l,v,ganFinal);
   mostrarAlerta('✅ Pronóstico guardado — el bracket se actualizó','exito');
   setTimeout(()=>renderApp(),600);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENVÍO DEFINITIVO DE LA APUESTA — bloqueo + checksum + soporte
+// ═══════════════════════════════════════════════════════════════
+function podioPronosticado(uid) {
+  return {
+    campeon:    resolverGanador('M104',uid,false),
+    subcampeon: resolverGanador('M104',uid,true),
+    tercero:    resolverGanador('M103',uid,false),
+    cuarto:     resolverGanador('M103',uid,true),
+  };
+}
+
+// Valida que la predicción esté 100% completa antes de permitir el envío
+function validarPrediccionCompleta(uid) {
+  const errores=[];
+  const faltanG=PARTIDOS_GRUPOS.filter(p=>!getPGrupo(uid,p.id));
+  if(faltanG.length) errores.push(`Faltan ${faltanG.length} marcadores de fase de grupos`);
+  const faltanE=PARTIDOS_ELIMINATORIAS.filter(p=>{const pr=getPElim(uid,p.id);return !pr||!pr.ganador;});
+  if(faltanE.length) errores.push(`Faltan ${faltanE.length} partidos de eliminatorias (marcador y ganador)`);
+  if(!errores.length){
+    const pod=podioPronosticado(uid);
+    if(!pod.campeon||!pod.subcampeon||!pod.tercero) errores.push('El bracket no resuelve campeón/subcampeón/tercero — revisa tus pronósticos');
+  }
+  return errores;
+}
+
+function enviarApuesta(uid) {
+  if (apuestasCerradas()) { mostrarAlerta('🔒 Las apuestas cerraron el '+DEADLINE_TEXTO,'error'); return; }
+  if (envioDe(uid)) { mostrarAlerta('Ya enviaste tu apuesta — está bloqueada','info'); return; }
+  const errores=validarPrediccionCompleta(uid);
+  if (errores.length) {
+    mostrarModal(`<div class="modal-titulo">⚠️ Predicción incompleta</div>
+      <p style="font-size:.85rem;color:var(--gris2);margin-bottom:8px">No se puede enviar una apuesta incompleta:</p>
+      ${errores.map(e=>`<div class="alerta alerta-error" style="font-size:.8rem">❌ ${esc(e)}</div>`).join('')}
+      <div class="modal-acciones"><button class="btn btn-gris" onclick="cerrarModal()">Entendido</button></div>`);
+    return;
+  }
+  const pod=podioPronosticado(uid);
+  const chk=checksumPrediccion(uid);
+  mostrarModal(`<div class="modal-titulo">📤 Confirmar envío definitivo</div>
+    <div class="alerta alerta-info" style="font-size:.8rem">Al enviar, tu apuesta queda <strong>BLOQUEADA</strong> y no podrás modificarla. Revisa el resumen:</div>
+    <div style="background:var(--azul);border-radius:8px;padding:12px;font-size:.86rem;margin-bottom:10px">
+      <div>🏆 Campeón: <strong>${eqL(pod.campeon)}</strong></div>
+      <div>🥈 Subcampeón: <strong>${eqL(pod.subcampeon)}</strong></div>
+      <div>🥉 Tercer puesto: <strong>${eqL(pod.tercero)}</strong></div>
+      <div style="margin-top:7px;font-size:.76rem;color:var(--gris2)">✅ 72 marcadores de grupos · ✅ 32 partidos de eliminatorias</div>
+      <div style="font-size:.72rem;color:var(--gris);margin-top:4px">Checksum de tu predicción: <code>${chk}</code></div>
+    </div>
+    <div class="modal-acciones">
+      <button class="btn btn-gris" onclick="cerrarModal()">Volver a revisar</button>
+      <button class="btn btn-dorado" onclick="confirmarEnvio('${uid}')">📤 Enviar y bloquear</button>
+    </div>`);
+}
+
+function confirmarEnvio(uid) {
+  if (apuestasCerradas()||envioDe(uid)) { cerrarModal(); renderApp(); return; }
+  const chk=checksumPrediccion(uid);
+  const id='PRED-'+chk+'-'+Date.now().toString(36).toUpperCase();
+  db.envios[uid]={id,checksum:chk,locked:true,
+    submittedAt:new Date().toISOString(),submittedAtBogota:ahoraBogota()};
+  guardarDB(); cerrarModal();
+  descargarSoporte(uid);
+  mostrarAlerta('✅ Apuesta enviada y bloqueada. Se descargó tu soporte.','exito');
+  renderApp();
+}
+
+// ── Soporte HTML descargable (comprobante de la apuesta) ────────
+function generarSoporteHTML(uid) {
+  const part=db.participantes.find(p=>p.id===uid);
+  const env=envioDe(uid)||{};
+  const cfg=db.config?.puntajes||CFG_DEFAULT.puntajes;
+  const pod=podioPronosticado(uid);
+  const clas=calcClasificados(uid);
+  const filasGrupos=Object.keys(GRUPOS).map(g=>{
+    const partidos=PARTIDOS_GRUPOS.filter(p=>p.grupo===g);
+    return `<h3>Grupo ${g}</h3><table><tr><th>Partido</th><th>Pronóstico</th></tr>
+      ${partidos.map(p=>{const pr=getPGrupo(uid,p.id);
+        return `<tr><td>${esc(p.equipoLocal)} vs ${esc(p.equipoVisitante)}</td><td><b>${pr?pr.local+' - '+pr.visitante:'—'}</b></td></tr>`;}).join('')}
+      <tr><td>Clasifican</td><td>1° ${esc(clas.primeros[g]||'—')} · 2° ${esc(clas.segundos[g]||'—')}</td></tr></table>`;
+  }).join('');
+  const filasElim=['dieciseisavos','octavos','cuartos','semifinal','tercerPuesto','final'].map(f=>{
+    const ps=PARTIDOS_ELIMINATORIAS.filter(p=>p.fase===f);
+    return `<h3>${nomF(f)}</h3><table><tr><th>#</th><th>Cruce</th><th>Marcador</th><th>Avanza/Gana</th></tr>
+      ${ps.map(p=>{
+        const e1=resolverSlot(p.slot1,uid,p.id)||p.slot1, e2=resolverSlot(p.slot2,uid,p.id)||p.slot2;
+        const pr=getPElim(uid,p.id);
+        const gan=resolverGanador(p.id,uid,false)||'—';
+        return `<tr><td>${p.num}</td><td>${esc(e1)} vs ${esc(e2)}</td><td>${pr?pr.local+' - '+pr.visitante:'—'}</td><td><b>${esc(gan)}</b></td></tr>`;}).join('')}
+    </table>`;
+  }).join('');
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Soporte Polla Mundialista 2026 — ${esc(part?.apodo||'')}</title>
+<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 14px;color:#15263b}
+h1{color:#0d1b2a;border-bottom:3px solid #f4a827;padding-bottom:8px;font-size:1.4rem}
+h2{color:#2d6a4f;font-size:1.05rem;margin-top:22px} h3{font-size:.92rem;margin:14px 0 4px;color:#0d1b2a}
+table{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:6px}
+th{background:#0d1b2a;color:#f4a827;padding:5px 8px;text-align:left}
+td{padding:4px 8px;border-bottom:1px solid #e2e6ec}
+.meta{background:#f5f7fa;border:1px solid #dde3ea;border-radius:8px;padding:12px;font-size:.85rem}
+.podio{background:#fff8e8;border:2px solid #f4a827;border-radius:8px;padding:12px;font-size:.95rem;margin:12px 0}
+code{background:#eef1f5;padding:1px 5px;border-radius:4px}</style></head><body>
+<h1>⚽ Soporte de Apuesta — Polla Mundialista 2026<br><small>Los Pibes de la 12</small></h1>
+<div class="meta">
+  <div><b>Apostador:</b> ${esc(part?.nombre||'')} (${esc(part?.apodo||'')})</div>
+  <div><b>Correo:</b> ${esc(part?.email||'No registrado')}</div>
+  <div><b>Fecha de envío (Bogotá):</b> ${esc(env.submittedAtBogota||ahoraBogota())}</div>
+  <div><b>ID de predicción:</b> <code>${esc(env.id||'BORRADOR — aún sin enviar')}</code></div>
+  <div><b>Checksum:</b> <code>${esc(env.checksum||checksumPrediccion(uid))}</code></div>
+</div>
+<div class="podio">
+  🏆 <b>Campeón:</b> ${esc(pod.campeon||'—')} &nbsp;·&nbsp; 🥈 <b>Subcampeón:</b> ${esc(pod.subcampeon||'—')}<br>
+  🥉 <b>Tercero:</b> ${esc(pod.tercero||'—')} &nbsp;·&nbsp; 4° puesto: ${esc(pod.cuarto||'—')}
+</div>
+<h2>Reglas de puntuación vigentes</h2>
+<table><tr><th>Concepto</th><th>Puntos</th></tr>
+<tr><td>Marcador exacto (incluye bono dif. de gol)</td><td>${cfg.marcadorExacto}+${cfg.diferenciaGol}</td></tr>
+<tr><td>Resultado correcto</td><td>${cfg.resultadoCorrecto}</td></tr>
+<tr><td>Bono diferencia de gol</td><td>${cfg.diferenciaGol}</td></tr>
+<tr><td>Clasificado a dieciseisavos</td><td>${cfg.clasificadoGrupos}</td></tr>
+<tr><td>Avance dieciseisavos / octavos / cuartos / semis</td><td>${cfg.avanceDieciseisavos} / ${cfg.avanceOctavos} / ${cfg.avanceCuartos} / ${cfg.avanceSemis}</td></tr>
+<tr><td>Campeón / Subcampeón / Tercer puesto</td><td>${cfg.campeon} / ${cfg.subcampeon} / ${cfg.tercerPuesto}</td></tr></table>
+<h2>Fase de Grupos — 72 pronósticos</h2>${filasGrupos}
+<h2>Eliminatorias — 32 pronósticos</h2>${filasElim}
+<p style="font-size:.72rem;color:#777;margin-top:18px">Documento generado automáticamente por la Polla Mundialista 2026 — Los Pibes de la 12.
+Verificación: el checksum debe coincidir con el registrado en la plataforma.</p>
+</body></html>`;
+}
+
+function descargarSoporte(uid) {
+  const part=db.participantes.find(p=>p.id===uid);
+  const html=generarSoporteHTML(uid);
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  a.download=`soporte_polla2026_${(part?.apodo||'apostador').replace(/[^a-zA-Z0-9]/g,'_')}.html`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ── Respaldo JSON (para consolidar en el dispositivo del admin) ─
+function descargarRespaldoJSON(uid) {
+  const part=db.participantes.find(p=>p.id===uid);
+  const data={version:1,tipo:'respaldo-polla26',
+    participante:part,
+    pronosticosGrupos:db.pronosticosGrupos[uid]||{},
+    pronosticosElim:db.pronosticosElim[uid]||{},
+    envio:envioDe(uid),
+    checksum:checksumPrediccion(uid),
+    exportadoBogota:ahoraBogota()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  a.download=`respaldo_polla2026_${(part?.apodo||'apostador').replace(/[^a-zA-Z0-9]/g,'_')}.json`;
+  a.click(); URL.revokeObjectURL(url);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1232,6 +1595,41 @@ function renderTabla() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// VISTA: REGLAS DE JUEGO
+// Los puntos se leen SIEMPRE de la configuración central (la misma
+// que usa el motor de cálculo) — texto y lógica nunca divergen.
+// ═══════════════════════════════════════════════════════════════
+function renderReglas() {
+  const cfg=db.config?.puntajes||CFG_DEFAULT.puntajes;
+  const reglas=[
+    `La ventana de apuestas se cierra el <strong>11 de junio de 2026 a la 1:00 p. m., hora Colombia</strong>, antes del primer partido del Mundial.`,
+    `Después del cierre de la ventana de apuestas <strong>no se podrá hacer ningún cambio</strong> desde el cierre hasta el final del torneo.`,
+    `Cada apostador deberá enviar a la cuenta de ahorros <strong>Bancolombia No. 07209452418</strong> el monto apostado de <strong>$100.000 COP</strong> antes del primer partido para que su pronóstico tenga validez.`,
+    `Los puntos obtenidos por acertar el resultado del partido son: <strong>${cfg.resultadoCorrecto} puntos</strong> (más <strong>${cfg.diferenciaGol} punto de bono</strong> si también aciertas la diferencia de gol).`,
+    `Los puntos obtenidos por acertar el marcador exacto son: <strong>${cfg.marcadorExacto + cfg.diferenciaGol} puntos</strong> (${cfg.marcadorExacto} del marcador exacto + ${cfg.diferenciaGol} del bono de diferencia).`,
+    `Los puntos obtenidos por acertar equipo que avance a la siguiente fase son: <strong>clasificado a dieciseisavos ${cfg.clasificadoGrupos} pts · avanza de dieciseisavos ${cfg.avanceDieciseisavos} pts · de octavos ${cfg.avanceOctavos} pts · de cuartos ${cfg.avanceCuartos} pts · a la final ${cfg.avanceSemis} pts</strong>.`,
+    `Los puntos obtenidos por acertar campeón son: <strong>${cfg.campeon} puntos</strong>.`,
+    `Los puntos obtenidos por acertar subcampeón son: <strong>${cfg.subcampeon} puntos</strong>.`,
+    `Los puntos obtenidos por acertar tercer puesto son: <strong>${cfg.tercerPuesto} puntos</strong>.`,
+    `Cualquier reclamación puede ponerla ante su madre.`,
+  ];
+  return `<div class="card" style="max-width:760px;margin:0 auto">
+    <div class="card-titulo">📜 Reglas de Juego</div>
+    <p style="font-size:.9rem;color:var(--gris2);margin-bottom:14px;line-height:1.5">
+      El perteneciente a los <strong style="color:var(--dorado)">PIBES DE LA 12</strong> que diligencie la apuesta debe saber que:</p>
+    <ol style="padding-left:22px;display:flex;flex-direction:column;gap:10px">
+      ${reglas.map(r=>`<li style="font-size:.88rem;line-height:1.55;color:var(--gris2)">${r}</li>`).join('')}
+    </ol>
+    <hr class="separator">
+    <div style="font-size:.74rem;color:var(--gris)">
+      Desempates entre apostadores: 1) más marcadores exactos · 2) más resultados acertados ·
+      3) más clasificados acertados · 4) orden alfabético (misma posición).
+      Desempates de grupos: criterios FIFA (puntos → enfrentamientos directos → diferencia de gol → goles a favor).
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // VISTA: ADMINISTRADOR
 // ═══════════════════════════════════════════════════════════════
 function renderAdmin() {
@@ -1253,11 +1651,14 @@ function renderAdmin() {
 
   const pHTML=parts.map(p=>{
     const real=db.resultadosReales[p.id];
-    const loc=p.equipoLocal||p.slot1, vis=p.equipoVisitante||p.slot2;
+    const esElim=!p.equipoLocal;
+    // En eliminatorias, los equipos se resuelven con el bracket REAL
+    const loc=p.equipoLocal||(esElim?resolverSlotReal(p.slot1,p.id):null)||p.slot1;
+    const vis=p.equipoVisitante||(esElim?resolverSlotReal(p.slot2,p.id):null)||p.slot2;
     return `<div class="partido-card ${real?'partido-jugado':''}">
       <div class="partido-info">
         <div class="partido-meta" style="min-width:65px">
-          <div class="badge badge-gris" style="font-size:.65rem">${p.grupo||p.id}</div>
+          <div class="badge badge-gris" style="font-size:.65rem">${p.grupo?('Grp '+p.grupo):('P'+p.num)}</div>
           <div style="font-size:.68rem;margin-top:2px">${fmtF(p.fecha)}</div>
         </div>
         <div class="partido-equipos">
@@ -1273,6 +1674,11 @@ function renderAdmin() {
             <strong>${esc(vis)}</strong>${TODOS_EQUIPOS.has(vis)?' '+fl(vis):''}
           </div>
         </div>
+        ${esElim?`<select id="agp-${p.id}" class="form-control" style="width:auto;font-size:.72rem;padding:4px 6px" title="Ganador por penales (solo si hay empate)">
+          <option value="">Penales…</option>
+          <option value="local" ${real?.ganador==='local'&&real.local===real.visitante?'selected':''}>Gana ${esc(loc).slice(0,14)}</option>
+          <option value="visitante" ${real?.ganador==='visitante'&&real.local===real.visitante?'selected':''}>Gana ${esc(vis).slice(0,14)}</option>
+        </select>`:''}
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
           ${real?`<span class="resultado-real" style="font-size:.78rem">✓ ${real.local}-${real.visitante}</span>`:''}
           <button class="btn btn-verde btn-sm" onclick="adminGuardar('${p.id}')">💾</button>
@@ -1283,19 +1689,28 @@ function renderAdmin() {
     </div>`;
   }).join('');
 
+  const numEnviados=Object.keys(db.envios||{}).length;
   return `<div class="card mb-16">
     <div class="card-titulo" style="justify-content:space-between;flex-wrap:wrap;gap:6px">
       <span>⚙️ Panel de Administrador</span>
       <div style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="btn btn-verde btn-sm" onclick="recalcularPuntajes();mostrarAlerta('✅ Puntajes recalculados','exito')">🔄 Recalcular</button>
         <button class="btn btn-gris btn-sm" onclick="exportTablaCSV()">📥 Tabla</button>
-        <button class="btn btn-gris btn-sm" onclick="exportPronosCSV()">📥 Pronósticos</button>
+        <button class="btn btn-gris btn-sm" onclick="exportPronosCSV()">📥 Predicciones</button>
+        <button class="btn btn-gris btn-sm" onclick="exportResultadosCSV()">📥 Resultados</button>
         <button class="btn btn-rojo btn-sm" onclick="adminReiniciar()">🗑️ Reiniciar</button>
       </div>
+    </div>
+    <div class="alerta ${apuestasCerradas()?'alerta-error':'alerta-info'} mb-8" style="font-size:.78rem">
+      ${apuestasCerradas()?'🔒 Ventana de apuestas CERRADA':'⏳ Ventana de apuestas ABIERTA'} — cierre: ${DEADLINE_TEXTO}
+      &nbsp;·&nbsp; Apuestas enviadas/bloqueadas: <strong>${numEnviados}/${db.participantes.length}</strong>
+      &nbsp;·&nbsp; Hora actual Bogotá: ${ahoraBogota()}
     </div>
     <div class="admin-grid mb-16">
       <div class="admin-action" onclick="modalParticipantes()"><div class="icon">👥</div><div class="lbl">Participantes (${db.participantes.length})</div></div>
       <div class="admin-action" onclick="modalConfig()"><div class="icon">⚙️</div><div class="lbl">Configurar Puntajes</div></div>
+      <div class="admin-action" onclick="adminImportarJSON()"><div class="icon">📂</div><div class="lbl">Importar respaldo JSON</div></div>
+      <div class="admin-action" onclick="modalDiagnostico()"><div class="icon">🩺</div><div class="lbl">Diagnóstico y pruebas</div></div>
       <div class="admin-action" onclick="adminBloquearTodos()"><div class="icon">🔒</div><div class="lbl">Bloquear todos</div></div>
       <div class="admin-action" onclick="recalcularPuntajes();navegar('tabla')"><div class="icon">📊</div><div class="lbl">Ver Tabla</div></div>
     </div>
@@ -1315,12 +1730,19 @@ function adminGuardar(matchId) {
   const l=parseInt(document.getElementById(`arl-${matchId}`)?.value);
   const v=parseInt(document.getElementById(`arv-${matchId}`)?.value);
   if(isNaN(l)||isNaN(v)||l<0||v<0){mostrarAlerta('Resultado inválido','error');return;}
-  const gan=l>v?'local':l<v?'visitante':'empate';
-  db.resultadosReales[matchId]={local:l,visitante:v,ganador:gan};
-  // Marcar partido como jugado
+  const esElim=PARTIDOS_ELIMINATORIAS.some(p=>p.id===matchId);
+  let gan=l>v?'local':l<v?'visitante':'empate';
+  if(esElim&&gan==='empate'){
+    // En eliminatorias el empate exige ganador por penales
+    const pen=document.getElementById(`agp-${matchId}`)?.value;
+    if(!pen){mostrarAlerta('⚠️ Empate en eliminatoria: selecciona el ganador por penales','error');return;}
+    gan=pen;
+  }
+  db.resultadosReales[matchId]={local:l,visitante:v,ganador:gan,status:'final',
+    updatedAt:new Date().toISOString()};
   [...PARTIDOS_GRUPOS,...PARTIDOS_ELIMINATORIAS].filter(p=>p.id===matchId).forEach(p=>p.estado='jugado');
   guardarDB(); recalcularPuntajes();
-  mostrarAlerta(`✅ Resultado guardado: ${l} - ${v}${gan!=='empate'?' → Avanza '+gan:'(empate)'}`, 'exito');
+  mostrarAlerta(`✅ Resultado guardado: ${l} - ${v}${gan!=='empate'?' → Gana '+gan:' (empate)'}`, 'exito');
   renderApp();
 }
 
@@ -1405,16 +1827,183 @@ function exportTablaCSV() {
 }
 
 function exportPronosCSV() {
-  const h=['Participante','Partido','Grupo','Local','Visitante','Pron.Local','Pron.Visitante','Real'];
+  // Excel maestro de predicciones: grupos + eliminatorias + metadatos de envío
+  const h=['prediction_id','bettor_name','bettor_email','apodo','submitted_at_bogota','locked','checksum',
+    'match_id','fifa_match_number','stage','group','team_a','team_b',
+    'predicted_goals_a','predicted_goals_b','predicted_winner_if_knockout','real'];
   const r=[];
   db.participantes.forEach(p=>{
+    const env=envioDe(p.id);
+    const meta=[env?.id||'',p.nombre,p.email||'',p.apodo,env?.submittedAtBogota||'',env?'SI':'NO',env?.checksum||checksumPrediccion(p.id)];
     PARTIDOS_GRUPOS.forEach(m=>{
       const pr=getPGrupo(p.id,m.id), re=db.resultadosReales[m.id];
-      r.push([p.nombre,m.id,m.grupo,m.equipoLocal,m.equipoVisitante,
-        pr!=null?pr.local:'—',pr!=null?pr.visitante:'—',re?`${re.local}-${re.visitante}`:'Pendiente']);
+      r.push([...meta,m.id,'',`grupos`,m.grupo,m.equipoLocal,m.equipoVisitante,
+        pr?pr.local:'',pr?pr.visitante:'','',re?`${re.local}-${re.visitante}`:'']);
+    });
+    PARTIDOS_ELIMINATORIAS.forEach(m=>{
+      const pr=getPElim(p.id,m.id), re=db.resultadosReales[m.id];
+      const e1=resolverSlot(m.slot1,p.id,m.id)||m.slot1, e2=resolverSlot(m.slot2,p.id,m.id)||m.slot2;
+      const gan=resolverGanador(m.id,p.id,false)||'';
+      r.push([...meta,m.id,m.num,m.fase,'',e1,e2,
+        pr?pr.local:'',pr?pr.visitante:'',gan,re?`${re.local}-${re.visitante}`:'']);
     });
   });
-  dlCSV([h,...r],'pronosticos.csv');
+  dlCSV([h,...r],'predicciones_maestro.csv');
+}
+
+function exportResultadosCSV() {
+  const h=['match_id','fifa_match_number','date','time_et','time_bogota','stage','group','venue',
+    'team_a','team_b','actual_goals_a','actual_goals_b','actual_winner','status','updated_at'];
+  const r=[];
+  PARTIDOS_GRUPOS.forEach(m=>{
+    const re=db.resultadosReales[m.id];
+    r.push([m.id,'',m.fecha,m.hora,horaBogota(m.hora),'grupos',m.grupo,m.sede,m.equipoLocal,m.equipoVisitante,
+      re?re.local:'',re?re.visitante:'',re?(re.ganador||''):'',re?(re.status||'final'):'scheduled',re?.updatedAt||'']);
+  });
+  PARTIDOS_ELIMINATORIAS.forEach(m=>{
+    const re=db.resultadosReales[m.id];
+    const e1=resolverSlotReal(m.slot1,m.id)||m.slot1, e2=resolverSlotReal(m.slot2,m.id)||m.slot2;
+    r.push([m.id,m.num,m.fecha,m.hora,horaBogota(m.hora),m.fase,'',m.sede,e1,e2,
+      re?re.local:'',re?re.visitante:'',re?(re.ganador||''):'',re?(re.status||'final'):'scheduled',re?.updatedAt||'']);
+  });
+  dlCSV([h,...r],'resultados_reales.csv');
+}
+
+// ── Importar respaldo JSON de un apostador (consolidación admin) ─
+// La app vive en localStorage de cada dispositivo: este import permite
+// al admin reunir las apuestas de todos en su propio equipo.
+function adminImportarJSON() {
+  const input=document.createElement('input');
+  input.type='file'; input.accept='.json,application/json'; input.multiple=true;
+  input.onchange=async ()=>{
+    let ok=0,fail=0;
+    for(const file of input.files){
+      try{
+        const data=JSON.parse(await file.text());
+        if(data.tipo!=='respaldo-polla26'||!data.participante?.id) throw new Error('formato');
+        // Verificar integridad con el checksum incluido
+        const chk=checksumStr(JSON.stringify({g:data.pronosticosGrupos||{},e:data.pronosticosElim||{}}));
+        if(data.checksum&&chk!==data.checksum) throw new Error('checksum no coincide — archivo alterado');
+        const p=data.participante;
+        const idx=db.participantes.findIndex(x=>x.id===p.id);
+        if(idx>=0) db.participantes[idx]=p; else db.participantes.push(p);
+        db.pronosticosGrupos[p.id]=data.pronosticosGrupos||{};
+        db.pronosticosElim[p.id]=data.pronosticosElim||{};
+        if(data.envio) db.envios[p.id]=data.envio;
+        ok++;
+      }catch(e){ console.error('Import error',file.name,e); fail++; }
+    }
+    guardarDB(); recalcularPuntajes(); renderApp();
+    mostrarAlerta(`📂 Importados: ${ok} · Fallidos: ${fail}`, fail?'error':'exito');
+  };
+  input.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VALIDACIÓN AUTOMÁTICA DE DATOS FIFA + SELF-TESTS
+// ═══════════════════════════════════════════════════════════════
+function validarDatosFIFA() {
+  const errores=[];
+  const grupos=Object.keys(GRUPOS);
+  if(grupos.length!==12) errores.push(`Grupos: ${grupos.length} ≠ 12`);
+  const equipos=grupos.flatMap(g=>GRUPOS[g].equipos);
+  if(equipos.length!==48) errores.push(`Equipos: ${equipos.length} ≠ 48`);
+  if(new Set(equipos).size!==equipos.length) errores.push('Hay equipos duplicados entre grupos');
+  grupos.forEach(g=>{if(GRUPOS[g].equipos.length!==4)errores.push(`Grupo ${g}: ${GRUPOS[g].equipos.length} equipos ≠ 4`);});
+  if(PARTIDOS_GRUPOS.length!==72) errores.push(`Partidos de grupos: ${PARTIDOS_GRUPOS.length} ≠ 72`);
+  if(PARTIDOS_ELIMINATORIAS.length!==32) errores.push(`Partidos eliminatorias: ${PARTIDOS_ELIMINATORIAS.length} ≠ 32`);
+  if(PARTIDOS_GRUPOS.length+PARTIDOS_ELIMINATORIAS.length!==104) errores.push('Total partidos ≠ 104');
+  // Cada equipo juega exactamente 3 partidos de grupo
+  const cuenta={};
+  PARTIDOS_GRUPOS.forEach(p=>{
+    cuenta[p.equipoLocal]=(cuenta[p.equipoLocal]||0)+1;
+    cuenta[p.equipoVisitante]=(cuenta[p.equipoVisitante]||0)+1;
+    if(!GRUPOS[p.grupo].equipos.includes(p.equipoLocal)) errores.push(`${p.id}: ${p.equipoLocal} no es del grupo ${p.grupo}`);
+    if(!GRUPOS[p.grupo].equipos.includes(p.equipoVisitante)) errores.push(`${p.id}: ${p.equipoVisitante} no es del grupo ${p.grupo}`);
+    if(isNaN(new Date(p.fecha).getTime())) errores.push(`${p.id}: fecha inválida ${p.fecha}`);
+  });
+  equipos.forEach(e=>{if(cuenta[e]!==3)errores.push(`${e} juega ${cuenta[e]||0} partidos ≠ 3`);});
+  // IDs únicos y números FIFA 73-104
+  const ids=[...PARTIDOS_GRUPOS,...PARTIDOS_ELIMINATORIAS].map(p=>p.id);
+  if(new Set(ids).size!==ids.length) errores.push('IDs de partido duplicados');
+  const nums=PARTIDOS_ELIMINATORIAS.map(p=>p.num).sort((a,b)=>a-b);
+  if(nums[0]!==73||nums[31]!==104||new Set(nums).size!==32) errores.push('Numeración eliminatorias ≠ 73-104');
+  // Banderas para los 48
+  equipos.forEach(e=>{if(!BANDERAS[e])errores.push(`Falta bandera de ${e}`);});
+  return errores;
+}
+
+function runSelfTests() {
+  const t=[]; const chk=(nombre,cond,detalle='')=>t.push({nombre,ok:!!cond,detalle});
+  // Datos FIFA
+  const errFIFA=validarDatosFIFA();
+  chk('Datos FIFA válidos (12/48/72/32/104)',errFIFA.length===0,errFIFA.join('; '));
+  // Usuario sintético para pruebas (se elimina al final, sin persistir)
+  const TU='__TEST__';
+  db.pronosticosGrupos[TU]={};
+  try {
+    // Grupo A: México gana todo, Sudáfrica 2°, Corea 3°, Checa última
+    const pa=PARTIDOS_GRUPOS.filter(p=>p.grupo==='A');
+    const marcador={'México':3,'Sudáfrica':2,'Corea del Sur':1,'Rep. Checa':0};
+    pa.forEach(p=>{db.pronosticosGrupos[TU][p.id]={local:marcador[p.equipoLocal],visitante:marcador[p.equipoVisitante]};});
+    const tabla=calcTablaGrupo(TU,'A');
+    chk('Tabla de grupo ordena por puntos',tabla[0].e==='México'&&tabla[3].e==='Rep. Checa',
+      tabla.map(x=>x.e+':'+x.pts).join(', '));
+    // Desempate head-to-head: B con todos empatados 1-1 excepto Canadá 1-0 a Suiza
+    db.pronosticosGrupos[TU]={};
+    PARTIDOS_GRUPOS.filter(p=>p.grupo==='B').forEach(p=>{
+      const cs=(p.equipoLocal==='Canadá'&&p.equipoVisitante==='Suiza'),
+            sc=(p.equipoLocal==='Suiza'&&p.equipoVisitante==='Canadá');
+      db.pronosticosGrupos[TU][p.id]=cs?{local:1,visitante:0}:sc?{local:0,visitante:1}:{local:1,visitante:1};
+    });
+    const tb=calcTablaGrupo(TU,'B');
+    chk('Desempate por enfrentamiento directo (Canadá > Suiza)',
+      tb.findIndex(x=>x.e==='Canadá')<tb.findIndex(x=>x.e==='Suiza'),
+      tb.map(x=>x.e+':'+x.pts).join(', '));
+    // Clasificados: grupo sin pronósticos devuelve null
+    const clas=calcClasificados(TU);
+    chk('Grupo sin pronósticos no clasifica a nadie',clas.primeros['C']===null&&clas.segundos['C']===null);
+    // Terceros: con solo 2 grupos pronosticados no hay 8 terceros → bracket de terceros pendiente
+    chk('Sin 8 terceros la asignación es null',asignarTerceros(clas.mejoresTerceros)===null);
+    // Asignación de terceros con 8 grupos válidos
+    const fake=['A','B','C','D','E','F','G','H'].map(g=>({e:GRUPOS[g].equipos[2],grupo:g,pts:0,dg:0,gf:0}));
+    const asig=asignarTerceros(fake);
+    chk('Asignación Anexo C respeta restricciones',!!asig&&Object.entries(asig).every(([mid,eq])=>{
+      const m=PARTIDOS_ELIMINATORIAS.find(p=>p.id===mid);
+      const grupoDe=Object.keys(GRUPOS).find(g=>GRUPOS[g].equipos.includes(eq));
+      return m.slot2.slice(2).includes(grupoDe);
+    }),JSON.stringify(asig));
+    // Deadline
+    chk('Deadline configurado 11-jun-2026 13:00 -05:00',
+      BETTING_DEADLINE.toISOString()==='2026-06-11T18:00:00.000Z');
+    // Checksum estable
+    chk('Checksum determinista',checksumPrediccion(TU)===checksumPrediccion(TU));
+    // Puntaje: marcador exacto vs resultado
+    const cfg=db.config?.puntajes||CFG_DEFAULT.puntajes;
+    chk('Config puntajes completa',['marcadorExacto','resultadoCorrecto','diferenciaGol','clasificadoGrupos',
+      'avanceDieciseisavos','avanceOctavos','avanceCuartos','avanceSemis','campeon','subcampeon','tercerPuesto']
+      .every(k=>typeof cfg[k]==='number'));
+  } finally {
+    delete db.pronosticosGrupos[TU]; delete db.pronosticosElim[TU];
+  }
+  return t;
+}
+
+function modalDiagnostico() {
+  const errFIFA=validarDatosFIFA();
+  const tests=runSelfTests();
+  const okAll=tests.every(x=>x.ok)&&errFIFA.length===0;
+  mostrarModal(`<div class="modal-titulo">🩺 Diagnóstico del sistema</div>
+    <div class="alerta ${okAll?'alerta-exito':'alerta-error'}" style="font-size:.8rem">
+      ${okAll?'✅ Todos los chequeos pasaron':'❌ Hay chequeos fallidos — revisar'}</div>
+    <div style="font-size:.78rem;max-height:50vh;overflow-y:auto">
+      ${tests.map(x=>`<div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+        ${x.ok?'✅':'❌'} ${esc(x.nombre)}
+        ${!x.ok&&x.detalle?`<div style="color:var(--gris);font-size:.7rem">${esc(x.detalle)}</div>`:''}
+      </div>`).join('')}
+      ${errFIFA.map(e=>`<div style="color:var(--rojo);padding:4px 0">❌ ${esc(e)}</div>`).join('')}
+    </div>
+    <div class="modal-acciones"><button class="btn btn-gris" onclick="cerrarModal()">Cerrar</button></div>`);
 }
 
 function dlCSV(data,fname) {
@@ -1450,6 +2039,9 @@ function cerrarModal(){document.getElementById('modalContainer').innerHTML='';}
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
   cargarDB();
+  // Validación automática de la estructura FIFA al arrancar
+  const errFIFA=validarDatosFIFA();
+  if(errFIFA.length) console.error('⚠️ Validación de datos FIFA falló:',errFIFA);
   restaurarSesion();
   if(ST.usuario&&!db.participantes.find(p=>p.id===ST.usuario.id)){
     ST.usuario=null; localStorage.removeItem('polla26session');

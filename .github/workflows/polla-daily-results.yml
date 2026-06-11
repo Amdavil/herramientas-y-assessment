@@ -1,0 +1,41 @@
+# ─────────────────────────────────────────────────────────────────
+# Actualización diaria de resultados reales — PLACEHOLDER DOCUMENTADO
+#
+# Objetivo: cada día a las 11:00 p.m. hora Colombia (04:00 UTC)
+# descargar los marcadores finales del día desde una API deportiva
+# y commitearlos a data/polla/resultados.json para que el admin
+# los importe (o la app los lea).
+#
+# ESTADO: deshabilitado (solo ejecución manual) hasta que se
+# configure el secret FOOTBALL_API_KEY con un proveedor de
+# resultados (p. ej. api-football.com / football-data.org).
+# Ver docs/polla/DEPLOYMENT.md para activarlo.
+# ─────────────────────────────────────────────────────────────────
+name: Polla — actualización diaria de resultados
+
+on:
+  workflow_dispatch:
+  # Para activar la corrida diaria a las 11:00 p.m. Colombia,
+  # descomentar las dos líneas siguientes Y configurar el secret:
+  # schedule:
+  #   - cron: '0 4 * * *'   # 04:00 UTC = 23:00 America/Bogota
+
+jobs:
+  update-results:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Actualizar resultados
+        env:
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
+        run: node scripts/polla/update_results.mjs
+      - name: Commit de resultados
+        run: |
+          git config user.name "Polla Results Bot"
+          git config user.email "actions@github.com"
+          git add data/polla/ || true
+          git diff --cached --quiet || git commit -m "data: resultados reales $(date -u +%F)"
+          git push

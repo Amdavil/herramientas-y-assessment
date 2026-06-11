@@ -5,3 +5,20 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# Python / local automation
+__pycache__/
+*.pyc
+.pytest_cache/
+pytest-cache-files-*/
+.tmp_pycache/
+venv/
+.env
+*.sqlite
+*.sqlite3
+
+# Agent outputs
+linkedin-agent/drafts/
+linkedin-agent/reports/
+linkedin-agent/logs/
+linkedin-agent/data/
