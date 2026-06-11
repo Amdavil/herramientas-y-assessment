@@ -901,6 +901,9 @@ function renderInicio() {
     </div>
   </div>`:''}
 
+  <!-- ══ TABLA DE POSICIONES EN EL INICIO ════════════════════ -->
+  ${renderTablaInicio()}
+
   <!-- ══ LOS 48 EQUIPOS — 12 GRUPOS ══════════════════════════ -->
   <div class="card mb-16">
     <div class="card-titulo">🌍 Los 48 Equipos — Copa Mundial FIFA 2026</div>
@@ -929,6 +932,50 @@ function renderInicio() {
   <div class="card">
     <div class="card-titulo">🗓️ Próximos Partidos</div>
     ${renderProximos()}
+  </div>`;
+}
+
+// ── Tabla de posiciones visible para todos en el Inicio ─────────
+// Prioriza la tabla oficial consolidada (data/polla/tabla.json,
+// publicada por el admin); si no existe, muestra la de este dispositivo.
+let TABLA_OFICIAL=null;
+async function cargarTablaOficial() {
+  try {
+    const r=await fetch('data/polla/tabla.json',{cache:'no-store'});
+    if(r.ok){ TABLA_OFICIAL=await r.json(); if(ST.vista==='inicio') renderApp(); }
+  } catch(e) {} // sin tabla publicada: fallback silencioso a la local
+}
+
+function renderTablaInicio() {
+  const oficial=TABLA_OFICIAL&&Array.isArray(TABLA_OFICIAL.ranking)&&TABLA_OFICIAL.ranking.length>0;
+  const rk=oficial?TABLA_OFICIAL.ranking:db.ranking;
+  if(!rk.length) return '';
+  const filas=rk.map((r,i)=>{
+    const pos=i+1, soy=ST.usuario&&(r.id===ST.usuario.id||r.nombre===ST.usuario.nombre);
+    return `<tr class="${pos<=3?'pos-'+pos:''}" style="${soy?'background:rgba(244,168,39,.07)':''}">
+      <td style="font-weight:700">${pos===1?'👑':pos===2?'🥈':pos===3?'🥉':pos}</td>
+      <td style="white-space:nowrap;font-weight:700">${esc(r.apodo||r.nombre)}
+        ${soy?'<span class="badge badge-gris" style="margin-left:5px">Tú</span>':''}</td>
+      <td style="font-weight:900;color:var(--dorado)">${r.pts}</td>
+      <td>${r.marcadoresExactos??'—'}</td><td>${r.resultadosOk??'—'}</td><td>${r.clasificadosOk??'—'}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="card mb-16">
+    <div class="card-titulo" style="justify-content:space-between;flex-wrap:wrap;gap:6px">
+      <span>📊 Así vamos — Tabla de Posiciones</span>
+      <span style="font-size:.68rem;color:var(--gris2);font-weight:400">
+        ${oficial?`🌐 Tabla oficial consolidada · ${esc(TABLA_OFICIAL.actualizado||'')}`:'📱 Datos de este dispositivo'}
+      </span>
+    </div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>#</th><th>Participante</th><th>Pts</th>
+        <th title="Marcadores exactos">⭐</th><th title="Resultados">✅</th><th title="Clasificados">🎫</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table></div>
+    <div style="font-size:.7rem;color:var(--gris);margin-top:6px">
+      Desempates: marcadores exactos → resultados acertados → clasificados.
+      <a onclick="navegar('tabla')" style="margin-left:6px">Ver tabla completa →</a>
+    </div>
   </div>`;
 }
 
@@ -1698,6 +1745,8 @@ function renderAdmin() {
         <button class="btn btn-gris btn-sm" onclick="exportTablaCSV()">📥 Tabla</button>
         <button class="btn btn-gris btn-sm" onclick="exportPronosCSV()">📥 Predicciones</button>
         <button class="btn btn-gris btn-sm" onclick="exportResultadosCSV()">📥 Resultados</button>
+        <button class="btn btn-dorado btn-sm" onclick="exportActaTransparencia()">📜 Acta transparencia</button>
+        <button class="btn btn-gris btn-sm" onclick="exportTablaJSON()">🌐 Publicar tabla</button>
         <button class="btn btn-rojo btn-sm" onclick="adminReiniciar()">🗑️ Reiniciar</button>
       </div>
     </div>
@@ -1867,6 +1916,93 @@ function exportResultadosCSV() {
       re?re.local:'',re?re.visitante:'',re?(re.ganador||''):'',re?(re.status||'final'):'scheduled',re?.updatedAt||'']);
   });
   dlCSV([h,...r],'resultados_reales.csv');
+}
+
+// ── Acta de transparencia: TODOS los diligenciamientos en un HTML ─
+// Prueba del último pronóstico de cada participante: checksum,
+// fecha de envío y detalle completo. Para compartir con el grupo.
+function exportActaTransparencia() {
+  recalcularPuntajes();
+  const cfg=db.config?.puntajes||CFG_DEFAULT.puntajes;
+  const secciones=db.participantes.map(part=>{
+    const uid=part.id;
+    const env=envioDe(uid);
+    const pod=podioPronosticado(uid);
+    const clas=calcClasificados(uid);
+    const prog=progreso(uid);
+    const filasG=Object.keys(GRUPOS).map(g=>{
+      const ps=PARTIDOS_GRUPOS.filter(p=>p.grupo===g);
+      return `<tr><td><b>Grupo ${g}</b></td><td>${ps.map(p=>{
+        const pr=getPGrupo(uid,p.id);
+        return `${esc(p.equipoLocal)} ${pr?pr.local:'·'}-${pr?pr.visitante:'·'} ${esc(p.equipoVisitante)}`;
+      }).join('<br>')}</td>
+      <td>1° ${esc(clas.primeros[g]||'—')}<br>2° ${esc(clas.segundos[g]||'—')}</td></tr>`;
+    }).join('');
+    const filasE=['dieciseisavos','octavos','cuartos','semifinal','tercerPuesto','final'].map(f=>{
+      const ps=PARTIDOS_ELIMINATORIAS.filter(p=>p.fase===f);
+      return `<tr><td><b>${nomF(f)}</b></td><td colspan="2">${ps.map(p=>{
+        const e1=resolverSlot(p.slot1,uid,p.id)||p.slot1, e2=resolverSlot(p.slot2,uid,p.id)||p.slot2;
+        const pr=getPElim(uid,p.id);
+        const gan=resolverGanador(p.id,uid,false);
+        return `P${p.num}: ${esc(e1)} ${pr?pr.local:'·'}-${pr?pr.visitante:'·'} ${esc(e2)}${gan?' → <b>'+esc(gan)+'</b>':''}`;
+      }).join('<br>')}</td></tr>`;
+    }).join('');
+    return `<div class="part">
+      <h2>${esc(part.apodo)} <small>(${esc(part.nombre)}${part.email?' · '+esc(part.email):''})</small></h2>
+      <div class="sello ${env?'ok':'no'}">
+        ${env?`✅ APUESTA ENVIADA Y BLOQUEADA<br>ID: <code>${esc(env.id)}</code><br>Checksum: <code>${esc(env.checksum)}</code><br>Enviada: ${esc(env.submittedAtBogota||env.submittedAt||'')}`
+            :`⚠️ SIN ENVÍO DEFINITIVO — avance ${prog.pct}% · checksum actual: <code>${checksumPrediccion(uid)}</code>`}
+      </div>
+      <div class="podio">🏆 ${esc(pod.campeon||'—')} · 🥈 ${esc(pod.subcampeon||'—')} · 🥉 ${esc(pod.tercero||'—')}</div>
+      <table><tr><th>Grupo</th><th>Pronósticos</th><th>Clasifican</th></tr>${filasG}${filasE}</table>
+    </div>`;
+  }).join('');
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Acta de Transparencia — Polla Mundialista 2026</title>
+<style>body{font-family:system-ui,sans-serif;max-width:840px;margin:24px auto;padding:0 14px;color:#15263b}
+h1{color:#0d1b2a;border-bottom:3px solid #f4a827;padding-bottom:8px;font-size:1.35rem}
+h2{color:#2d6a4f;font-size:1.02rem;margin:0 0 6px}
+.part{border:1px solid #d8dee8;border-radius:10px;padding:14px;margin:14px 0;page-break-inside:avoid}
+.sello{border-radius:7px;padding:8px 10px;font-size:.8rem;margin-bottom:8px}
+.sello.ok{background:#e9f9f2;border:1px solid #2d6a4f}
+.sello.no{background:#fdeeee;border:1px solid #c0392b}
+.podio{background:#fff8e8;border:1px solid #f4a827;border-radius:7px;padding:7px 10px;font-size:.86rem;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:.72rem}
+th{background:#0d1b2a;color:#f4a827;padding:4px 7px;text-align:left}
+td{padding:4px 7px;border-bottom:1px solid #e8ecf2;vertical-align:top}
+code{background:#eef1f5;padding:1px 4px;border-radius:3px}</style></head><body>
+<h1>📜 Acta de Transparencia — Polla Mundialista 2026<br><small>Los Pibes de la 12</small></h1>
+<p style="font-size:.84rem">Generada: <b>${ahoraBogota()}</b> · Participantes: <b>${db.participantes.length}</b> ·
+Apuestas enviadas: <b>${Object.keys(db.envios||{}).length}</b> · Cierre de apuestas: ${DEADLINE_TEXTO}</p>
+<p style="font-size:.78rem;color:#555">El checksum identifica de forma única el contenido de cada predicción:
+cualquier cambio posterior al envío produciría un checksum distinto al registrado aquí.
+Puntos vigentes: exacto ${cfg.marcadorExacto}+${cfg.diferenciaGol} · resultado ${cfg.resultadoCorrecto} ·
+clasificado ${cfg.clasificadoGrupos} · avances ${cfg.avanceDieciseisavos}/${cfg.avanceOctavos}/${cfg.avanceCuartos}/${cfg.avanceSemis} ·
+campeón ${cfg.campeon} · sub ${cfg.subcampeon} · 3° ${cfg.tercerPuesto}.</p>
+${secciones||'<p>Sin participantes registrados en este dispositivo.</p>'}
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  a.download=`acta_transparencia_polla2026_${new Date().toISOString().slice(0,10)}.html`;
+  a.click(); URL.revokeObjectURL(url);
+  mostrarAlerta('📜 Acta de transparencia descargada','exito');
+}
+
+// ── Publicar tabla oficial: exporta data/polla/tabla.json ────────
+// El admin sube este archivo al repo (o se lo pasa a quien mantiene
+// el repo) y todos los dispositivos verán la misma tabla en Inicio.
+function exportTablaJSON() {
+  recalcularPuntajes();
+  const data={actualizado:ahoraBogota(),
+    ranking:db.ranking.map(r=>({id:r.id,nombre:r.nombre,apodo:r.apodo,pts:r.pts,
+      marcadoresExactos:r.marcadoresExactos,resultadosOk:r.resultadosOk,clasificadosOk:r.clasificadosOk,
+      campeonOk:r.campeonOk,subcampeonOk:r.subcampeonOk}))};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='tabla.json';
+  a.click(); URL.revokeObjectURL(url);
+  mostrarAlerta('🌐 tabla.json descargado — súbelo a data/polla/ del repositorio','exito');
 }
 
 // ── Importar respaldo JSON de un apostador (consolidación admin) ─
@@ -2043,6 +2179,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const errFIFA=validarDatosFIFA();
   if(errFIFA.length) console.error('⚠️ Validación de datos FIFA falló:',errFIFA);
   restaurarSesion();
+  cargarTablaOficial();
   if(ST.usuario&&!db.participantes.find(p=>p.id===ST.usuario.id)){
     ST.usuario=null; localStorage.removeItem('polla26session');
   }
