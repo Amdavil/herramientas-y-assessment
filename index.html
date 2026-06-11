@@ -454,26 +454,25 @@ function cargarDB() {
 // ═══════════════════════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════════════════════
-function registrar(nombre,apodo,email,pw) {
+function registrar(nombre,apodo,email) {
   if (apuestasCerradas()) return {ok:false,msg:'Las apuestas cerraron el '+DEADLINE_TEXTO+'. Ya no es posible registrarse.'};
   nombre=nombre.trim(); apodo=apodo.trim();
   if (!nombre) return {ok:false,msg:'El nombre es obligatorio'};
   email=(email||'').trim();
   if (email && db.participantes.find(p=>(p.email||'').toLowerCase()===email.toLowerCase()))
     return {ok:false,msg:'Ya existe un participante con ese correo'};
-  if (!pw||pw.length<4) return {ok:false,msg:'La contraseña debe tener al menos 4 caracteres'};
   if (db.participantes.find(p=>p.nombre.toLowerCase()===nombre.toLowerCase()))
     return {ok:false,msg:'Ya existe un participante con ese nombre'};
   const id='U'+Date.now()+Math.random().toString(36).slice(2,5);
-  db.participantes.push({id,nombre,apodo:apodo||nombre,email:email.trim(),pw,
+  db.participantes.push({id,nombre,apodo:apodo||nombre,email:email.trim(),
     inscripcion:new Date().toISOString()});
   guardarDB();
   return {ok:true,usuario:{id,nombre,apodo:apodo||nombre,email:email.trim()}};
 }
 
-function loginFn(nombre,pw) {
-  const p=db.participantes.find(u=>u.nombre.toLowerCase()===nombre.trim().toLowerCase()&&u.pw===pw);
-  if(!p) return {ok:false,msg:'Nombre o contraseña incorrectos'};
+function loginFn(nombre) {
+  const p=db.participantes.find(u=>u.nombre.toLowerCase()===nombre.trim().toLowerCase());
+  if(!p) return {ok:false,msg:'No existe un participante con ese nombre. Verifica o regístrate.'};
   return {ok:true,usuario:{id:p.id,nombre:p.nombre,apodo:p.apodo,email:p.email}};
 }
 
@@ -1005,8 +1004,6 @@ function renderLogin() {
       <div id="loginAlert"></div>
       <div class="form-grupo"><label>Nombre de usuario</label>
         <input class="form-control" id="lNom" placeholder="Tu nombre" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <div class="form-grupo"><label>Contraseña</label>
-        <input class="form-control" id="lPw" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-dorado btn-bloque btn-lg mt-8" onclick="doLogin()">Ingresar</button>
       <hr class="separator">
       <p class="text-center text-gris" style="font-size:.82rem">¿No tienes cuenta? <a onclick="navegar('registro')">Regístrate aquí</a></p>
@@ -1015,7 +1012,7 @@ function renderLogin() {
 }
 
 function doLogin() {
-  const r=loginFn(document.getElementById('lNom').value, document.getElementById('lPw').value);
+  const r=loginFn(document.getElementById('lNom').value);
   if(!r.ok){document.getElementById('loginAlert').innerHTML=`<div class="alerta alerta-error">❌ ${esc(r.msg)}</div>`;return;}
   ST.usuario=r.usuario; guardarSesion(r.usuario); navegar('perfil');
 }
@@ -1030,7 +1027,6 @@ function renderRegistro() {
         <div class="form-grupo"><label>Apodo</label><input class="form-control" id="rApo" placeholder="Como te conocen"></div>
       </div>
       <div class="form-grupo"><label>Correo (opcional)</label><input class="form-control" id="rEmail" type="email" placeholder="tu@correo.com"></div>
-      <div class="form-grupo"><label>Contraseña * (mín. 4 caracteres)</label><input class="form-control" id="rPw" type="password" placeholder="••••••"></div>
       <button class="btn btn-verde btn-bloque btn-lg mt-8" onclick="doRegistro()">Crear cuenta</button>
       <hr class="separator">
       <p class="text-center text-gris" style="font-size:.82rem">¿Ya tienes cuenta? <a onclick="navegar('login')">Ingresa aquí</a></p>
@@ -1040,7 +1036,7 @@ function renderRegistro() {
 
 function doRegistro() {
   const r=registrar(document.getElementById('rNom').value,document.getElementById('rApo').value,
-    document.getElementById('rEmail').value,document.getElementById('rPw').value);
+    document.getElementById('rEmail').value);
   if(!r.ok){document.getElementById('regAlert').innerHTML=`<div class="alerta alerta-error">❌ ${esc(r.msg)}</div>`;return;}
   ST.usuario=r.usuario; guardarSesion(r.usuario); navegar('perfil');
 }
