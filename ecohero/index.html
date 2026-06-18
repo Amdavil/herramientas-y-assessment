@@ -128,7 +128,7 @@
     .iv-timer.urgent{color:var(--danger);animation:crit-blink .45s infinite;}
 
     /* CANVAS */
-    #gc{width:100%;height:auto;display:block;flex-shrink:0;image-rendering:pixelated;}
+    #gc{width:100%;aspect-ratio:480/418;display:block;flex-shrink:0;image-rendering:pixelated;}
 
     /* TIPS */
     .tips-bar{background:rgba(2,9,5,.96);border-top:1px solid rgba(57,255,20,.1);
@@ -340,14 +340,14 @@ const WW = 480, WH = 418;
 const PR = 9; // player radius
 
 const ROOMS = [
-  {id:'kitchen',  name:'Cocina',       x:8,  y:8,   w:142, h:120, fc:'#0f0a06', ic:'🍳'},
-  {id:'living',   name:'Sala',          x:162,y:8,   w:150, h:120, fc:'#06090f', ic:'🛋️'},
-  {id:'bedroom1', name:'Habitación 1',  x:324,y:8,   w:148, h:120, fc:'#090610', ic:'🛏️'},
-  {id:'hall',     name:'Pasillo',       x:8,  y:136, w:464, h:40,  fc:'#080808', ic:''},
-  {id:'bathroom', name:'Baño',          x:8,  y:184, w:142, h:118, fc:'#050d0e', ic:'🛁'},
-  {id:'garden',   name:'Jardín',        x:162,y:184, w:150, h:118, fc:'#050e05', ic:'🌿'},
-  {id:'bedroom2', name:'Habitación 2',  x:324,y:184, w:148, h:118, fc:'#090610', ic:'🛏️'},
-  {id:'laundry',  name:'Lavandería',    x:8,  y:310, w:464, h:100, fc:'#0d0a06', ic:'🧺'},
+  {id:'kitchen',  name:'Cocina',       x:8,  y:0,   w:142, h:148, fc:'#0f0a06', ic:'🍳'},
+  {id:'living',   name:'Sala',          x:162,y:0,   w:150, h:148, fc:'#06090f', ic:'🛋️'},
+  {id:'bedroom1', name:'Habitación 1',  x:324,y:0,   w:148, h:148, fc:'#090610', ic:'🛏️'},
+  {id:'hall',     name:'Pasillo',       x:8,  y:148, w:464, h:44,  fc:'#080808', ic:''},
+  {id:'bathroom', name:'Baño',          x:8,  y:192, w:142, h:126, fc:'#050d0e', ic:'🛁'},
+  {id:'garden',   name:'Jardín',        x:162,y:192, w:150, h:126, fc:'#050e05', ic:'🌿'},
+  {id:'bedroom2', name:'Habitación 2',  x:324,y:192, w:148, h:126, fc:'#090610', ic:'🛏️'},
+  {id:'laundry',  name:'Lavandería',    x:8,  y:318, w:464, h:100, fc:'#0d0a06', ic:'🧺'},
 ];
 
 // Furniture definitions for each room [type, x%, y%, w%, h%]
@@ -397,13 +397,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = WW;
 canvas.height = WH;
 
-function resizeCanvas() {
-  const maxW = Math.min(440, window.innerWidth);
-  canvas.style.width = maxW + 'px';
-  canvas.style.height = Math.round(WH * maxW / WW) + 'px';
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+
 
 /* ═══════════════════ GAME STATE ═══════════════════ */
 
@@ -423,10 +417,7 @@ let actionFlag = false;
 /* ═══════════════════ COLLISION ═══════════════════ */
 
 function isWalkable(x, y) {
-  return ROOMS.some(r =>
-    x - PR >= r.x && x + PR <= r.x + r.w &&
-    y - PR >= r.y && y + PR <= r.y + r.h
-  );
+  return ROOMS.some(r => x >= r.x && x <= r.x+r.w && y >= r.y && y <= r.y+r.h);
 }
 
 function roomAt(x, y) {
@@ -881,7 +872,7 @@ function startLevel(){
   const cfg=LEVELS[Math.min(G.level-1,LEVELS.length-1)];
   G.water=100;G.energy=100;G.timeLeft=cfg.dur;
   G.activeProblems=[];G.fx=[];G.running=true;G.shakeTs=0;
-  P.x=240;P.y=156;P.moving=false;
+  P.x=240;P.y=170;P.moving=false;
 
   document.getElementById('lv').textContent=G.level;
   setTip('¡Muévete hasta el problema y presiona ARREGLAR!');
