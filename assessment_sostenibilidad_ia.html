@@ -1485,7 +1485,7 @@
       const ctx = canvas.getContext("2d");
       const dpr = window.devicePixelRatio || 1;
       const cssWidth = canvas.clientWidth || 760;
-      const cssHeight = canvas.clientHeight || 420;
+      const cssHeight = canvas.clientHeight || 480;
       canvas.width = Math.round(cssWidth * dpr);
       canvas.height = Math.round(cssHeight * dpr);
       ctx.scale(dpr, dpr);
@@ -1494,8 +1494,8 @@
       const labels = data.map(d => d.label);
       const values = data.map(d => d.score);
       const cx = cssWidth / 2;
-      const cy = cssHeight / 2 + 12;
-      const radius = Math.min(cssWidth, cssHeight) * .32;
+      const cy = cssHeight / 2 + 10;
+      const radius = Math.min(cssWidth, cssHeight) * .27;
       const max = 4;
 
       if (!data.length) {
@@ -1510,6 +1510,23 @@
         const angle = (-Math.PI / 2) + (i * 2 * Math.PI / labels.length);
         const r = radius * (value / max);
         return [cx + Math.cos(angle) * r, cy + Math.sin(angle) * r];
+      }
+
+      function wrapLabel(ctx, text, maxWidth) {
+        const words = text.split(" ");
+        const lines = [];
+        let line = "";
+        for (const w of words) {
+          const test = line ? line + " " + w : w;
+          if (ctx.measureText(test).width > maxWidth && line) {
+            lines.push(line);
+            line = w;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+        return lines.slice(0, 2); // max 2 lines
       }
 
       ctx.strokeStyle = "#d9e1ea";
@@ -1528,17 +1545,26 @@
       }
 
       labels.forEach((label, i) => {
-        const [x, y] = point(i, 4.35);
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         const [ax, ay] = point(i, 4);
         ctx.lineTo(ax, ay);
         ctx.stroke();
 
-        ctx.textAlign = x < cx - 20 ? "right" : x > cx + 20 ? "left" : "center";
-        ctx.textBaseline = y < cy ? "bottom" : "top";
-        const short = label.length > 24 ? label.slice(0, 22) + "..." : label;
-        ctx.fillText(short, x, y);
+        const [lx, ly] = point(i, 4.65);
+        const align = lx < cx - 20 ? "right" : lx > cx + 20 ? "left" : "center";
+        ctx.textAlign = align;
+        ctx.font = "bold 11px Segoe UI, Arial";
+        ctx.fillStyle = "#172033";
+        const maxLabelWidth = radius * 0.85;
+        const lines = wrapLabel(ctx, label, maxLabelWidth);
+        const lineH = 14;
+        const baseline = ly < cy ? "bottom" : "top";
+        const startY = baseline === "bottom" ? ly - (lines.length - 1) * lineH : ly;
+        ctx.textBaseline = "top";
+        lines.forEach((ln, li) => ctx.fillText(ln, lx, startY + li * lineH));
+        ctx.fillStyle = "#647084";
+        ctx.font = "11px Segoe UI, Arial";
       });
 
       ctx.beginPath();
