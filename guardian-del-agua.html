@@ -6,9 +6,9 @@
 <title>💧🌳 Guardián del Agua</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;font-family:'Segoe UI',sans-serif}
+html,body{width:100%;height:100%;height:100dvh;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;font-family:'Segoe UI',sans-serif}
 body{background:#bfe8ff}
-#world{position:relative;width:100vw;height:100vh;overflow:hidden}
+#world{position:relative;width:100vw;height:100vh;height:100dvh;overflow:hidden}
 
 /* ═══ SKY & GROUND ═══ */
 #sky{position:absolute;inset:0;z-index:0;
@@ -130,26 +130,37 @@ body.critical #waterBar{background:linear-gradient(90deg,#a83a1c,#e07a4f)}
 #toast.vi{opacity:1}
 
 /* ═══ CONTROLS ═══ */
-#dpad{position:absolute;bottom:18px;left:14px;z-index:200;display:grid;grid-template-columns:46px 46px 46px;
-  grid-template-rows:46px 46px 46px;gap:3px;opacity:.68}
-.db{background:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.5);border-radius:10px;color:#12341a;
-  font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;
+#dpad{position:absolute;bottom:18px;left:14px;z-index:200;display:grid;grid-template-columns:60px 60px 60px;
+  grid-template-rows:60px 60px 60px;gap:4px;opacity:.85}
+.db{background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.55);border-radius:12px;color:#12341a;
+  font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;
   touch-action:none}
-.db:active{background:rgba(255,255,255,.6)}
+.db:active{background:rgba(255,255,255,.7)}
 .de{background:none;border:none}
-#actBtn{position:absolute;bottom:34px;right:18px;z-index:200;width:64px;height:64px;border-radius:50%;
-  background:linear-gradient(135deg,#66bb6a,#2e7d32);border:2px solid rgba(255,255,255,.55);color:#fff;font-size:26px;
-  display:flex;align-items:center;justify-content:center;opacity:.55;transition:opacity .25s,box-shadow .25s;
+#actBtn{position:absolute;bottom:38px;right:18px;z-index:200;width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(135deg,#66bb6a,#2e7d32);border:2px solid rgba(255,255,255,.55);color:#fff;font-size:30px;
+  display:flex;align-items:center;justify-content:center;opacity:.65;transition:opacity .25s,box-shadow .25s;
   -webkit-tap-highlight-color:transparent;touch-action:none}
 #actBtn.ready{opacity:1;box-shadow:0 0 20px rgba(102,187,106,.8)}
 #deskHint{display:none;position:absolute;bottom:6px;left:50%;transform:translateX(-50%);z-index:200;
   color:rgba(20,50,25,.55);font-size:11px;font-weight:600}
 @media(min-width:769px){#dpad{display:none}#actBtn{display:none}#deskHint{display:block}}
+
+/* ═══ BRANDING ═══ */
+#brandBadge{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);z-index:150;
+  display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.9);padding:3px 9px 3px 5px;
+  border-radius:12px;opacity:.75;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+#brandBadge img{height:13px;width:auto;display:block}
+#brandBadge span{font-size:8.5px;color:#2e4a1f;font-weight:700;letter-spacing:.2px}
+.brand-footer{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;
+  background:#fff;padding:7px 16px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.brand-footer img{height:20px;width:auto;display:block}
+.brand-footer span{font-size:11px;color:#2e4a1f;font-weight:700}
 @media(max-width:768px){#deskHint{display:none}}
 
 /* ═══ OVERLAYS ═══ */
 .ov{position:absolute;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(10,35,20,.94);color:#fff;text-align:center;padding:22px;overflow-y:auto}
+  background:rgba(10,35,20,.94);color:#fff;text-align:center;padding:22px;overflow-y:auto;touch-action:pan-y}
 .ov h1{font-size:23px;margin-bottom:4px}
 .ov h2{font-size:15px;color:#bfe6c0;margin-bottom:10px}
 .ov .big{font-size:50px;margin:6px 0}
@@ -209,6 +220,7 @@ body.critical #waterBar{background:linear-gradient(90deg,#a83a1c,#e07a4f)}
   </div>
   <div id="actBtn">🌱</div>
   <div id="deskHint">⌨️ Flechas/WASD mover · Espacio sembrar · Choca con los leñadores para ahuyentarlos</div>
+  <div id="brandBadge"><img src="assets/projectability-logo.jpg" alt="Project-Ability"><span>Project-Ability</span></div>
 
   <div class="ov" id="startScreen">
     <div class="big">💧🌳🧑‍🌾</div>
@@ -218,6 +230,7 @@ body.critical #waterBar{background:linear-gradient(90deg,#a83a1c,#e07a4f)}
     <p>🏃 Choca con un leñador para <b>ahuyentarlo</b> y salvar el árbol que está talando (¡se ve cuando lo tumba!) · 🌱 Usa tus semillas para sembrar donde quede tierra libre · 💧 Mantén el nivel del agua para sobrevivir 5 días.</p>
     <div class="fact">🌳 Dato real: un bosque sano funciona como una esponja natural — capta la lluvia, filtra el agua y la libera lentamente hacia ríos y acuíferos durante todo el año.</div>
     <button class="bgreen" id="playBtn">▶️ ¡Jugar!</button>
+    <div class="brand-footer"><img src="assets/projectability-logo.jpg" alt="Project-Ability"><span>Un juego de Project-Ability</span></div>
   </div>
 
   <div class="ov" id="endScreen" style="display:none">
@@ -250,6 +263,7 @@ body.critical #waterBar{background:linear-gradient(90deg,#a83a1c,#e07a4f)}
     </div>
     <button class="bgreen" id="restartBtn">🔄 Jugar de nuevo</button>
     <button class="bblue" id="shareBtn">📤 Compartir</button>
+    <div class="brand-footer"><img src="assets/projectability-logo.jpg" alt="Project-Ability"><span>Un juego de Project-Ability</span></div>
   </div>
 </div>
 
@@ -401,21 +415,22 @@ $('muteBtn').addEventListener('click',()=>{const m=Audio_.toggleMute();$('muteBt
 // ═══════════════════════════════════════
 //  GAME DATA
 // ═══════════════════════════════════════
-const PLAYER_SPEED=155, ENEMY_SPEED=92;
-const SCARE_RADIUS=44, STUN_TIME=4.4, PLANT_RADIUS=64;
+const PLAYER_SPEED=175, ENEMY_SPEED=78;
+const SCARE_RADIUS=52, STUN_TIME=4.4, PLANT_RADIUS=64;
 const GROW1=8, GROW2=14;
-const CHOP_TIMES={1:2.4,2:3.7,3:6.4};
+const CHOP_TIMES={1:3.2,2:4.8,3:8.5};
 const FELL_ANIM=0.56;
 const BASE_DRAIN=1.1, MATURE_OFFSET=0.16, GROW_OFFSET=0.05;
 const DAY_LENGTH=42, TOTAL_DAYS=5;
-const SEED_INTERVAL=10, MAX_SEEDS=6;
+const SEED_INTERVAL=5, MAX_SEEDS=10;
 const STAGE_EMOJI={0:'',1:'🌱',2:'🌿',3:'🌳'};
 
-// s = etapa inicial (0 vacío, 1 semilla, 2 brote, 3 árbol maduro) — el bosque arranca ya establecido
+// s = etapa inicial (0 vacío, 1 semilla, 2 brote, 3 árbol maduro) — el bosque arranca ya bien establecido
 const PLOTS_DATA=[
-  {x:24,y:32,s:3},{x:39,y:19,s:3},{x:53,y:16,s:2},{x:67,y:19,s:3},{x:79,y:32,s:3},
-  {x:15,y:60,s:3},{x:85,y:60,s:2},{x:27,y:80,s:0},{x:50,y:87,s:0},{x:73,y:80,s:3},
-  {x:10,y:20,s:1},{x:90,y:20,s:3},{x:8,y:72,s:3},{x:92,y:72,s:0},{x:33,y:75,s:1},{x:67,y:75,s:3}
+  {x:10,y:14,s:3},{x:24,y:12,s:3},{x:39,y:14,s:3},{x:53,y:12,s:2},{x:67,y:14,s:3},{x:81,y:12,s:3},{x:92,y:16,s:3},
+  {x:8,y:30,s:3},{x:92,y:30,s:3},{x:6,y:50,s:3},{x:94,y:50,s:1},{x:8,y:70,s:3},{x:92,y:70,s:0},
+  {x:16,y:80,s:3},{x:30,y:88,s:0},{x:44,y:82,s:1},{x:56,y:82,s:3},{x:70,y:88,s:2},{x:84,y:80,s:3},
+  {x:22,y:40,s:3},{x:78,y:40,s:3},{x:22,y:58,s:1},{x:78,y:58,s:3},{x:50,y:24,s:3}
 ];
 const DECOR=[
   {e:'🌲',x:4,y:14,s:34},{e:'🌳',x:8,y:44,s:30},{e:'🌲',x:3,y:70,s:32},{e:'🌳',x:6,y:92,s:28},
@@ -438,7 +453,7 @@ const TIPS=[
 let game, player, plots, enemies, pressedDirs, lastTime;
 
 function resetState(){
-  game={running:false,ended:false,day:1,dayTime:0,water:70,seeds:3,seedTimer:0,
+  game={running:false,ended:false,day:1,dayTime:0,water:70,seeds:6,seedTimer:0,
     score:0,matured:0,scared:0,lost:0,planted:0,thirdSpawned:false,tipIdx:0,tipTimer:0};
   player={x:50,y:66};
   plots=PLOTS_DATA.map(p=>{
@@ -692,7 +707,7 @@ function updateDay(dt){
   game.dayTime+=dt;
   if(game.dayTime>=DAY_LENGTH){
     game.dayTime=0;game.day++;
-    if(game.day===3 && !game.thirdSpawned){
+    if(game.day===4 && !game.thirdSpawned){
       game.thirdSpawned=true;
       const en=mkEnemy('🥷',12,88);
       enemies.push(en);
@@ -757,7 +772,7 @@ function updateHUD(){
   $('waterVal').textContent=Math.round(game.water)+'%';
   $('waterBar').style.width=game.water+'%';
   $('dayVal').textContent=`${Math.min(game.day,TOTAL_DAYS)}/${TOTAL_DAYS}`;
-  $('matureVal').textContent=game.matured;
+  $('matureVal').textContent=plots.filter(p=>p.stage===3).length;
   $('seedVal').textContent=game.seeds;
   $('scoreVal').textContent=game.score;
   document.body.classList.toggle('critical',game.water<25);
