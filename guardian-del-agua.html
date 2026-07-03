@@ -147,15 +147,14 @@ body.critical #waterBar{background:linear-gradient(90deg,#a83a1c,#e07a4f)}
 @media(min-width:769px){#dpad{display:none}#actBtn{display:none}#deskHint{display:block}}
 
 /* ═══ BRANDING ═══ */
-#brandBadge{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);z-index:150;
-  display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.9);padding:3px 9px 3px 5px;
-  border-radius:12px;opacity:.75;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-#brandBadge img{height:13px;width:auto;display:block}
-#brandBadge span{font-size:8.5px;color:#2e4a1f;font-weight:700;letter-spacing:.2px}
-.brand-footer{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;
-  background:#fff;padding:7px 16px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.brand-footer img{height:20px;width:auto;display:block}
-.brand-footer span{font-size:11px;color:#2e4a1f;font-weight:700}
+/* marca de agua tenue directamente en el escenario del juego */
+#brandWatermark{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);z-index:2;
+  width:230px;max-width:34vw;opacity:.24;mix-blend-mode:multiply;pointer-events:none}
+#brandWatermark img{width:100%;display:block}
+.brand-footer{display:inline-flex;align-items:center;justify-content:center;gap:12px;margin-top:16px;
+  background:#fff;padding:10px 22px;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.brand-footer img{height:38px;width:auto;display:block}
+.brand-footer span{font-size:13px;color:#2e4a1f;font-weight:700}
 @media(max-width:768px){#deskHint{display:none}}
 
 /* ═══ OVERLAYS ═══ */
@@ -184,6 +183,7 @@ body.critical #waterBar{background:linear-gradient(90deg,#a83a1c,#e07a4f)}
   <div id="sky"></div>
   <div id="sun">☀️</div>
   <div id="ground"></div>
+  <div id="brandWatermark"><img src="assets/projectability-logo.jpg" alt="Project-Ability"></div>
   <div id="cloudLayer"></div>
   <div id="decorLayer"></div>
   <div id="butterflyLayer"></div>
@@ -220,7 +220,6 @@ body.critical #waterBar{background:linear-gradient(90deg,#a83a1c,#e07a4f)}
   </div>
   <div id="actBtn">🌱</div>
   <div id="deskHint">⌨️ Flechas/WASD mover · Espacio sembrar · Choca con los leñadores para ahuyentarlos</div>
-  <div id="brandBadge"><img src="assets/projectability-logo.jpg" alt="Project-Ability"><span>Project-Ability</span></div>
 
   <div class="ov" id="startScreen">
     <div class="big">💧🌳🧑‍🌾</div>
@@ -339,22 +338,32 @@ const Audio_={
     const filt=ctx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=1600;filt.connect(pad);
     const oscs=chords[0].map((f,i)=>{
       const o=ctx.createOscillator();o.type=i%2?'triangle':'sine';o.frequency.value=f;
-      const og=ctx.createGain();og.gain.value=.3;o.connect(og);og.connect(filt);o.start();return o;
+      const og=ctx.createGain();og.gain.value=.14;o.connect(og);og.connect(filt);o.start();return o;
     });
     const lfo=ctx.createOscillator();lfo.frequency.value=.05;
     const lfoGain=ctx.createGain();lfoGain.gain.value=200;
     lfo.connect(lfoGain);lfoGain.connect(filt.frequency);lfo.start();
 
-    // gentle flowing-water bed (filtered noise loop)
+    // flowing water — a low "stream body" layer plus a bubbling higher layer whose
+    // volume gently swells and dips like water lapping over stones
     const noiseBuf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
     const nd=noiseBuf.getChannelData(0);
     for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
-    const waterSrc=ctx.createBufferSource();waterSrc.buffer=noiseBuf;waterSrc.loop=true;
-    const waterFilt=ctx.createBiquadFilter();waterFilt.type='bandpass';waterFilt.frequency.value=1700;waterFilt.Q.value=.6;
-    const waterGain=ctx.createGain();waterGain.gain.value=.045;
-    waterSrc.connect(waterFilt);waterFilt.connect(waterGain);waterGain.connect(this.musicGain);waterSrc.start();
 
-    this.padNodes={pad,oscs,lfo,waterSrc};
+    const streamSrc=ctx.createBufferSource();streamSrc.buffer=noiseBuf;streamSrc.loop=true;
+    const streamFilt=ctx.createBiquadFilter();streamFilt.type='lowpass';streamFilt.frequency.value=420;
+    const streamGain=ctx.createGain();streamGain.gain.value=.05;
+    streamSrc.connect(streamFilt);streamFilt.connect(streamGain);streamGain.connect(this.musicGain);streamSrc.start();
+
+    const waterSrc=ctx.createBufferSource();waterSrc.buffer=noiseBuf;waterSrc.loop=true;
+    const waterFilt=ctx.createBiquadFilter();waterFilt.type='bandpass';waterFilt.frequency.value=1900;waterFilt.Q.value=.5;
+    const waterGain=ctx.createGain();waterGain.gain.value=.06;
+    waterSrc.connect(waterFilt);waterFilt.connect(waterGain);waterGain.connect(this.musicGain);waterSrc.start();
+    const waterLfo=ctx.createOscillator();waterLfo.type='sine';waterLfo.frequency.value=.35;
+    const waterLfoGain=ctx.createGain();waterLfoGain.gain.value=.035;
+    waterLfo.connect(waterLfoGain);waterLfoGain.connect(waterGain.gain);waterLfo.start();
+
+    this.padNodes={pad,oscs,lfo,waterSrc,streamSrc,waterLfo};
 
     let chordIdx=0;
     const advanceChord=()=>{
@@ -368,27 +377,34 @@ const Audio_={
     this._curChord=chords[0];
     this.chordTimer=setTimeout(advanceChord,6000);
 
-    // random bird chirps
+    // birds — two different "species" so the soundscape feels less repetitive
     const chirp=()=>{
       if(!this.padNodes)return;
-      if(Math.random()<.55){
-        const base=1700+Math.random()*1500;
-        this.tone(base,.09,'sine',.05,0,this.musicGain);
-        this.tone(base*1.25,.07,'sine',.04,.09,this.musicGain);
+      if(Math.random()<.6){
+        if(Math.random()<.5){
+          // short high chirp-pair
+          const base=2000+Math.random()*1400;
+          this.tone(base,.08,'sine',.055,0,this.musicGain);
+          this.tone(base*1.3,.06,'sine',.04,.1,this.musicGain);
+        }else{
+          // little 3-note trill, descending
+          const base=1500+Math.random()*900;
+          [1,.82,.68].forEach((mul,i)=>this.tone(base*mul,.07,'sine',.045,i*.075,this.musicGain));
+        }
       }
-      this.birdTimer=setTimeout(chirp,900+Math.random()*2200);
+      this.birdTimer=setTimeout(chirp,700+Math.random()*1900);
     };
     chirp();
 
-    // gentle melodic plucks from the current chord
+    // gentle melodic plucks from the current chord — kept soft, in the background
     const tick=()=>{
       if(!this.padNodes)return;
-      if(Math.random()<.6){
+      if(Math.random()<.45){
         const chord=this._curChord||chords[0];
         const f=chord[Math.floor(Math.random()*chord.length)]*(Math.random()<.6?2:1);
-        this.tone(f,1.2,'sine',.06,0,this.musicGain);
+        this.tone(f,1.2,'sine',.04,0,this.musicGain);
       }
-      this.ambTimer=setTimeout(tick,1200);
+      this.ambTimer=setTimeout(tick,1300);
     };
     tick();
   },
@@ -397,13 +413,15 @@ const Audio_={
     if(this.chordTimer){clearTimeout(this.chordTimer);this.chordTimer=null}
     if(this.birdTimer){clearTimeout(this.birdTimer);this.birdTimer=null}
     if(this.padNodes){
-      const {pad,oscs,lfo,waterSrc}=this.padNodes,ctx=this.ctx;
+      const {pad,oscs,lfo,waterSrc,streamSrc,waterLfo}=this.padNodes,ctx=this.ctx;
       try{
         pad.gain.linearRampToValueAtTime(0,ctx.currentTime+.5);
         setTimeout(()=>{
           oscs.forEach(o=>{try{o.stop()}catch(e){}});
           try{lfo.stop()}catch(e){}
           try{waterSrc.stop()}catch(e){}
+          try{streamSrc.stop()}catch(e){}
+          try{waterLfo.stop()}catch(e){}
         },600);
       }catch(e){}
       this.padNodes=null;
@@ -430,7 +448,7 @@ const PLOTS_DATA=[
   {x:10,y:14,s:3},{x:24,y:12,s:3},{x:39,y:14,s:3},{x:53,y:12,s:2},{x:67,y:14,s:3},{x:81,y:12,s:3},{x:92,y:16,s:3},
   {x:8,y:30,s:3},{x:92,y:30,s:3},{x:6,y:50,s:3},{x:94,y:50,s:1},{x:8,y:70,s:3},{x:92,y:70,s:0},
   {x:16,y:80,s:3},{x:30,y:88,s:0},{x:44,y:82,s:1},{x:56,y:82,s:3},{x:70,y:88,s:2},{x:84,y:80,s:3},
-  {x:22,y:40,s:3},{x:78,y:40,s:3},{x:22,y:58,s:1},{x:78,y:58,s:3},{x:50,y:24,s:3}
+  {x:15,y:40,s:3},{x:85,y:40,s:3},{x:15,y:58,s:1},{x:85,y:58,s:3},{x:50,y:22,s:3}
 ];
 const DECOR=[
   {e:'🌲',x:4,y:14,s:34},{e:'🌳',x:8,y:44,s:30},{e:'🌲',x:3,y:70,s:32},{e:'🌳',x:6,y:92,s:28},
@@ -779,8 +797,8 @@ function updateHUD(){
   $('cracks').style.opacity=game.water<30?String(clamp((30-game.water)/30,0,1)*0.8):'0';
 }
 function renderLake(){
-  const scale=0.55+(game.water/100)*0.65;
-  const base=Math.min(W(),H())*0.34;
+  const scale=0.42+(game.water/100)*0.88;
+  const base=Math.min(W(),H())*0.38;
   const size=base*scale;
   const lake=$('lake');
   lake.style.width=size+'px';lake.style.height=(size*0.72)+'px';
