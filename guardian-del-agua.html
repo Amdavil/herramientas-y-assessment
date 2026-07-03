@@ -151,10 +151,10 @@ body.critical #waterBar{background:linear-gradient(90deg,#a83a1c,#e07a4f)}
 #brandWatermark{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);z-index:2;
   width:230px;max-width:34vw;opacity:.24;mix-blend-mode:multiply;pointer-events:none}
 #brandWatermark img{width:100%;display:block}
-.brand-footer{display:inline-flex;align-items:center;justify-content:center;gap:12px;margin-top:16px;
-  background:#fff;padding:10px 22px;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.brand-footer img{height:38px;width:auto;display:block}
-.brand-footer span{font-size:13px;color:#2e4a1f;font-weight:700}
+.brand-footer{display:inline-flex;align-items:center;justify-content:center;gap:14px;margin-top:16px;
+  background:#fff;padding:12px 26px;border-radius:18px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.brand-footer img{height:64px;width:auto;display:block}
+.brand-footer span{font-size:15px;color:#2e4a1f;font-weight:700}
 @media(max-width:768px){#deskHint{display:none}}
 
 /* ═══ OVERLAYS ═══ */
@@ -438,7 +438,7 @@ const SCARE_RADIUS=52, STUN_TIME=4.4, PLANT_RADIUS=64;
 const GROW1=8, GROW2=14;
 const CHOP_TIMES={1:3.2,2:4.8,3:8.5};
 const FELL_ANIM=0.56;
-const BASE_DRAIN=1.1, MATURE_OFFSET=0.16, GROW_OFFSET=0.05;
+const BASE_DRAIN=1.1, MATURE_OFFSET=0.06, GROW_OFFSET=0.02;
 const DAY_LENGTH=42, TOTAL_DAYS=5;
 const SEED_INTERVAL=5, MAX_SEEDS=10;
 const STAGE_EMOJI={0:'',1:'🌱',2:'🌿',3:'🌳'};
@@ -910,11 +910,24 @@ $('actBtn').addEventListener('pointerdown',e=>{e.preventDefault();doAction()});
 $('actBtn').addEventListener('contextmenu',e=>e.preventDefault());
 $('playBtn').addEventListener('click',startGame);
 $('restartBtn').addEventListener('click',restartGame);
-$('shareBtn').addEventListener('click',()=>{
+$('shareBtn').addEventListener('click',async()=>{
   Audio_.sfx('click');
-  const text=`💧🌳 Jugué Guardián del Agua: protegí el manantial ${game.matured} árboles maduros y ${game.scared} veces ahuyenté a los leñadores. ¡Cuida el agua y los bosques!`;
-  if(navigator.share){navigator.share({title:'Guardián del Agua',text}).catch(()=>{})}
-  else{navigator.clipboard?.writeText(text);toast('📋 Texto copiado para compartir')}
+  const url='https://amdavil.github.io/herramientas-y-assessment/guardian-del-agua.html';
+  const text=`💧🌳 Jugué Guardián del Agua: protegí el manantial ${game.matured} árboles maduros y ${game.scared} veces ahuyenté a los leñadores. ¡Cuida el agua y los bosques! ${url}`;
+  let shared=false;
+  try{
+    if(typeof navigator.share==='function'){
+      await navigator.share({title:'Guardián del Agua',text,url});
+      shared=true;
+    }
+  }catch(e){ /* el usuario canceló o el navegador bloqueó el share nativo — seguimos con el respaldo */ }
+  if(shared)return;
+  try{
+    await navigator.clipboard.writeText(text);
+    toast('📋 Texto copiado — ¡pégalo donde quieras compartirlo!');
+  }catch(e){
+    window.prompt('Copia este texto para compartir:',text);
+  }
 });
 
 resetState();buildWorld();updateHUD();renderLake();
