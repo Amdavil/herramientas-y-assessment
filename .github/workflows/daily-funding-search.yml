@@ -2,8 +2,8 @@ name: Radar Diario — Visión Circular ANDI
 
 on:
   schedule:
-    # 8:00 AM hora Colombia (UTC-5) = 13:00 UTC, lunes y viernes
-    - cron: '0 13 * * 1,5'
+    # 8:00 AM hora Colombia (UTC-5) = 13:00 UTC, solo los viernes
+    - cron: '0 13 * * 5'
   workflow_dispatch:
     # Permite ejecutar manualmente desde GitHub Actions > Run workflow
 

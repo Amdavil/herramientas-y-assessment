@@ -153,7 +153,7 @@ revises y lo mandes a mano.
 
 ### Opción A — GitHub Actions (recomendada, en la nube)
 
-Ya viene un workflow en `.github/workflows/daily-funding-search.yml` que corre **de lunes a viernes a las
+Ya viene un workflow en `.github/workflows/daily-funding-search.yml` que corre **todos los viernes a las
 8:00 AM (hora Colombia)** y permite ejecución manual.
 
 1. Sube el repo a GitHub.
