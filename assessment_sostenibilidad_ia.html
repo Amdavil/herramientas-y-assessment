@@ -216,6 +216,45 @@
       margin-top: 6px;
     }
 
+    /* ── Plan de acción ── */
+    .plan-invest-summary {
+      display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0 18px;
+    }
+    .plan-invest-card {
+      flex: 1; min-width: 160px; background: var(--soft); border: 1px solid var(--line);
+      border-radius: 10px; padding: 12px 14px;
+    }
+    .plan-invest-card strong { display: block; font-size: 18px; color: var(--navy); }
+    .plan-invest-card span { font-size: 12px; color: var(--muted); }
+    .plan-phase { margin-bottom: 22px; }
+    .plan-phase-header {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border-radius: 8px; margin-bottom: 10px; font-weight: 700; font-size: 15px;
+    }
+    .plan-phase-header .phase-count { font-weight: 400; font-size: 12px; opacity: .85; }
+    .phase-1 .plan-phase-header { background: rgba(181,74,74,.12); color: var(--red); }
+    .phase-2 .plan-phase-header { background: rgba(196,127,27,.12); color: var(--amber); }
+    .phase-3 .plan-phase-header { background: rgba(47,117,181,.12); color: var(--blue); }
+    .plan-item {
+      border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
+      background: var(--panel);
+    }
+    .plan-item-head {
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-bottom: 6px;
+    }
+    .plan-item-head h4 { margin: 0; font-size: 14.5px; color: var(--ink); }
+    .plan-item-meta {
+      display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted);
+      margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line);
+    }
+    .plan-item-meta b { color: var(--ink); }
+    .plan-item .plan-como { font-size: 13px; color: var(--ink); margin: 4px 0 6px; }
+    .plan-item ul { margin: 6px 0 0 18px; padding: 0; font-size: 12.5px; color: var(--muted); }
+    .plan-item ul li { margin-bottom: 3px; }
+    .plan-pill {
+      font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--soft);
+      border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
+    }
     .category-badge.tier-start { background: rgba(196,127,27,.14); color: var(--amber); }
     .category-badge.tier-mid   { background: rgba(47,117,181,.14); color: var(--blue); }
     .category-badge.tier-top   { background: rgba(22,129,122,.16); color: var(--focus); }
@@ -924,6 +963,13 @@
           </div>
         </div>
 
+        <div class="panel" style="margin-top:16px" id="actionPlanPanel">
+          <h2><span class="panel-icon">🗺️</span> Plan de acción para cerrar brechas</h2>
+          <p>Hoja de ruta secuenciada por fases según la criticidad de cada brecha. Incluye acciones concretas, tareas, tiempos y costes estimados para una organización mediana (los valores reales dependen del tamaño y sector).</p>
+          <div class="plan-invest-summary" id="planInvestSummary"></div>
+          <div id="actionPlanBody"></div>
+        </div>
+
         <div class="panel" style="margin-top:16px">
           <h2><span class="panel-icon">⚠️</span> Brechas priorizadas por aspecto</h2>
           <p>Lista ordenada por mayor brecha frente al nivel 4 de implementación.</p>
@@ -1198,6 +1244,59 @@
       IACH: ["Formación, rediseño de roles y gestión del cambio para adopción.", "Capacitaciones o adopción para algunos equipos.", "Uso informal sin plan de capacidades.", "Sin formación ni gestión del cambio para IA."]
     };
 
+    // ── Base de conocimiento del plan de acción ──
+    // Por aspecto: a = acción principal, c = cómo abordarla, t = tareas clave,
+    // sem = duración estimada (semanas), coste = banda de inversión (1 baja, 2 media, 3 alta)
+    const COST_BANDS = { 1: "USD 500 – 2.000", 2: "USD 2.000 – 8.000", 3: "USD 8.000 – 25.000" };
+    const COST_MID   = { 1: 1250, 2: 5000, 3: 16500 };
+
+    const ACTION_PLANS = {
+      EGP:  { a: "Definir y formalizar el propósito superior", c: "Taller directivo para articular propósito, validarlo con stakeholders clave e integrarlo a la planeación estratégica.", t: ["Taller de propósito con alta dirección", "Redacción y aprobación del propósito", "Plan de comunicación interna", "Indicadores de alineación estratégica"], sem: 6, coste: 1 },
+      EGM:  { a: "Realizar análisis de materialidad", c: "Identificar y priorizar los temas ESG relevantes consultando stakeholders internos y externos (doble materialidad).", t: ["Mapeo de temas potenciales", "Encuestas/entrevistas a stakeholders", "Matriz de materialidad", "Validación directiva e integración a estrategia"], sem: 8, coste: 2 },
+      EGG:  { a: "Documentar el enfoque de gestión por tema material", c: "Para cada tema material definir política, objetivos, indicadores y responsable.", t: ["Políticas por tema material", "Definición de KPIs y metas", "Asignación de responsables", "Tablero de seguimiento"], sem: 8, coste: 1 },
+      EGOD: { a: "Involucrar al máximo órgano directivo en la agenda ESG", c: "Incluir el desempeño ESG como punto permanente de agenda con reportes periódicos y decisiones documentadas.", t: ["Protocolo de reporte ESG a junta", "Capacitación del órgano directivo", "Calendario de revisiones", "Actas con decisiones ESG"], sem: 6, coste: 1 },
+      ESGR: { a: "Integrar riesgos ESG al sistema de gestión de riesgos", c: "Ampliar la matriz de riesgos con riesgos climáticos, sociales y de gobernanza, con controles y dueños.", t: ["Actualización de matriz de riesgos", "Talleres de identificación ESG", "Definición de controles", "Seguimiento trimestral"], sem: 10, coste: 2 },
+      ESGT: { a: "Formular plan tecnológico alineado a la estrategia", c: "Diagnóstico de brechas tecnológicas, hoja de ruta de inversión y controles de ciberseguridad.", t: ["Diagnóstico tecnológico", "Hoja de ruta de inversiones", "Política de ciberseguridad", "Plan de actualización continua"], sem: 12, coste: 2 },
+      ESPS: { a: "Incorporar criterios de sostenibilidad al producto/servicio", c: "Analizar el ciclo de vida del producto/servicio e integrar criterios ambientales y sociales al diseño.", t: ["Análisis de ciclo de vida simplificado", "Criterios de ecodiseño", "Revisión de portafolio", "Documentación de atributos sostenibles"], sem: 12, coste: 2 },
+      EMS:  { a: "Integrar criterios ESG a la cadena de suministro", c: "Definir criterios de selección y evaluación de proveedores con variables ambientales y sociales.", t: ["Política de compras sostenibles", "Cuestionario ESG a proveedores", "Evaluación de proveedores críticos", "Plan de desarrollo de proveedores"], sem: 12, coste: 2 },
+      EMM:  { a: "Desarrollar inteligencia de mercados sostenibles", c: "Monitorear tendencias, regulación y competidores para posicionar la oferta sostenible.", t: ["Análisis de tendencias del sector", "Benchmark de competidores", "Propuesta de valor sostenible", "Plan de posicionamiento"], sem: 8, coste: 1 },
+      EMC:  { a: "Integrar expectativas ESG del cliente a la gestión comercial", c: "Medir satisfacción y expectativas de sostenibilidad de los clientes y adaptar la oferta.", t: ["Encuesta de expectativas ESG", "Segmentación por sensibilidad sostenible", "Ajustes a la oferta", "Medición periódica de satisfacción"], sem: 8, coste: 1 },
+      EEPF: { a: "Incluir la sostenibilidad en la planeación financiera", c: "Asignar presupuesto a iniciativas ESG con proyecciones a mediano plazo y criterios de retorno.", t: ["Presupuesto ESG anual", "Casos de negocio de iniciativas", "Proyección a 3 años", "Revisión trimestral de ejecución"], sem: 8, coste: 1 },
+      EEGC: { a: "Segmentar contablemente los costos ESG", c: "Crear centros de costo o etiquetas contables para inversiones y gastos ambientales, sociales y de gobernanza.", t: ["Diseño del plan de cuentas ESG", "Parametrización del sistema contable", "Capacitación al equipo contable", "Primer reporte de costos ESG"], sem: 8, coste: 1 },
+      EEFC: { a: "Proyectar flujo de caja con escenarios de riesgo ESG", c: "Incorporar escenarios climáticos, regulatorios y sociales a las proyecciones de caja.", t: ["Identificación de riesgos con impacto en caja", "Modelación de escenarios", "Plan de contingencia financiera", "Actualización semestral"], sem: 6, coste: 1 },
+      EEGI: { a: "Aprovechar incentivos tributarios verdes", c: "Mapear beneficios fiscales por inversiones ambientales y sociales aplicables al negocio.", t: ["Inventario de incentivos aplicables", "Evaluación de elegibilidad", "Gestión de certificaciones requeridas", "Incorporación a planeación tributaria"], sem: 8, coste: 1 },
+      MAGI: { a: "Construir matriz de aspectos e impactos ambientales", c: "Identificar los impactos ambientales por proceso y establecer controles operacionales.", t: ["Levantamiento de procesos", "Valoración de impactos", "Controles operacionales", "Indicadores y revisión periódica"], sem: 10, coste: 2 },
+      MAGL: { a: "Implementar matriz de requisitos legales ambientales", c: "Identificar la normativa ambiental aplicable, asignar responsables y verificar cumplimiento.", t: ["Identificación normativa aplicable", "Matriz legal con responsables", "Verificación de cumplimiento", "Actualización ante cambios normativos"], sem: 8, coste: 1 },
+      MAGC: { a: "Lanzar programa de cultura ambiental", c: "Plan de formación y campañas internas con indicadores de participación.", t: ["Diagnóstico de cultura actual", "Plan de capacitaciones", "Campañas de sensibilización", "Medición de participación"], sem: 12, coste: 1 },
+      MARA: { a: "Implementar programa de uso eficiente del agua", c: "Medir consumos, fijar metas de reducción e instalar tecnologías de ahorro.", t: ["Medición y línea base de consumo", "Metas de reducción", "Tecnologías de ahorro", "Reporte periódico"], sem: 16, coste: 2 },
+      MARV: { a: "Gestionar aguas residuales conforme a norma", c: "Caracterizar vertimientos, asegurar tratamiento y monitorear calidad.", t: ["Caracterización de vertimientos", "Evaluación de sistema de tratamiento", "Monitoreo de calidad", "Permisos y cumplimiento normativo"], sem: 20, coste: 3 },
+      MARR: { a: "Implementar gestión integral de residuos", c: "Separación en fuente, aprovechamiento y metas de reducción con indicadores.", t: ["Diagnóstico de generación", "Puntos de separación en fuente", "Alianzas de aprovechamiento", "Indicadores y metas"], sem: 12, coste: 2 },
+      MARB: { a: "Evaluar y gestionar impactos sobre biodiversidad", c: "Identificar impactos del negocio sobre ecosistemas y definir plan de conservación.", t: ["Evaluación de impactos", "Plan de conservación/compensación", "Alianzas con actores locales", "Monitoreo"], sem: 20, coste: 3 },
+      MAEC: { a: "Elaborar inventario de gases efecto invernadero", c: "Medir emisiones alcance 1 y 2 (y 3 material), fijar metas de reducción y reportar.", t: ["Inventario GEI línea base", "Metas de reducción", "Plan de mitigación/adaptación", "Reporte público"], sem: 16, coste: 2 },
+      MAEA: { a: "Controlar emisiones atmosféricas", c: "Monitorear fuentes de emisión, verificar cumplimiento y establecer planes de reducción.", t: ["Inventario de fuentes", "Monitoreo de emisiones", "Controles de reducción", "Verificación normativa"], sem: 16, coste: 3 },
+      MAER: { a: "Gestionar el ruido operacional", c: "Medir niveles de ruido, comparar con norma y aplicar controles de ingeniería.", t: ["Mediciones de ruido", "Mapa de ruido", "Controles de ingeniería", "Seguimiento periódico"], sem: 12, coste: 2 },
+      MAEE: { a: "Implementar programa de eficiencia energética", c: "Auditoría energética, metas de reducción y evaluación de fuentes renovables.", t: ["Auditoría energética", "Metas e indicadores", "Evaluación de renovables", "Monitoreo continuo"], sem: 16, coste: 2 },
+      RSRD: { a: "Implementar debida diligencia en derechos humanos", c: "Evaluar riesgos de DDHH en operación y cadena de valor, con mecanismos de remediación.", t: ["Evaluación de riesgos DDHH", "Política de derechos humanos", "Mecanismo de quejas y remediación", "Reporte de gestión"], sem: 12, coste: 2 },
+      RSRV: { a: "Formalizar código de ética y canal de denuncias", c: "Redactar/actualizar código, habilitar canal confidencial y formar al personal.", t: ["Código de ética aprobado", "Canal de denuncias confidencial", "Formación periódica", "Comité de ética y seguimiento de casos"], sem: 10, coste: 1 },
+      RSRI: { a: "Adoptar política de diversidad, inclusión y equidad", c: "Diagnóstico de brechas, metas medibles y programas activos de inclusión.", t: ["Diagnóstico de brechas (incl. salarial)", "Política y metas D&I", "Programas de inclusión", "Reporte de avances"], sem: 12, coste: 1 },
+      RSSI: { a: "Mapear y priorizar stakeholders", c: "Identificar grupos de interés, analizar expectativas y priorizar el relacionamiento.", t: ["Identificación de stakeholders", "Análisis de expectativas", "Matriz de priorización", "Estrategia de relacionamiento"], sem: 6, coste: 1 },
+      RSSR: { a: "Activar estrategia de relacionamiento", c: "Establecer canales de diálogo por grupo de interés y medir la calidad de la relación.", t: ["Canales de diálogo por grupo", "Calendario de encuentros", "Participación en decisiones clave", "Medición de satisfacción"], sem: 10, coste: 1 },
+      RSRA: { a: "Publicar reporte de sostenibilidad", c: "Elaborar reporte bajo estándar reconocido (GRI/SASB) con indicadores verificables.", t: ["Definición de estándar y alcance", "Levantamiento de indicadores", "Redacción y diseño", "Publicación y retroalimentación"], sem: 16, coste: 2 },
+      RSCC: { a: "Medir y gestionar el clima laboral", c: "Aplicar medición periódica con planes de acción por área y seguimiento.", t: ["Encuesta de clima", "Análisis por área", "Planes de acción", "Seguimiento semestral"], sem: 8, coste: 1 },
+      RSCF: { a: "Estructurar plan de formación y desarrollo", c: "Evaluar competencias, alinear formación a estrategia y crear planes de carrera.", t: ["Evaluación de competencias", "Plan de formación anual", "Planes de carrera", "Indicadores de desarrollo"], sem: 10, coste: 2 },
+      RSCS: { a: "Fortalecer el sistema de seguridad y salud en el trabajo", c: "Cerrar brechas del SG-SST con indicadores, investigación de incidentes y auditorías.", t: ["Autoevaluación del SG-SST", "Plan de cierre de brechas", "Investigación de incidentes", "Auditoría y mejora continua"], sem: 12, coste: 2 },
+      IAEG: { a: "Formular estrategia de IA alineada al propósito", c: "Definir visión, objetivos y hoja de ruta de IA vinculada a la estrategia corporativa.", t: ["Taller de visión de IA", "Objetivos y casos prioritarios", "Hoja de ruta 12-24 meses", "Aprobación directiva"], sem: 8, coste: 2 },
+      IAGI: { a: "Establecer gobierno de IA", c: "Definir roles, responsables y criterios de decisión para iniciativas de IA.", t: ["Definición de roles y comité", "Criterios de aprobación de proyectos", "Supervisión directiva", "Políticas de uso"], sem: 6, coste: 1 },
+      IACU: { a: "Priorizar portafolio de casos de uso de IA", c: "Identificar casos de uso y priorizarlos por valor, factibilidad y riesgo.", t: ["Inventario de casos de uso", "Matriz valor/factibilidad", "Selección de pilotos", "Roadmap de implementación"], sem: 6, coste: 1 },
+      IADG: { a: "Implementar gobierno y calidad de datos", c: "Establecer responsables, estándares de calidad y seguridad sobre los datos críticos.", t: ["Inventario de datos críticos", "Estándares de calidad", "Roles de dueños de datos", "Controles de seguridad"], sem: 12, coste: 2 },
+      IATI: { a: "Preparar infraestructura para IA", c: "Evaluar y habilitar plataformas, integraciones y seguridad para operar soluciones de IA.", t: ["Evaluación de arquitectura actual", "Selección de plataformas", "Plan de integración", "Controles de seguridad"], sem: 12, coste: 3 },
+      IAAP: { a: "Automatizar procesos con IA", c: "Rediseñar procesos priorizados incorporando IA con supervisión humana y medición de beneficios.", t: ["Selección de procesos piloto", "Rediseño e implementación", "Controles humanos", "Medición de beneficios"], sem: 16, coste: 2 },
+      IAVI: { a: "Medir el valor generado por la IA", c: "Definir indicadores de desempeño, ahorro, riesgo e impacto ESG de las iniciativas de IA.", t: ["Definición de KPIs de IA", "Línea base", "Tablero de seguimiento", "Revisión trimestral"], sem: 6, coste: 1 },
+      IARS: { a: "Gestionar riesgos, privacidad y seguridad de IA", c: "Identificar y controlar riesgos de privacidad, sesgo y seguridad en los usos de IA.", t: ["Matriz de riesgos de IA", "Controles de privacidad", "Pruebas de seguridad", "Monitoreo continuo"], sem: 10, coste: 2 },
+      IAET: { a: "Adoptar principios de IA responsable", c: "Definir lineamientos de ética, transparencia, explicabilidad y supervisión humana.", t: ["Principios de IA responsable", "Proceso de revisión ética", "Transparencia con usuarios", "Formación del equipo"], sem: 8, coste: 1 },
+      IACH: { a: "Gestionar el cambio y capacidades digitales", c: "Formar a los equipos y rediseñar roles para asegurar la adopción de la IA.", t: ["Diagnóstico de capacidades", "Plan de formación en IA", "Rediseño de roles", "Acompañamiento a la adopción"], sem: 12, coste: 2 }
+    };
+
     const STORAGE_KEY = "assessment-sostenibilidad-ia-v1";
     let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"scores":{},"notes":{}}');
     let viewOnlyMissing = false;
@@ -1422,6 +1521,7 @@
       renderImpactBars();
       renderGapTable();
       renderRecommendations();
+      renderActionPlan();
       renderCharts();
       updateFinishBanner(answered);
     }
@@ -1479,6 +1579,64 @@
           : "Mantener seguimiento, auditoría interna y mejora continua.";
         return `<tr><td>${index + 1}. ${item.label}</td><td class="${cls}">${fmt(gap)}</td><td>${action}</td></tr>`;
       }).join("") : `<tr><td colspan="3">Completa al menos una respuesta para generar recomendaciones.</td></tr>`;
+    }
+
+    function renderActionPlan() {
+      const body = byId("actionPlanBody");
+      const summary = byId("planInvestSummary");
+
+      // Brechas: preguntas respondidas (no NA) con puntaje menor a 4
+      const gaps = QUESTIONS.filter(q => {
+        const s = state.scores[q.code];
+        return s !== undefined && s !== "NA" && Number(s) < 4;
+      }).map(q => ({ ...q, score: Number(state.scores[q.code]), plan: ACTION_PLANS[q.code] }))
+        .filter(q => q.plan);
+
+      if (!gaps.length) {
+        summary.innerHTML = "";
+        body.innerHTML = `<p style="color:var(--muted)">No hay brechas registradas: o el assessment aún no tiene respuestas, o todos los aspectos alcanzaron el nivel 4. 🏆</p>`;
+        return;
+      }
+
+      // Fase según criticidad: puntaje 1 → Fase 1, 2 → Fase 2, 3 → Fase 3
+      const phases = [
+        { n: 1, name: "Fase 1 · 0 a 3 meses — Brechas críticas", desc: "Aspectos ausentes que exponen a la organización a riesgos regulatorios, reputacionales u operativos.", items: gaps.filter(g => g.score === 1) },
+        { n: 2, name: "Fase 2 · 3 a 6 meses — Consolidación", desc: "Aspectos con acciones puntuales que requieren estructurarse como gestión formal.", items: gaps.filter(g => g.score === 2) },
+        { n: 3, name: "Fase 3 · 6 a 12 meses — Optimización", desc: "Aspectos con gestión parcial que deben integrarse y medirse para alcanzar el nivel 4.", items: gaps.filter(g => g.score === 3) }
+      ];
+
+      // Resumen de inversión estimada
+      const totalMin = gaps.reduce((acc, g) => acc + (g.plan.coste === 1 ? 500 : g.plan.coste === 2 ? 2000 : 8000), 0);
+      const totalMax = gaps.reduce((acc, g) => acc + (g.plan.coste === 1 ? 2000 : g.plan.coste === 2 ? 8000 : 25000), 0);
+      const fmtUsd = n => "USD " + n.toLocaleString("es-CO");
+      const totalSem = Math.max(...gaps.map(g => g.plan.sem), 0);
+
+      summary.innerHTML = `
+        <div class="plan-invest-card"><strong>${gaps.length}</strong><span>acciones para cerrar brechas</span></div>
+        <div class="plan-invest-card"><strong>${fmtUsd(totalMin)} – ${fmtUsd(totalMax)}</strong><span>inversión estimada total (referencial)</span></div>
+        <div class="plan-invest-card"><strong>${gaps.filter(g => g.score === 1).length}</strong><span>acciones críticas (Fase 1)</span></div>
+        <div class="plan-invest-card"><strong>~${Math.ceil(totalSem / 4)} meses</strong><span>duración de la acción más larga</span></div>`;
+
+      body.innerHTML = phases.filter(p => p.items.length).map(p => `
+        <div class="plan-phase phase-${p.n}">
+          <div class="plan-phase-header">${p.name} <span class="phase-count">· ${p.items.length} ${p.items.length === 1 ? "acción" : "acciones"}</span></div>
+          <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">${p.desc}</p>
+          ${p.items.map(g => `
+            <div class="plan-item">
+              <div class="plan-item-head">
+                <h4>${g.plan.a}</h4>
+                <span class="plan-pill">${g.pillar}</span>
+                <span class="plan-pill">${g.aspect}</span>
+              </div>
+              <div class="plan-como"><b>Cómo:</b> ${g.plan.c}</div>
+              <ul>${g.plan.t.map(t => `<li>${t}</li>`).join("")}</ul>
+              <div class="plan-item-meta">
+                <span>⏱ <b>${g.plan.sem} semanas</b></span>
+                <span>💰 <b>${COST_BANDS[g.plan.coste]}</b></span>
+                <span>📊 Nivel actual: <b>${g.score} / 4</b></span>
+              </div>
+            </div>`).join("")}
+        </div>`).join("");
     }
 
     function drawRadar(canvas, data, options = {}) {
