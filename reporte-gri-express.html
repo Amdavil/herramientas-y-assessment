@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reporte GRI Express — Genere su reporte de sostenibilidad guiado por PAL</title>
+  <meta name="description" content="Genere el primer reporte de sostenibilidad de su empresa con referencia a los Estándares GRI, guiado paso a paso por un asistente experto. Por Projectability.">
+  <style>
+    :root {
+      --navy: #1f4e79;
+      --teal: #16817a;
+      --green: #5f8d3e;
+      --amber: #c47f1b;
+      --red: #b54a4a;
+      --ink: #172033;
+      --muted: #647084;
+      --line: #d9e1ea;
+      --soft: #f5f7fa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: #eef3f7;
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .topbar {
+      background: linear-gradient(90deg, var(--navy), var(--teal));
+      color: #fff; padding: 14px 22px; display: flex; align-items: center; gap: 14px;
+      position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 14px rgba(15,42,68,.25);
+    }
+    .topbar .logo { font-weight: 800; font-size: 15px; letter-spacing: .5px; }
+    .topbar .logo span { opacity: .8; font-weight: 400; }
+    .topbar .module-indicator { margin-left: auto; font-size: 12.5px; opacity: .9; }
+
+    .progress-track { background: rgba(255,255,255,.25); height: 5px; }
+    .progress-fill { height: 100%; background: #9be7df; width: 0%; transition: width .4s ease; }
+
+    .wrap { max-width: 780px; margin: 0 auto; padding: 26px 16px 120px; }
+
+    /* ── Chat ── */
+    .msg { display: flex; gap: 12px; margin-bottom: 18px; animation: rise .35s ease; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .avatar {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--teal), var(--green));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 4px 12px rgba(22,129,122,.35);
+      border: 2.5px solid #fff;
+    }
+    .bubble {
+      background: #fff; border-radius: 4px 16px 16px 16px; padding: 16px 18px;
+      box-shadow: 0 4px 16px rgba(23,32,51,.07); max-width: 620px; flex: 1;
+    }
+    .bubble .pal-name { font-size: 11px; font-weight: 800; color: var(--teal); letter-spacing: 1px; margin-bottom: 5px; }
+    .bubble p { font-size: 14.5px; line-height: 1.6; color: var(--ink); }
+    .bubble p + p { margin-top: 8px; }
+    .bubble .help {
+      margin-top: 10px; background: #f0f7f6; border-left: 3px solid var(--teal);
+      padding: 10px 12px; border-radius: 0 8px 8px 0; font-size: 13px; color: #3e5c58; line-height: 1.55;
+    }
+    .bubble .gri-tag {
+      display: inline-block; margin-top: 10px; font-size: 11px; font-weight: 700;
+      background: #eef1f8; color: var(--navy); padding: 3px 10px; border-radius: 999px;
+      border: 1px solid #dfe5f0;
+    }
+    .msg.user { flex-direction: row-reverse; }
+    .msg.user .bubble {
+      background: linear-gradient(135deg, #eaf4ff, #e3f2f0);
+      border-radius: 16px 4px 16px 16px; max-width: 540px; flex: initial;
+    }
+    .msg.user .bubble p { font-size: 14px; white-space: pre-wrap; }
+    .user-icon {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; background: var(--navy);
+      color: #fff; display: flex; align-items: center; justify-content: center; font-size: 17px;
+      border: 2.5px solid #fff; box-shadow: 0 4px 12px rgba(31,78,121,.3);
+    }
+    .typing { display: flex; gap: 5px; padding: 6px 0; }
+    .typing span {
+      width: 8px; height: 8px; border-radius: 50%; background: #b8c4d0;
+      animation: blink 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: .3; } 40% { opacity: 1; } }
+
+    /* ── Input dock ── */
+    .dock {
+      position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+      border-top: 1px solid var(--line); padding: 14px 16px 18px; z-index: 60;
+      box-shadow: 0 -6px 24px rgba(23,32,51,.08);
+    }
+    .dock-inner { max-width: 780px; margin: 0 auto; }
+    .dock label.dock-hint { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .dock-row { display: flex; gap: 10px; }
+    .dock input[type=text], .dock input[type=number], .dock textarea, .dock select {
+      flex: 1; border: 2px solid var(--line); border-radius: 10px; padding: 12px 14px;
+      font: inherit; font-size: 14.5px; color: var(--ink); outline: none; background: #fbfcfe;
+    }
+    .dock textarea { min-height: 84px; resize: vertical; }
+    .dock input:focus, .dock textarea:focus, .dock select:focus { border-color: var(--teal); background: #fff; }
+    .dock .send {
+      border: 0; background: linear-gradient(135deg, var(--teal), var(--green)); color: #fff;
+      font-weight: 700; font-size: 14.5px; padding: 12px 26px; border-radius: 10px;
+      cursor: pointer; font-family: inherit; align-self: flex-end; transition: transform .12s;
+      min-height: 47px;
+    }
+    .dock .send:hover { transform: translateY(-1px); }
+    .dock .send:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .dock .skip {
+      border: 0; background: none; color: var(--muted); font-size: 12.5px; cursor: pointer;
+      font-family: inherit; text-decoration: underline; margin-top: 8px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      border: 2px solid var(--line); background: #fbfcfe; border-radius: 999px;
+      padding: 9px 16px; font-size: 13.5px; cursor: pointer; font-family: inherit;
+      color: var(--ink); transition: all .15s; font-weight: 500;
+    }
+    .chip:hover { border-color: var(--teal); }
+    .chip.selected { background: var(--teal); border-color: var(--teal); color: #fff; font-weight: 700; }
+    .chips-actions { margin-top: 10px; display: flex; align-items: center; gap: 12px; }
+    .chips-count { font-size: 12.5px; color: var(--muted); }
+
+    /* ── Welcome / final ── */
+    .hero-card {
+      background: #fff; border-radius: 20px; padding: 38px 34px; max-width: 640px;
+      margin: 30px auto; box-shadow: 0 18px 50px rgba(23,32,51,.12); text-align: center;
+    }
+    .hero-card .big-avatar {
+      width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--teal), var(--green));
+      display: flex; align-items: center; justify-content: center; font-size: 46px;
+      box-shadow: 0 10px 28px rgba(22,129,122,.4); border: 4px solid #fff; outline: 3px solid #d9efec;
+    }
+    .hero-card h1 { color: var(--navy); font-size: 25px; margin-bottom: 10px; line-height: 1.3; }
+    .hero-card > p { color: var(--muted); font-size: 14.5px; line-height: 1.65; margin-bottom: 12px; text-align: left; }
+    .hero-meta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 18px 0 22px; }
+    .hero-meta span { background: var(--soft); border: 1px solid var(--line); border-radius: 999px; padding: 7px 15px; font-size: 12.5px; font-weight: 600; color: var(--navy); }
+    .disclaimer-box {
+      background: #fdf8ef; border: 1px solid #ecd9b4; border-radius: 12px; padding: 14px 16px;
+      font-size: 12.5px; color: #7a6234; line-height: 1.6; text-align: left; margin-bottom: 22px;
+    }
+    .disclaimer-box strong { color: #5f4c26; }
+    .btn-primary {
+      display: inline-block; border: 0; background: linear-gradient(135deg, var(--navy), var(--teal));
+      color: #fff; font-weight: 700; font-size: 16px; padding: 15px 34px; border-radius: 12px;
+      cursor: pointer; font-family: inherit; transition: transform .15s, box-shadow .15s; text-decoration: none;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(31,78,121,.35); }
+    .btn-ghost {
+      background: none; border: 0; color: var(--muted); font-size: 13px; cursor: pointer;
+      font-family: inherit; text-decoration: underline; margin-top: 14px; display: inline-block;
+    }
+    .resume-note { font-size: 12.5px; color: var(--teal); font-weight: 600; margin-bottom: 14px; }
+
+    /* ── Module transition card ── */
+    .module-card {
+      background: linear-gradient(120deg, var(--navy), var(--teal)); color: #fff;
+      border-radius: 16px; padding: 22px 24px; margin-bottom: 18px; animation: rise .4s ease;
+    }
+    .module-card .m-step { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; opacity: .8; margin-bottom: 6px; }
+    .module-card h2 { font-size: 19px; margin-bottom: 6px; }
+    .module-card p { font-size: 13px; opacity: .9; line-height: 1.55; }
+
+    /* ── Report ── */
+    #reportView { display: none; background: #fff; }
+    .report-page { max-width: 800px; margin: 0 auto; padding: 50px 56px; }
+    .report-toolbar {
+      position: sticky; top: 0; background: var(--navy); color: #fff; padding: 13px 22px;
+      display: flex; gap: 14px; align-items: center; z-index: 70;
+    }
+    .report-toolbar button, .report-toolbar a {
+      border: 1px solid rgba(255,255,255,.4); background: rgba(255,255,255,.12); color: #fff;
+      padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: inherit; text-decoration: none;
+    }
+    .report-toolbar button.primary-tool { background: #fff; color: var(--navy); border-color: #fff; }
+    .r-cover { text-align: center; padding: 90px 0 70px; page-break-after: always; }
+    .r-cover .r-cover-tag { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--teal); font-weight: 700; margin-bottom: 18px; }
+    .r-cover h1 { font-size: 34px; color: var(--navy); line-height: 1.25; margin-bottom: 12px; }
+    .r-cover .r-period { font-size: 17px; color: var(--muted); margin-bottom: 34px; }
+    .r-cover .r-ref {
+      display: inline-block; background: var(--soft); border: 1px solid var(--line);
+      border-radius: 10px; padding: 12px 22px; font-size: 13px; color: var(--ink); line-height: 1.5;
+    }
+    .r-cover .r-by { margin-top: 60px; font-size: 12px; color: var(--muted); }
+    .report-page h2.r-section {
+      color: var(--navy); font-size: 21px; border-bottom: 3px solid var(--teal);
+      padding-bottom: 8px; margin: 42px 0 16px;
+    }
+    .report-page h3 { color: var(--teal); font-size: 16px; margin: 22px 0 8px; }
+    .report-page p, .report-page li { font-size: 13.5px; line-height: 1.7; color: var(--ink); }
+    .report-page ul { margin: 6px 0 10px 22px; }
+    .r-field { margin-bottom: 12px; }
+    .r-field .r-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .r-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 26px; margin: 14px 0; }
+    .kpi-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 14px 0; }
+    .kpi-card {
+      flex: 1; min-width: 150px; background: var(--soft); border: 1px solid var(--line);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .kpi-card .kpi-value { font-size: 22px; font-weight: 800; color: var(--navy); }
+    .kpi-card .kpi-label { font-size: 11.5px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+    table.gri-index { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 12.5px; }
+    table.gri-index th { background: var(--navy); color: #fff; text-align: left; padding: 9px 12px; font-size: 12px; }
+    table.gri-index td { border-bottom: 1px solid var(--line); padding: 8px 12px; vertical-align: top; }
+    table.gri-index tr:nth-child(even) td { background: #f8fafc; }
+    .r-notice {
+      background: #fdf8ef; border: 1px solid #ecd9b4; border-radius: 10px; padding: 14px 18px;
+      font-size: 12px; color: #7a6234; line-height: 1.65; margin-top: 30px;
+    }
+    .r-topic-header { display: flex; align-items: center; gap: 10px; }
+    .r-topic-header .r-gri-code {
+      font-size: 11px; font-weight: 800; background: #eef1f8; color: var(--navy);
+      padding: 3px 10px; border-radius: 999px; border: 1px solid #dfe5f0; white-space: nowrap;
+    }
+
+    @media print {
+      .report-toolbar { display: none; }
+      body { background: #fff; }
+      .report-page { padding: 0; max-width: none; }
+      .r-cover { padding-top: 200px; }
+    }
+    @media (max-width: 640px) {
+      .report-page { padding: 30px 20px; }
+      .r-grid { grid-template-columns: 1fr; }
+      .dock-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ Vista conversación ══ -->
+  <div id="appView">
+    <div class="topbar">
+      <div class="logo">🌱 Reporte GRI Express <span>· by Projectability</span></div>
+      <div class="module-indicator" id="moduleIndicator"></div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="wrap" id="chat"></div>
+    <div class="dock" id="dock" style="display:none">
+      <div class="dock-inner" id="dockInner"></div>
+    </div>
+  </div>
+
+  <!-- ══ Vista reporte ══ -->
+  <div id="reportView">
+    <div class="report-toolbar">
+      <button class="primary-tool" onclick="window.print()">🖨️ Descargar PDF / Imprimir</button>
+      <button onclick="backToChat()">← Volver al asistente</button>
+      <span style="margin-left:auto;font-size:12px;opacity:.8">Guarde como PDF desde el diálogo de impresión</span>
+    </div>
+    <div class="report-page" id="reportContent"></div>
+  </div>
+
+  <script>
+    // ═══════════════ CATÁLOGO DE TEMAS MATERIALES (Estándares temáticos GRI) ═══════════════
+    const TOPICS = {
+      t201: { gri: "GRI 201", name: "Desempeño económico", icon: "📈",
+        questions: [
+          { id: "t201_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización el desempeño económico y su relación con la sostenibilidad? Describa brevemente su enfoque.",
+            help: "Ejemplo: cómo la sostenibilidad influye en sus decisiones de inversión, si evalúa riesgos económicos derivados del cambio climático, o cómo distribuye el valor que genera." },
+          { id: "t201_ingresos", type: "text", gri: "GRI 201-1",
+            text: "¿Cuál fue el valor económico directo generado (ingresos) en el periodo del reporte? Puede indicar el valor o un rango.",
+            help: "Si prefiere no revelar la cifra exacta, puede escribir un rango (ej. 'entre USD 1M y 5M') o 'Información confidencial'. GRI permite omitir datos justificando la razón." }
+        ]},
+      t205: { gri: "GRI 205", name: "Anticorrupción", icon: "⚖️",
+        questions: [
+          { id: "t205_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Qué mecanismos tiene su organización para prevenir la corrupción? (políticas, código de ética, canal de denuncias, capacitaciones)",
+            help: "Mencione si existe un código de ética, cómo se comunica, si hay canal de denuncias y quién investiga los casos." },
+          { id: "t205_casos", type: "number", unit: "casos", gri: "GRI 205-3",
+            text: "¿Cuántos casos confirmados de corrupción se presentaron en el periodo?",
+            help: "Si no hubo casos, indique 0. Reportar cero también es información valiosa y transparente." }
+        ]},
+      t204: { gri: "GRI 204", name: "Prácticas de adquisición", icon: "🤝",
+        questions: [
+          { id: "t204_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo selecciona a sus proveedores y qué peso tienen los criterios locales, ambientales o sociales en esa decisión?",
+            help: "Describa su proceso de compras: ¿prioriza proveedores locales? ¿evalúa prácticas laborales o ambientales de sus proveedores?" },
+          { id: "t204_local", type: "number", unit: "%", gri: "GRI 204-1",
+            text: "¿Qué porcentaje aproximado de su presupuesto de compras se destina a proveedores locales?",
+            help: "'Local' se define según su contexto: puede ser su ciudad, región o país. Indique el criterio en el siguiente campo si lo desea." }
+        ]},
+      t302: { gri: "GRI 302", name: "Energía", icon: "⚡",
+        questions: [
+          { id: "t302_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización el consumo de energía? ¿Existen iniciativas de eficiencia o energías renovables?",
+            help: "Mencione medidas como iluminación eficiente, paneles solares, metas de reducción o monitoreo de consumos." },
+          { id: "t302_consumo", type: "number", unit: "kWh/año", gri: "GRI 302-1",
+            text: "¿Cuál fue el consumo total de energía eléctrica en el periodo (kWh)?",
+            help: "Este dato está en sus facturas de energía. Sume los 12 meses del periodo. Si tiene varias sedes, sume todas o reporte la principal indicándolo." }
+        ]},
+      t303: { gri: "GRI 303", name: "Agua y efluentes", icon: "💧",
+        questions: [
+          { id: "t303_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización el uso del agua y sus vertimientos?",
+            help: "Describa de dónde proviene el agua que usa, si hay medidas de ahorro y qué pasa con las aguas residuales." },
+          { id: "t303_consumo", type: "number", unit: "m³/año", gri: "GRI 303-5",
+            text: "¿Cuál fue el consumo total de agua en el periodo (metros cúbicos)?",
+            help: "Este dato está en sus facturas de acueducto. Sume los 12 meses del periodo." }
+        ]},
+      t305: { gri: "GRI 305", name: "Emisiones", icon: "🌫️",
+        questions: [
+          { id: "t305_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización sus emisiones de gases de efecto invernadero? ¿Ha medido su huella de carbono?",
+            help: "Si aún no ha medido su huella, descríbalo honestamente e indique si planea hacerlo — la transparencia sobre el punto de partida es válida en GRI." },
+          { id: "t305_huella", type: "text", gri: "GRI 305-1/2",
+            text: "Si conoce su huella de carbono, indique el valor en toneladas de CO₂ equivalente (tCO₂e). Si no la ha medido, escriba 'No medida aún'.",
+            help: "Alcance 1: emisiones directas (combustibles propios). Alcance 2: indirectas por energía comprada. Si tiene ambos, indíquelos por separado." }
+        ]},
+      t306: { gri: "GRI 306", name: "Residuos", icon: "♻️",
+        questions: [
+          { id: "t306_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización los residuos que genera? (separación, reciclaje, disposición)",
+            help: "Describa qué tipos de residuos genera, si separa en la fuente, y si tiene alianzas con recicladores o gestores autorizados." },
+          { id: "t306_aprovechamiento", type: "number", unit: "%", gri: "GRI 306-4",
+            text: "¿Qué porcentaje aproximado de sus residuos se aprovecha (recicla, reutiliza o composta)?",
+            help: "Si no lo ha medido, haga una estimación honesta e indíquelo. Un estimado transparente es mejor que la omisión." }
+        ]},
+      t401: { gri: "GRI 401", name: "Empleo", icon: "👥",
+        questions: [
+          { id: "t401_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización el empleo? (tipos de contratación, beneficios, estabilidad)",
+            help: "Describa sus prácticas de contratación, beneficios que ofrece más allá de la ley y cómo promueve la estabilidad laboral." },
+          { id: "t401_contrataciones", type: "number", unit: "personas", gri: "GRI 401-1",
+            text: "¿Cuántas personas nuevas contrató en el periodo?",
+            help: "Cuente solo contrataciones nuevas, no renovaciones." },
+          { id: "t401_rotacion", type: "number", unit: "%", gri: "GRI 401-1",
+            text: "¿Cuál fue la rotación de personal aproximada en el periodo (%)?",
+            help: "Fórmula simple: (personas que salieron ÷ promedio de empleados) × 100." }
+        ]},
+      t403: { gri: "GRI 403", name: "Salud y seguridad en el trabajo", icon: "🦺",
+        questions: [
+          { id: "t403_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización la salud y seguridad de sus trabajadores?",
+            help: "En Colombia esto corresponde al SG-SST. Mencione si tiene el sistema implementado, responsable asignado y actividades de prevención." },
+          { id: "t403_accidentes", type: "number", unit: "accidentes", gri: "GRI 403-9",
+            text: "¿Cuántos accidentes de trabajo registrables ocurrieron en el periodo?",
+            help: "Si no hubo, indique 0. Incluya los accidentes reportados a la ARL o entidad equivalente." }
+        ]},
+      t404: { gri: "GRI 404", name: "Formación y educación", icon: "🎓",
+        questions: [
+          { id: "t404_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización la formación y el desarrollo de su equipo?",
+            help: "Describa si existe un plan de capacitación, temas priorizados y cómo se decide quién se forma." },
+          { id: "t404_horas", type: "number", unit: "horas/persona", gri: "GRI 404-1",
+            text: "¿Cuántas horas de formación recibió en promedio cada colaborador durante el periodo?",
+            help: "Fórmula: total de horas de capacitación ÷ número de empleados. Un estimado razonable es aceptable." }
+        ]},
+      t405: { gri: "GRI 405", name: "Diversidad e igualdad de oportunidades", icon: "🌈",
+        questions: [
+          { id: "t405_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo promueve su organización la diversidad y la igualdad de oportunidades?",
+            help: "Mencione políticas de no discriminación, equidad de género, inclusión de personas con discapacidad o grupos subrepresentados." },
+          { id: "t405_mujeres", type: "number", unit: "%", gri: "GRI 405-1",
+            text: "¿Qué porcentaje de su equipo son mujeres?",
+            help: "Si puede, indique también el porcentaje de mujeres en cargos directivos en el siguiente campo de detalle." }
+        ]},
+      t413: { gri: "GRI 413", name: "Comunidades locales", icon: "🏘️",
+        questions: [
+          { id: "t413_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo se relaciona su organización con las comunidades donde opera?",
+            help: "Describa programas sociales, empleos locales generados, donaciones, voluntariados o mecanismos de diálogo con la comunidad." },
+          { id: "t413_programas", type: "text", gri: "GRI 413-1",
+            text: "Mencione los principales programas o iniciativas con la comunidad realizados en el periodo.",
+            help: "Liste 1 a 3 iniciativas con una breve descripción de cada una y, si es posible, el número de personas beneficiadas." }
+        ]},
+      t418: { gri: "GRI 418", name: "Privacidad del cliente", icon: "🔐",
+        questions: [
+          { id: "t418_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo protege su organización los datos personales de sus clientes?",
+            help: "Mencione su política de tratamiento de datos, medidas de seguridad de la información y cumplimiento de la normativa aplicable (ej. Ley 1581 en Colombia, GDPR)." },
+          { id: "t418_reclamos", type: "number", unit: "reclamos", gri: "GRI 418-1",
+            text: "¿Cuántos reclamos fundamentados sobre violaciones de privacidad o pérdida de datos de clientes recibió en el periodo?",
+            help: "Si no hubo, indique 0." }
+        ]}
+    };
+
+    // ═══════════════ FLUJO DE CONVERSACIÓN ═══════════════
+    const MODULES = [
+      { id: "m1", name: "Perfil de la organización", ref: "GRI 2: Contenidos Generales",
+        desc: "Los datos básicos que todo reporte GRI debe incluir sobre quién es la organización y cómo opera." },
+      { id: "m2", name: "Gobernanza y compromiso", ref: "GRI 2: Gobernanza y estrategia",
+        desc: "Quién dirige la sostenibilidad en la organización y cuál es el compromiso de la alta dirección." },
+      { id: "m3", name: "Análisis de materialidad", ref: "GRI 3: Temas Materiales",
+        desc: "La selección de los temas de sostenibilidad más relevantes para su negocio y sus grupos de interés." },
+      { id: "m4", name: "Contenidos por tema material", ref: "Estándares temáticos GRI",
+        desc: "El desempeño de su organización en cada tema que seleccionó como material." },
+      { id: "m5", name: "Cierre y generación", ref: "Revisión final",
+        desc: "Últimos detalles y generación de su reporte." }
+    ];
+
+    const BASE_STEPS = [
+      // ── Módulo 1: Perfil ──
+      { module: "m1", id: "org_nombre", type: "text", gri: "GRI 2-1",
+        text: "Empecemos por lo esencial: ¿cuál es el nombre legal completo de su organización?",
+        help: "Use el nombre registrado legalmente (el que aparece en su registro mercantil o cámara de comercio), no solo la marca comercial." },
+      { module: "m1", id: "org_naturaleza", type: "select", gri: "GRI 2-1",
+        options: ["Sociedad por acciones simplificada (S.A.S.)", "Sociedad anónima (S.A.)", "Sociedad limitada (Ltda.)", "Empresa unipersonal", "Entidad sin ánimo de lucro / Fundación", "Cooperativa", "Otra forma jurídica"],
+        text: "¿Cuál es la naturaleza jurídica de la organización?" },
+      { module: "m1", id: "org_sector", type: "text", gri: "GRI 2-6",
+        text: "¿En qué sector opera y cuáles son sus principales productos o servicios?",
+        help: "Ejemplo: 'Sector agroindustrial — producción y exportación de café especial' o 'Servicios — consultoría en ingeniería civil'." },
+      { module: "m1", id: "org_ubicacion", type: "text", gri: "GRI 2-1",
+        text: "¿Dónde está la sede principal y en qué países o regiones opera?",
+        help: "Ejemplo: 'Sede principal en Medellín, Colombia. Operaciones en Colombia y exportaciones a Estados Unidos y Europa'." },
+      { module: "m1", id: "org_cadena", type: "textarea", gri: "GRI 2-6",
+        text: "Describa brevemente su cadena de valor: ¿quiénes son sus principales proveedores y clientes?",
+        help: "No necesita nombres específicos — describa tipos: 'Proveedores: pequeños productores agrícolas de la región. Clientes: cadenas de retail y distribuidores mayoristas'." },
+      { module: "m1", id: "org_empleados", type: "number", unit: "personas", gri: "GRI 2-7",
+        text: "¿Cuántas personas trabajan actualmente en la organización (empleados directos)?",
+        help: "Cuente empleados con contrato directo. Si tiene contratistas significativos, podrá mencionarlos en el detalle." },
+      { module: "m1", id: "org_periodo", type: "select", gri: "GRI 2-3",
+        options: ["Año calendario 2025 (enero – diciembre)", "Año calendario 2024 (enero – diciembre)", "Últimos 12 meses", "Otro periodo"],
+        text: "¿Qué periodo cubrirá este reporte?",
+        help: "GRI recomienda reportar anualmente. Lo usual es el año calendario anterior." },
+
+      // ── Módulo 2: Gobernanza ──
+      { module: "m2", id: "gob_estructura", type: "textarea", gri: "GRI 2-9",
+        text: "¿Cómo está estructurada la dirección de la organización? (junta directiva, gerencia, comités)",
+        help: "Ejemplo: 'La organización cuenta con una junta directiva de 5 miembros y un gerente general. Existe un comité de calidad que sesiona mensualmente'." },
+      { module: "m2", id: "gob_responsable", type: "text", gri: "GRI 2-13",
+        text: "¿Quién es la persona o cargo responsable de los temas de sostenibilidad en la organización?",
+        help: "Puede ser un cargo dedicado o una responsabilidad asignada: 'Coordinadora de Calidad y Sostenibilidad' o 'El gerente general asume directamente estos temas'." },
+      { module: "m2", id: "gob_declaracion", type: "textarea", gri: "GRI 2-22",
+        text: "Ahora algo importante: escriba una declaración breve del máximo responsable de la organización sobre su compromiso con la sostenibilidad. Aparecerá al inicio del reporte como mensaje de la dirección.",
+        help: "3-5 frases en primera persona. Ejemplo: 'En [empresa] entendemos que nuestro éxito está ligado al bienestar de las personas y del entorno. Este primer reporte refleja nuestro punto de partida y nuestro compromiso de mejora continua...'. Si lo prefiere, escriba las ideas y el reporte le dará formato." },
+      { module: "m2", id: "gob_politicas", type: "chips-multi", gri: "GRI 2-23", max: 10,
+        options: ["Código de ética", "Política de sostenibilidad", "Política ambiental", "Política de SST (seguridad y salud)", "Política de tratamiento de datos", "Política de derechos humanos", "Política de diversidad e inclusión", "Ninguna formalizada aún"],
+        text: "¿Cuáles de estas políticas o compromisos tiene formalizados la organización? Seleccione todos los que apliquen." },
+
+      // ── Módulo 3: Materialidad ──
+      { module: "m3", id: "mat_proceso", type: "select", gri: "GRI 3-1",
+        options: ["Consultamos a clientes, empleados u otros grupos de interés", "Lo definió internamente el equipo directivo", "Nos basamos en los temas típicos de nuestro sector", "Es la primera vez que hacemos este análisis"],
+        text: "Para definir los temas materiales de su reporte: ¿cómo identificó su organización los temas de sostenibilidad más relevantes?",
+        help: "No hay respuesta incorrecta. GRI pide transparencia sobre el proceso, no un método específico. Este reporte documentará el método que usted indique." },
+      { module: "m3", id: "mat_temas", type: "chips-topics", gri: "GRI 3-2", min: 3, max: 6,
+        text: "Seleccione entre 3 y 6 temas materiales — los más relevantes para su negocio y sus grupos de interés. Para cada uno le pediré información específica.",
+        help: "Elija los temas donde su organización tiene mayores impactos (positivos o negativos) o los que más le exigen sus clientes y stakeholders. Menos temas bien reportados vale más que muchos temas superficiales." },
+
+      // ── Módulo 5 (cierre) se agrega dinámicamente después de los temas ──
+    ];
+
+    const CLOSING_STEPS = [
+      { module: "m5", id: "cierre_logro", type: "textarea", gri: "Contexto",
+        text: "Ya casi terminamos. ¿Cuál fue el principal logro de sostenibilidad de la organización en este periodo?",
+        help: "Puede ser grande o pequeño: una certificación, reducción de consumo, un programa social, o simplemente haber iniciado este proceso de reporte." },
+      { module: "m5", id: "cierre_reto", type: "textarea", gri: "Contexto",
+        text: "¿Y cuál es el principal reto o compromiso para el próximo periodo?",
+        help: "GRI valora los compromisos a futuro. Ejemplo: 'Medir nuestra huella de carbono por primera vez' o 'Formalizar la política ambiental'." },
+      { module: "m5", id: "cierre_contacto", type: "text", gri: "GRI 2-3",
+        text: "Por último: ¿qué correo o contacto debe aparecer en el reporte para preguntas sobre su contenido?",
+        help: "GRI 2-3 requiere un punto de contacto. Usualmente el correo corporativo del responsable de sostenibilidad." }
+    ];
+
+    // ═══════════════ ESTADO ═══════════════
+    const STORAGE_KEY = "gri-express-v1";
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"answers":{},"stepIndex":-1,"steps":null}');
+    let steps = [];        // flujo completo (se reconstruye con temas seleccionados)
+    let stepIndex = -1;    // -1 = pantalla de bienvenida
+    let lastModule = null;
+
+    const chat = document.getElementById("chat");
+    const dock = document.getElementById("dock");
+    const dockInner = document.getElementById("dockInner");
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers: state.answers, stepIndex, steps: steps.map(s => s.id) }));
+    }
+
+    function buildSteps() {
+      steps = [...BASE_STEPS];
+      const selected = state.answers["mat_temas"];
+      if (selected && Array.isArray(selected)) {
+        selected.forEach(tid => {
+          const topic = TOPICS[tid];
+          if (topic) topic.questions.forEach(q => steps.push({ ...q, module: "m4", topicId: tid }));
+        });
+        steps.push(...CLOSING_STEPS);
+      }
+    }
+
+    // ═══════════════ RENDER ═══════════════
+    function esc(s) { return String(s ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+    function addPalMessage(html, delay = 500) {
+      return new Promise(resolve => {
+        const typing = document.createElement("div");
+        typing.className = "msg";
+        typing.innerHTML = `<div class="avatar">🌱</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+        chat.appendChild(typing);
+        scrollBottom();
+        setTimeout(() => {
+          typing.querySelector(".bubble").innerHTML = `<div class="pal-name">PAL · Asistente GRI</div>${html}`;
+          scrollBottom();
+          resolve();
+        }, delay);
+      });
+    }
+
+    function addUserMessage(text) {
+      const div = document.createElement("div");
+      div.className = "msg user";
+      div.innerHTML = `<div class="user-icon">👤</div><div class="bubble"><p>${esc(text)}</p></div>`;
+      chat.appendChild(div);
+      scrollBottom();
+    }
+
+    function addModuleCard(mod, num) {
+      const div = document.createElement("div");
+      div.className = "module-card";
+      div.innerHTML = `<div class="m-step">MÓDULO ${num} DE ${MODULES.length} · ${mod.ref.toUpperCase()}</div><h2>${mod.name}</h2><p>${mod.desc}</p>`;
+      chat.appendChild(div);
+      scrollBottom();
+    }
+
+    function scrollBottom() {
+      requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+    }
+
+    function updateProgress() {
+      const total = steps.length || BASE_STEPS.length + 12;
+      const pct = Math.max(0, Math.min(100, (stepIndex / total) * 100));
+      document.getElementById("progressFill").style.width = pct + "%";
+      const step = steps[stepIndex];
+      if (step) {
+        const mod = MODULES.find(m => m.id === step.module);
+        const num = MODULES.findIndex(m => m.id === step.module) + 1;
+        document.getElementById("moduleIndicator").textContent = `Módulo ${num}/${MODULES.length} · ${mod.name}`;
+      }
+    }
+
+    // ═══════════════ BIENVENIDA ═══════════════
+    function renderWelcome() {
+      const hasProgress = Object.keys(state.answers).length > 0;
+      chat.innerHTML = `
+        <div class="hero-card">
+          <div class="big-avatar">🌱</div>
+          <h1>Reporte GRI Express</h1>
+          <p style="text-align:center;color:var(--teal);font-weight:600;margin-bottom:16px">Hola, soy <strong>PAL</strong> — su asistente para construir el primer reporte de sostenibilidad de su organización.</p>
+          <p>Le haré preguntas en lenguaje claro, una a la vez, con ayudas para encontrar cada dato. Al final generará un <strong>reporte de sostenibilidad profesional y descargable</strong>, elaborado <strong>con referencia a los Estándares GRI 2021</strong> — el marco de reporte más utilizado del mundo.</p>
+          <div class="hero-meta">
+            <span>⏱ 30–45 minutos</span>
+            <span>💾 Su avance se guarda solo</span>
+            <span>📄 PDF profesional al final</span>
+            <span>🔒 Sus datos no salen de su navegador</span>
+          </div>
+          <div class="disclaimer-box">
+            <strong>Claridad metodológica importante:</strong> este reporte se elabora bajo la opción <strong>"con referencia a los Estándares GRI"</strong> (GRI 1: Fundamentos 2021), adecuada para organizaciones que inician su camino de reporte. No constituye un reporte "de conformidad con" los Estándares GRI (que exige la totalidad de contenidos obligatorios), ni ha sido verificado por un tercero independiente. Es una base sólida y honesta para licitaciones, clientes corporativos y mejora continua — y así lo declara en su texto.
+          </div>
+          ${hasProgress
+            ? `<div class="resume-note">📌 Tiene un reporte en progreso (${Object.keys(state.answers).length} respuestas guardadas)</div>
+               <button class="btn-primary" onclick="resumeSession()">Continuar donde quedé →</button>
+               <br><button class="btn-ghost" onclick="resetSession()">Empezar un reporte nuevo desde cero</button>`
+            : `<button class="btn-primary" onclick="startSession()">Comenzar mi reporte →</button>`}
+        </div>`;
+      dock.style.display = "none";
+    }
+
+    function startSession() {
+      state = { answers: {}, stepIndex: -1 };
+      buildSteps();
+      chat.innerHTML = "";
+      stepIndex = -1;
+      lastModule = null;
+      nextStep();
+    }
+
+    function resumeSession() {
+      buildSteps();
+      chat.innerHTML = "";
+      lastModule = null;
+      // Reconstruir conversación previa de forma compacta
+      let idx = 0;
+      for (; idx < steps.length; idx++) {
+        const s = steps[idx];
+        if (state.answers[s.id] === undefined) break;
+        renderPastStep(s);
+      }
+      stepIndex = idx - 1;
+      nextStep();
+    }
+
+    function renderPastStep(s) {
+      const mod = MODULES.find(m => m.id === s.module);
+      if (s.module !== lastModule) {
+        addModuleCard(mod, MODULES.findIndex(m => m.id === s.module) + 1);
+        lastModule = s.module;
+      }
+      const div = document.createElement("div");
+      div.className = "msg";
+      div.innerHTML = `<div class="avatar">🌱</div><div class="bubble"><div class="pal-name">PAL · Asistente GRI</div><p>${esc(s.text)}</p>${s.gri ? `<span class="gri-tag">${s.gri}</span>` : ""}</div>`;
+      chat.appendChild(div);
+      const ans = state.answers[s.id];
+      addUserMessage(Array.isArray(ans) ? ans.map(a => TOPICS[a] ? `${TOPICS[a].icon} ${TOPICS[a].name}` : a).join(", ") : String(ans) + (s.unit ? " " + s.unit : ""));
+    }
+
+    function resetSession() {
+      if (!confirm("¿Seguro que desea borrar el avance actual y empezar de cero?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state = { answers: {}, stepIndex: -1 };
+      renderWelcome();
+    }
+
+    // ═══════════════ MOTOR DE PASOS ═══════════════
+    async function nextStep() {
+      stepIndex++;
+      save();
+      updateProgress();
+
+      if (stepIndex >= steps.length) {
+        if (steps.length && state.answers["mat_temas"]) return renderFinish();
+        return;
+      }
+
+      const s = steps[stepIndex];
+
+      // Tarjeta de módulo al cambiar de módulo
+      if (s.module !== lastModule) {
+        const mod = MODULES.find(m => m.id === s.module);
+        addModuleCard(mod, MODULES.findIndex(m => m.id === s.module) + 1);
+        lastModule = s.module;
+        await new Promise(r => setTimeout(r, 350));
+      }
+
+      // Encabezado del tema en módulo 4
+      let topicIntro = "";
+      if (s.topicId) {
+        const t = TOPICS[s.topicId];
+        const firstOfTopic = steps.findIndex(x => x.topicId === s.topicId) === stepIndex;
+        if (firstOfTopic) topicIntro = `<p><strong>${t.icon} Ahora hablemos de: ${t.name}</strong> <span class="gri-tag" style="margin-top:0">${t.gri}</span></p>`;
+      }
+
+      const html = `${topicIntro}<p>${esc(s.text)}</p>${s.help ? `<div class="help">💡 ${esc(s.help)}</div>` : ""}${s.gri && !topicIntro ? `<span class="gri-tag">${s.gri}</span>` : ""}`;
+      await addPalMessage(html, stepIndex === 0 ? 400 : 650);
+      renderDock(s);
+    }
+
+    function renderDock(s) {
+      dock.style.display = "block";
+      let inner = "";
+
+      if (s.type === "text" || s.type === "number") {
+        inner = `
+          <div class="dock-row">
+            <input type="${s.type}" id="dockInput" placeholder="${s.type === "number" ? "Escriba el valor" + (s.unit ? " en " + s.unit : "") : "Escriba su respuesta..."}" ${s.type === "number" ? 'min="0" step="any"' : ""}>
+            <button class="send" id="dockSend">Enviar</button>
+          </div>
+          <button class="skip" id="dockSkip">Prefiero omitir este dato por ahora</button>`;
+      } else if (s.type === "textarea") {
+        inner = `
+          <div class="dock-row">
+            <textarea id="dockInput" placeholder="Escriba con sus palabras — PAL le dará formato en el reporte..."></textarea>
+            <button class="send" id="dockSend">Enviar</button>
+          </div>
+          <button class="skip" id="dockSkip">Prefiero omitir este dato por ahora</button>`;
+      } else if (s.type === "select") {
+        inner = `
+          <div class="dock-row">
+            <select id="dockInput">
+              <option value="" disabled selected>Seleccione una opción...</option>
+              ${s.options.map(o => `<option>${esc(o)}</option>`).join("")}
+            </select>
+            <button class="send" id="dockSend">Enviar</button>
+          </div>`;
+      } else if (s.type === "chips-multi" || s.type === "chips-topics") {
+        const opts = s.type === "chips-topics"
+          ? Object.entries(TOPICS).map(([k, t]) => ({ v: k, label: `${t.icon} ${t.name}` }))
+          : s.options.map(o => ({ v: o, label: o }));
+        inner = `
+          <div class="chips" id="chipsBox">
+            ${opts.map(o => `<button class="chip" data-v="${esc(o.v)}">${esc(o.label)}</button>`).join("")}
+          </div>
+          <div class="chips-actions">
+            <button class="send" id="dockSend" disabled>Confirmar selección</button>
+            <span class="chips-count" id="chipsCount">${s.min ? `Seleccione entre ${s.min} y ${s.max}` : "Seleccione los que apliquen"}</span>
+          </div>`;
+      }
+
+      dockInner.innerHTML = inner;
+
+      // Listeners
+      const sendBtn = document.getElementById("dockSend");
+      const input = document.getElementById("dockInput");
+
+      if (s.type === "chips-multi" || s.type === "chips-topics") {
+        const selected = new Set();
+        document.querySelectorAll("#chipsBox .chip").forEach(chip => {
+          chip.onclick = () => {
+            const v = chip.dataset.v;
+            if (selected.has(v)) { selected.delete(v); chip.classList.remove("selected"); }
+            else {
+              if (s.max && selected.size >= s.max) return;
+              selected.add(v); chip.classList.add("selected");
+            }
+            const n = selected.size;
+            document.getElementById("chipsCount").textContent = `${n} seleccionado${n === 1 ? "" : "s"}${s.min ? ` (mínimo ${s.min}, máximo ${s.max})` : ""}`;
+            sendBtn.disabled = s.min ? (n < s.min || n > s.max) : n === 0;
+          };
+        });
+        sendBtn.onclick = () => submitAnswer(s, [...selected]);
+      } else {
+        sendBtn.onclick = () => {
+          const v = input.value.trim();
+          if (!v) { input.focus(); return; }
+          submitAnswer(s, s.type === "number" ? Number(v) : v);
+        };
+        input.addEventListener("keydown", e => {
+          if (e.key === "Enter" && s.type !== "textarea") { e.preventDefault(); sendBtn.click(); }
+          if (e.key === "Enter" && e.ctrlKey && s.type === "textarea") sendBtn.click();
+        });
+        const skipBtn = document.getElementById("dockSkip");
+        if (skipBtn) skipBtn.onclick = () => submitAnswer(s, "Información no disponible en este periodo");
+        setTimeout(() => input.focus(), 100);
+      }
+    }
+
+    function submitAnswer(s, value) {
+      state.answers[s.id] = value;
+      dock.style.display = "none";
+      const display = Array.isArray(value)
+        ? value.map(v => TOPICS[v] ? `${TOPICS[v].icon} ${TOPICS[v].name}` : v).join(", ")
+        : String(value) + (s.unit && value !== "Información no disponible en este periodo" ? " " + s.unit : "");
+      addUserMessage(display);
+
+      // Si acaba de definir los temas materiales, reconstruir el flujo
+      if (s.id === "mat_temas") buildSteps();
+      save();
+      setTimeout(nextStep, 300);
+    }
+
+    // ═══════════════ CIERRE Y REPORTE ═══════════════
+    async function renderFinish() {
+      updateProgress();
+      document.getElementById("progressFill").style.width = "100%";
+      await addPalMessage(`
+        <p><strong>🎉 ¡Lo logramos!</strong> Ha completado toda la información necesaria.</p>
+        <p>Su reporte incluye el perfil de la organización, la declaración de la dirección, el análisis de materialidad con ${(state.answers["mat_temas"] || []).length} temas materiales, los contenidos de cada tema y el índice de contenidos GRI.</p>
+        <p>Puede revisarlo, imprimirlo o guardarlo como PDF. Si desea corregir algo, puede volver al asistente.</p>`, 800);
+      dock.style.display = "block";
+      dockInner.innerHTML = `
+        <div class="dock-row" style="justify-content:center">
+          <button class="send" style="font-size:16px;padding:15px 34px" onclick="generateReport()">📄 Generar mi Reporte GRI Express</button>
+        </div>`;
+    }
+
+    function backToChat() {
+      document.getElementById("reportView").style.display = "none";
+      document.getElementById("appView").style.display = "block";
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function A(id, fallback = "Información no disponible en este periodo") {
+      const v = state.answers[id];
+      return (v === undefined || v === "" ) ? fallback : v;
+    }
+
+    function generateReport() {
+      const selected = state.answers["mat_temas"] || [];
+      const periodo = A("org_periodo", "Periodo no especificado");
+      const nombre = A("org_nombre", "La organización");
+      const hoy = new Date().toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+
+      const politicas = state.answers["gob_politicas"];
+      const politicasHtml = Array.isArray(politicas) && politicas.length && politicas[0] !== "Ninguna formalizada aún"
+        ? `<ul>${politicas.map(p => `<li>${esc(p)}</li>`).join("")}</ul>`
+        : `<p>La organización se encuentra en proceso de formalización de sus políticas de sostenibilidad, lo cual ha identificado como compromiso de mejora.</p>`;
+
+      // Capítulos por tema
+      const topicChapters = selected.map(tid => {
+        const t = TOPICS[tid];
+        const enfoque = A(t.questions[0].id);
+        const kpis = t.questions.slice(1).map(q => {
+          const val = A(q.id, null);
+          if (val === null || val === "Información no disponible en este periodo") return "";
+          return `<div class="kpi-card"><div class="kpi-value">${esc(val)}${q.unit ? ` <span style="font-size:13px;font-weight:600">${q.unit}</span>` : ""}</div><div class="kpi-label">${esc(q.text.split("?")[0].replace(/^¿/, ""))} · ${q.gri}</div></div>`;
+        }).join("");
+        return `
+          <div class="r-topic-header"><h2 class="r-section" style="flex:1">${t.icon} ${t.name}</h2><span class="r-gri-code">${t.gri}</span></div>
+          <h3>Enfoque de gestión (GRI 3-3)</h3>
+          <p>${esc(enfoque)}</p>
+          ${kpis ? `<h3>Indicadores del periodo</h3><div class="kpi-row">${kpis}</div>` : ""}`;
+      }).join("");
+
+      // Índice GRI
+      const indexRows = [
+        ["GRI 2-1", "Detalles de la organización", "Perfil de la organización"],
+        ["GRI 2-3", "Periodo de reporte y punto de contacto", "Acerca de este reporte"],
+        ["GRI 2-6", "Actividades y cadena de valor", "Perfil de la organización"],
+        ["GRI 2-7", "Empleados", "Perfil de la organización"],
+        ["GRI 2-9", "Estructura de gobernanza", "Gobernanza"],
+        ["GRI 2-13", "Delegación de la gestión de impactos", "Gobernanza"],
+        ["GRI 2-22", "Declaración sobre la estrategia de desarrollo sostenible", "Mensaje de la dirección"],
+        ["GRI 2-23", "Compromisos y políticas", "Gobernanza"],
+        ["GRI 3-1", "Proceso de determinación de temas materiales", "Análisis de materialidad"],
+        ["GRI 3-2", "Lista de temas materiales", "Análisis de materialidad"],
+        ...selected.flatMap(tid => {
+          const t = TOPICS[tid];
+          return [
+            ["GRI 3-3", `Gestión de ${t.name.toLowerCase()}`, t.name],
+            ...t.questions.slice(1).map(q => [q.gri, t.name + " — indicador", t.name])
+          ];
+        })
+      ];
+
+      document.getElementById("reportContent").innerHTML = `
+        <div class="r-cover">
+          <div class="r-cover-tag">Reporte de Sostenibilidad</div>
+          <h1>${esc(nombre)}</h1>
+          <div class="r-period">${esc(periodo)}</div>
+          <div class="r-ref">Elaborado <strong>con referencia a los Estándares GRI 2021</strong><br>(GRI 1: Fundamentos 2021)</div>
+          <div class="r-by">Generado con Reporte GRI Express · Projectability · ${hoy}</div>
+        </div>
+
+        <h2 class="r-section">Mensaje de la dirección</h2>
+        <p style="font-style:italic">"${esc(A("gob_declaracion"))}"</p>
+
+        <h2 class="r-section">Acerca de este reporte</h2>
+        <p>Este es el reporte de sostenibilidad de <strong>${esc(nombre)}</strong> correspondiente al periodo <strong>${esc(periodo)}</strong>. Ha sido elaborado con referencia a los Estándares GRI 2021, seleccionando los contenidos generales y temáticos aplicables a la escala y madurez actual de la organización.</p>
+        <div class="r-grid">
+          <div class="r-field"><div class="r-label">Periodo del reporte</div>${esc(periodo)}</div>
+          <div class="r-field"><div class="r-label">Ciclo de reporte</div>Anual</div>
+          <div class="r-field"><div class="r-label">Punto de contacto</div>${esc(A("cierre_contacto"))}</div>
+          <div class="r-field"><div class="r-label">Fecha de publicación</div>${hoy}</div>
+        </div>
+
+        <h2 class="r-section">Perfil de la organización</h2>
+        <div class="r-grid">
+          <div class="r-field"><div class="r-label">Nombre legal (GRI 2-1)</div>${esc(nombre)}</div>
+          <div class="r-field"><div class="r-label">Naturaleza jurídica (GRI 2-1)</div>${esc(A("org_naturaleza"))}</div>
+          <div class="r-field"><div class="r-label">Ubicación y operaciones (GRI 2-1)</div>${esc(A("org_ubicacion"))}</div>
+          <div class="r-field"><div class="r-label">Empleados (GRI 2-7)</div>${esc(A("org_empleados"))} personas</div>
+        </div>
+        <h3>Actividades y sector (GRI 2-6)</h3>
+        <p>${esc(A("org_sector"))}</p>
+        <h3>Cadena de valor (GRI 2-6)</h3>
+        <p>${esc(A("org_cadena"))}</p>
+
+        <h2 class="r-section">Gobernanza</h2>
+        <h3>Estructura de gobernanza (GRI 2-9)</h3>
+        <p>${esc(A("gob_estructura"))}</p>
+        <h3>Responsabilidad sobre la sostenibilidad (GRI 2-13)</h3>
+        <p>${esc(A("gob_responsable"))}</p>
+        <h3>Compromisos y políticas formalizadas (GRI 2-23)</h3>
+        ${politicasHtml}
+
+        <h2 class="r-section">Análisis de materialidad</h2>
+        <h3>Proceso de determinación (GRI 3-1)</h3>
+        <p>Para la determinación de los temas materiales de este reporte, la organización siguió el siguiente proceso: <strong>${esc(A("mat_proceso")).toLowerCase()}</strong>. La priorización consideró los impactos de la organización en la economía, el medio ambiente y las personas, así como la relevancia de cada tema para sus grupos de interés.</p>
+        <h3>Temas materiales del periodo (GRI 3-2)</h3>
+        <ul>${selected.map(tid => `<li><strong>${TOPICS[tid].icon} ${TOPICS[tid].name}</strong> (${TOPICS[tid].gri})</li>`).join("")}</ul>
+
+        ${topicChapters}
+
+        <h2 class="r-section">Logros y compromisos</h2>
+        <h3>Principal logro del periodo</h3>
+        <p>${esc(A("cierre_logro"))}</p>
+        <h3>Compromisos para el próximo periodo</h3>
+        <p>${esc(A("cierre_reto"))}</p>
+
+        <h2 class="r-section">Índice de contenidos GRI</h2>
+        <p><strong>${esc(nombre)}</strong> ha presentado la información citada en este índice de contenidos GRI para el periodo <strong>${esc(periodo)}</strong> con referencia a los Estándares GRI.</p>
+        <table class="gri-index">
+          <thead><tr><th style="width:110px">Contenido GRI</th><th>Descripción</th><th style="width:200px">Ubicación en el reporte</th></tr></thead>
+          <tbody>${indexRows.map(r => `<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}</tbody>
+        </table>
+
+        <div class="r-notice">
+          <strong>Alcance y limitaciones:</strong> este reporte fue elaborado bajo la opción "con referencia a los Estándares GRI" (GRI 1: Fundamentos 2021) mediante la herramienta Reporte GRI Express de Projectability. La información fue suministrada y es responsabilidad de ${esc(nombre)}. El reporte no ha sido objeto de verificación externa independiente. Los datos estimados se identifican como tales en el texto. Este documento constituye un primer ejercicio de transparencia y rendición de cuentas, y una base para la mejora continua del proceso de reporte de la organización.
+        </div>`;
+
+      document.getElementById("appView").style.display = "none";
+      document.getElementById("reportView").style.display = "block";
+      window.scrollTo(0, 0);
+    }
+
+    // ═══════════════ INICIO ═══════════════
+    buildSteps();
+    renderWelcome();
+  </script>
+</body>
+</html>
