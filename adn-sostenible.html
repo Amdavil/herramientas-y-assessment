@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test Express: ¿Cuál es el ADN Sostenible de tu empresa?</title>
+  <meta name="description" content="Descubre en 60 segundos si tu empresa es un Dinosaurio Corporativo o un Unicornio Sostenible. Test gratuito de Projectability.">
+  <meta property="og:title" content="¿Cuál es el ADN Sostenible de tu empresa? 🧬">
+  <meta property="og:description" content="60 segundos. 8 preguntas. Una verdad incómoda (o gloriosa) sobre tu empresa.">
+  <style>
+    :root {
+      --navy: #1f4e79;
+      --teal: #16817a;
+      --green: #5f8d3e;
+      --amber: #c47f1b;
+      --red: #b54a4a;
+      --ink: #172033;
+      --muted: #647084;
+      --line: #d9e1ea;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(160deg, #0e2a44 0%, #1f4e79 55%, #16817a 130%);
+      min-height: 100vh;
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 60px;
+    }
+    .brand {
+      color: #fff; opacity: .85; font-size: 13px; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 18px; font-weight: 600;
+    }
+    .card {
+      background: #fff; border-radius: 20px; width: 100%; max-width: 560px;
+      padding: 34px 30px; box-shadow: 0 24px 60px rgba(0,0,0,.35);
+      animation: pop .4s ease;
+    }
+    @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* Intro */
+    .intro h1 { font-size: 26px; line-height: 1.25; color: var(--navy); margin-bottom: 12px; }
+    .intro .dna { font-size: 54px; text-align: center; margin-bottom: 14px; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .intro p { color: var(--muted); font-size: 15px; margin-bottom: 10px; line-height: 1.5; }
+    .intro .meta { display: flex; gap: 14px; margin: 18px 0 22px; }
+    .intro .meta span {
+      background: #f0f5f9; border-radius: 999px; padding: 7px 14px;
+      font-size: 12.5px; font-weight: 600; color: var(--navy);
+    }
+    .archetypes-preview { display: flex; justify-content: space-between; margin-bottom: 24px; }
+    .archetypes-preview div { text-align: center; font-size: 11px; color: var(--muted); width: 24%; }
+    .archetypes-preview .em { font-size: 30px; display: block; margin-bottom: 4px; }
+
+    button.cta {
+      width: 100%; border: 0; background: linear-gradient(90deg, var(--teal), var(--green));
+      color: #fff; font-size: 17px; font-weight: 700; padding: 16px; border-radius: 12px;
+      cursor: pointer; font-family: inherit; transition: transform .15s, box-shadow .15s;
+    }
+    button.cta:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(22,129,122,.4); }
+
+    /* Quiz */
+    .progress-track { background: #e8eef4; height: 8px; border-radius: 999px; margin-bottom: 22px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; border-radius: 999px; width: 0%;
+      background: linear-gradient(90deg, var(--teal), var(--green));
+      transition: width .35s ease;
+    }
+    .q-count { font-size: 12px; font-weight: 700; color: var(--teal); letter-spacing: 1px; margin-bottom: 8px; }
+    .q-text { font-size: 20px; font-weight: 700; color: var(--navy); line-height: 1.35; margin-bottom: 20px; }
+    .opt {
+      display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+      background: #f7fafc; border: 2px solid var(--line); border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 10px; cursor: pointer; font-family: inherit;
+      font-size: 14.5px; color: var(--ink); transition: all .15s;
+    }
+    .opt:hover { border-color: var(--teal); background: #eefaf8; transform: translateX(4px); }
+    .opt .opt-emoji { font-size: 22px; flex-shrink: 0; }
+
+    /* Result */
+    .result { text-align: center; }
+    .result .r-emoji { font-size: 76px; margin-bottom: 8px; animation: bounceIn .6s ease; }
+    @keyframes bounceIn { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    .result .r-label { font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+    .result h2 { font-size: 28px; color: var(--navy); margin-bottom: 4px; }
+    .result .r-punch { font-size: 15.5px; color: var(--teal); font-weight: 600; font-style: italic; margin-bottom: 16px; }
+    .result .r-desc { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin-bottom: 18px; text-align: left; }
+    .r-meter { background: #e8eef4; height: 14px; border-radius: 999px; overflow: hidden; margin-bottom: 6px; }
+    .r-meter-fill { height: 100%; border-radius: 999px; transition: width 1s ease .3s; width: 0%; }
+    .r-meter-caption { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+    .r-tips { text-align: left; background: #f7fafc; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px; }
+    .r-tips h3 { font-size: 13px; color: var(--navy); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+    .r-tips li { font-size: 13.5px; color: var(--ink); margin: 0 0 8px 18px; line-height: 1.45; }
+    .share-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .share-btn {
+      flex: 1; border: 0; border-radius: 10px; padding: 13px 8px; font-size: 13.5px;
+      font-weight: 700; cursor: pointer; font-family: inherit; color: #fff; transition: transform .15s;
+    }
+    .share-btn:hover { transform: translateY(-2px); }
+    .share-li { background: #0a66c2; }
+    .share-wa { background: #25d366; }
+    .share-copy { background: var(--navy); }
+    .assessment-cta {
+      display: block; text-decoration: none; background: linear-gradient(90deg, var(--navy), var(--teal));
+      color: #fff; border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 700;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .assessment-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(31,78,121,.4); }
+    .assessment-cta span { display: block; font-size: 12px; font-weight: 400; opacity: .85; margin-top: 4px; }
+    .retry { background: none; border: 0; color: var(--muted); font-size: 13px; cursor: pointer; margin-top: 14px; text-decoration: underline; font-family: inherit; }
+    .foot { color: rgba(255,255,255,.7); font-size: 12px; margin-top: 22px; text-align: center; }
+    .foot a { color: #fff; }
+    .shared-banner {
+      background: #fff8e8; border: 1px solid #f0d9a8; color: #8a6417; border-radius: 10px;
+      padding: 10px 14px; font-size: 13px; margin-bottom: 16px; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="brand">Projectability · Test Express</div>
+  <div class="card" id="card"></div>
+  <div class="foot">Un experimento de <a href="https://www.projectability.net" target="_blank" rel="noopener">projectability.net</a> · Sin registro · 60 segundos</div>
+
+  <script>
+    const QUESTIONS = [
+      { q: "Mañana sale una ley ambiental nueva que afecta tu negocio. ¿Qué pasa en la oficina?",
+        opts: [
+          ["😱", "Pánico total. ¿Cuál ley?", 1],
+          ["🔍", "Alguien la googlea esa semana", 2],
+          ["📋", "El responsable la revisa y ajustamos", 3],
+          ["😎", "Ya la veíamos venir hace meses", 4]
+        ]},
+      { q: "¿Dónde viven los datos de sostenibilidad de tu empresa?",
+        opts: [
+          ["🤷", "¿Cuáles datos?", 1],
+          ["🗄️", "En un Excel que nadie encuentra", 2],
+          ["📊", "En reportes que armamos cada año", 3],
+          ["⚡", "En un tablero que se actualiza solo", 4]
+        ]},
+      { q: "Cuando alguien dice \"ESG\" en una reunión, la gente...",
+        opts: [
+          ["🦗", "Silencio incómodo", 1],
+          ["🙂", "Asiente sin tener idea", 2],
+          ["💬", "Conoce lo básico y opina", 3],
+          ["🔥", "Lo vive: hay metas y responsables", 4]
+        ]},
+      { q: "El propósito de tu empresa es...",
+        opts: [
+          ["💰", "Facturar. Punto.", 1],
+          ["🖼️", "Un cuadro bonito en la recepción", 2],
+          ["📝", "Está escrito y a veces se usa", 3],
+          ["🧭", "Guía decisiones reales todos los días", 4]
+        ]},
+      { q: "¿Qué pasa con los residuos de tu operación?",
+        opts: [
+          ["🙈", "Ni idea, desaparecen mágicamente", 1],
+          ["🗑️", "Se botan y ya", 2],
+          ["♻️", "Se separan... cuando nos acordamos", 3],
+          ["🔄", "Son insumo de algo más: circularidad", 4]
+        ]},
+      { q: "Tu relación con la Inteligencia Artificial es...",
+        opts: [
+          ["🚫", "Le tenemos miedo / está prohibida", 1],
+          ["🤫", "La usamos a escondidas del jefe", 2],
+          ["🧪", "Hay pilotos sueltos por ahí", 3],
+          ["🤖", "Estrategia clara, con gobierno y ética", 4]
+        ]},
+      { q: "Un cliente grande te pide el reporte de sostenibilidad. Tú...",
+        opts: [
+          ["🏃", "Cambias de tema elegantemente", 1],
+          ["🎨", "Improvisas algo en Canva esa noche", 2],
+          ["🧩", "Tienes datos sueltos y los organizas", 3],
+          ["📨", "Se lo envías en 5 minutos", 4]
+        ]},
+      { q: "Para tu equipo, la sostenibilidad es...",
+        opts: [
+          ["💸", "Un gasto que impone la gerencia", 1],
+          ["🌊", "Una moda que ya pasará", 2],
+          ["💡", "Buena idea, pero no hay plan", 3],
+          ["🚀", "Nuestra ventaja competitiva", 4]
+        ]}
+    ];
+
+    const ARCHETYPES = [
+      { id: "dino", min: 8, max: 14, emoji: "🦖", name: "Dinosaurio Corporativo",
+        punch: "\"El meteorito se llama regulación, y ya viene en camino.\"",
+        desc: "Tu empresa opera como si fuera 1995: la sostenibilidad es un rumor lejano y la IA, ciencia ficción. La buena noticia: los dinosaurios que evolucionaron se convirtieron en aves — todavía puedes volar. La mala: cada mes que pasa, tus competidores, los reguladores y tus propios clientes te dejan más atrás.",
+        color: "#b54a4a", pct: 25,
+        tips: ["Empieza por lo básico: un diagnóstico honesto de dónde estás (spoiler: tenemos uno gratis).", "Identifica la regulación ambiental y social que YA te aplica — probablemente estás incumpliendo algo.", "Nombra un responsable de sostenibilidad, aunque sea a tiempo parcial. Alguien tiene que despertar primero."] },
+      { id: "explorador", min: 15, max: 21, emoji: "🌱", name: "Explorador Verde",
+        punch: "\"Ya despertaste. Ahora falta caminar.\"",
+        desc: "Tu empresa ya sabe que la sostenibilidad importa — hay intención, conversaciones y hasta alguna iniciativa suelta. Pero seamos honestos: todavía es más discurso que sistema. Estás en el punto exacto donde las empresas se dividen: las que estructuran su gestión despegan, las que se quedan en buenas intenciones se estancan.",
+        color: "#c47f1b", pct: 50,
+        tips: ["Convierte las iniciativas sueltas en un plan con responsables, metas y fechas.", "Mide algo. Lo que no se mide, no existe: energía, residuos, clima laboral — elige y arranca.", "Haz un análisis de materialidad simple: ¿qué temas ESG le importan de verdad a tu negocio?"] },
+      { id: "potencia", min: 22, max: 27, emoji: "🚀", name: "Proyectable en Potencia",
+        punch: "\"Te falta un empujón para jugar en primera división.\"",
+        desc: "Tu empresa tiene gestión real: datos, prácticas y un equipo que entiende el juego. Estás mejor que el 80% del mercado — pero ese último tramo es el que separa a los buenos de los referentes. Integrar lo que ya haces, medirlo con rigor y sumarle inteligencia artificial es tu próxima frontera.",
+        color: "#2f75b5", pct: 75,
+        tips: ["Integra tus prácticas en un sistema: que sostenibilidad, finanzas y estrategia hablen entre sí.", "Publica tu primer reporte de sostenibilidad — la transparencia es tu mejor marketing.", "Usa IA para automatizar la medición y proyección de tus indicadores ESG."] },
+      { id: "unicornio", min: 28, max: 32, emoji: "🦄", name: "Unicornio Sostenible",
+        punch: "\"Eres lo que las demás empresas dicen ser en sus brochures.\"",
+        desc: "Gestión integrada, datos en vivo, propósito real e IA con gobierno. O respondiste con mucho optimismo (😏) o tu empresa es genuinamente excepcional. Si es lo segundo: tu reto ya no es mejorar, es liderar — convertir tu madurez en ventaja comercial, atraer talento y marcar el estándar de tu industria.",
+        color: "#16817a", pct: 98,
+        tips: ["Verifica tu percepción con un diagnóstico estructurado — los unicornios de verdad se auditan.", "Monetiza tu madurez: certificaciones, licitaciones y financiamiento verde te están esperando.", "Comparte tu caso: los líderes que enseñan dominan la conversación de su industria."] }
+    ];
+
+    const ASSESSMENT_URL = "https://amdavil.github.io/herramientas-y-assessment/assessment_sostenibilidad_ia.html";
+    const PAGE_URL = "https://amdavil.github.io/herramientas-y-assessment/adn-sostenible.html";
+
+    let current = 0;
+    let total = 0;
+    const card = document.getElementById("card");
+
+    function renderIntro() {
+      const sharedFrom = new URLSearchParams(location.search).get("r");
+      const shared = ARCHETYPES.find(a => a.id === sharedFrom);
+      card.innerHTML = `
+        <div class="intro">
+          <div class="dna">🧬</div>
+          ${shared ? `<div class="shared-banner">Alguien obtuvo <strong>${shared.emoji} ${shared.name}</strong> — ¿y tu empresa qué es?</div>` : ""}
+          <h1>¿Cuál es el ADN Sostenible de tu empresa?</h1>
+          <p>8 preguntas sin anestesia sobre cómo tu organización maneja la sostenibilidad y la IA. Sin registro, sin correo, sin excusas.</p>
+          <div class="meta"><span>⏱ 60 segundos</span><span>🎯 4 arquetipos</span><span>🔓 Gratis</span></div>
+          <div class="archetypes-preview">
+            <div><span class="em">🦖</span>Dinosaurio</div>
+            <div><span class="em">🌱</span>Explorador</div>
+            <div><span class="em">🚀</span>En Potencia</div>
+            <div><span class="em">🦄</span>Unicornio</div>
+          </div>
+          <button class="cta" onclick="startQuiz()">Descubrir mi ADN →</button>
+        </div>`;
+    }
+
+    function startQuiz() {
+      current = 0; total = 0;
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = QUESTIONS[current];
+      const pct = (current / QUESTIONS.length) * 100;
+      card.innerHTML = `
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="q-count">PREGUNTA ${current + 1} DE ${QUESTIONS.length}</div>
+        <div class="q-text">${q.q}</div>
+        ${q.opts.map((o, i) => `
+          <button class="opt" onclick="answer(${o[2]})">
+            <span class="opt-emoji">${o[0]}</span> ${o[1]}
+          </button>`).join("")}`;
+      requestAnimationFrame(() => {
+        card.querySelector(".progress-fill").style.width = `${((current) / QUESTIONS.length) * 100}%`;
+      });
+    }
+
+    function answer(points) {
+      total += points;
+      current++;
+      if (current < QUESTIONS.length) {
+        renderQuestion();
+      } else {
+        renderResult();
+      }
+    }
+
+    function renderResult() {
+      const a = ARCHETYPES.find(x => total >= x.min && total <= x.max) || ARCHETYPES[0];
+      const shareUrl = `${PAGE_URL}?r=${a.id}`;
+      const shareText = `Mi empresa resultó ser ${a.emoji} ${a.name} en el Test de ADN Sostenible de Projectability. ¿Y la tuya? 🧬`;
+
+      card.innerHTML = `
+        <div class="result">
+          <div class="r-emoji">${a.emoji}</div>
+          <div class="r-label">Tu empresa es...</div>
+          <h2>${a.name}</h2>
+          <div class="r-punch">${a.punch}</div>
+          <div class="r-meter"><div class="r-meter-fill" id="meterFill" style="background:${a.color}"></div></div>
+          <div class="r-meter-caption">Nivel de proyectabilidad: <strong>${a.pct}%</strong> · Puntaje ${total}/32</div>
+          <div class="r-desc">${a.desc}</div>
+          <div class="r-tips">
+            <h3>🎯 Tus 3 próximos movimientos</h3>
+            <ul>${a.tips.map(t => `<li>${t}</li>`).join("")}</ul>
+          </div>
+          <div class="share-row">
+            <button class="share-btn share-li" onclick="shareLinkedIn('${a.id}')">in · Compartir</button>
+            <button class="share-btn share-wa" onclick="shareWhatsApp('${a.id}')">WhatsApp</button>
+            <button class="share-btn share-copy" onclick="copyLink('${a.id}', this)">Copiar link</button>
+          </div>
+          <a class="assessment-cta" href="${ASSESSMENT_URL}" target="_blank" rel="noopener">
+            ¿Quieres el diagnóstico serio? → Assessment completo ESG + IA
+            <span>44 aspectos · radares de madurez · plan de acción para cerrar brechas</span>
+          </a>
+          <button class="retry" onclick="renderIntro()">↻ Repetir el test</button>
+        </div>`;
+      requestAnimationFrame(() => {
+        setTimeout(() => { document.getElementById("meterFill").style.width = `${a.pct}%`; }, 50);
+      });
+    }
+
+    function getShareText(id) {
+      const a = ARCHETYPES.find(x => x.id === id);
+      return `Mi empresa resultó ser ${a.emoji} ${a.name} en el Test de ADN Sostenible. ¿Y la tuya? 🧬`;
+    }
+
+    function shareLinkedIn(id) {
+      const url = `${PAGE_URL}?r=${id}`;
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, "_blank", "width=600,height=600");
+    }
+
+    function shareWhatsApp(id) {
+      const url = `${PAGE_URL}?r=${id}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(getShareText(id) + " " + url)}`, "_blank");
+    }
+
+    function copyLink(id, btn) {
+      const url = `${PAGE_URL}?r=${id}`;
+      navigator.clipboard.writeText(`${getShareText(id)} ${url}`).then(() => {
+        btn.textContent = "✓ ¡Copiado!";
+        setTimeout(() => { btn.textContent = "Copiar link"; }, 2000);
+      });
+    }
+
+    renderIntro();
+  </script>
+</body>
+</html>
