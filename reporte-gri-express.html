@@ -664,7 +664,7 @@
         grantAccess();
         feedbackEl.style.color = "var(--teal)";
         feedbackEl.textContent = "✓ Código válido. Generando su reporte completo...";
-        setTimeout(() => generateReport(false), 900);
+        setTimeout(() => runFullReport(), 900);
       } else {
         feedbackEl.style.color = "var(--red)";
         feedbackEl.textContent = "✗ Código no válido. Verifique e intente de nuevo.";
@@ -1254,17 +1254,21 @@
       renderFinishDock();
     }
 
+    function runFullReport() {
+      // Por defecto, todo reporte completo pasa por la redacción profesional IA
+      if (AI.endpoint) aiEnhanceAll();
+      else generateReport(false);
+    }
+
     function renderFinishDock() {
       if (hasAccess()) {
-        const aiBtn = AI.endpoint
-          ? `<button class="send" style="font-size:15px;background:linear-gradient(135deg,#6b5ca5,#2f75b5)" onclick="aiEnhanceAll()">✨ Generar con redacción profesional IA</button>`
-          : "";
         dockInner.innerHTML = `
           <div class="dock-row" style="justify-content:center;flex-wrap:wrap;gap:10px">
-            <button class="send" style="font-size:15px;padding:14px 26px" onclick="state.aiTexts=null;state.aiContexts=null;save();generateReport(false)">📄 Generar mi Reporte GRI Express</button>
-            ${aiBtn}
+            <button class="send" style="font-size:16px;padding:15px 30px;background:linear-gradient(135deg,var(--teal),#2f75b5)" onclick="runFullReport()">✨ Generar mi Reporte GRI Express</button>
           </div>
-          ${AI.endpoint ? `<div style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:8px">La redacción IA pule sus textos con lenguaje corporativo y principios GRI de calidad — nunca modifica sus cifras. Usted revisa el resultado final.</div>` : ""}`;
+          ${AI.endpoint ? `
+          <div style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:8px">PAL redactará sus textos con lenguaje profesional y principios de calidad GRI — nunca modifica sus cifras. Usted revisa el resultado final.</div>
+          <div style="text-align:center"><button class="skip" onclick="state.aiTexts=null;state.aiContexts=null;save();generateReport(false)">Prefiero generar con mis textos originales, sin IA</button></div>` : ""}`;
         return;
       }
       dockInner.innerHTML = `
@@ -1320,7 +1324,7 @@
           }),
           onApprove: (data, actions) => actions.order.capture().then(() => {
             grantAccess();
-            generateReport(false);
+            runFullReport();
           }),
           onError: () => {
             document.getElementById("accessFeedback").textContent = "Hubo un problema con el pago. Intente de nuevo o use un código de acceso.";
