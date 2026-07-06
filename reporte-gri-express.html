@@ -809,8 +809,9 @@
     }
 
     // ═══════════════ REDACCIÓN PROFESIONAL CON IA ═══════════════
-    // Campos de texto libre que la IA pule (nunca toca cifras ni selecciones)
-    const AI_TEXT_FIELDS = ["org_cadena", "gob_estructura", "gob_declaracion", "cierre_logro", "cierre_reto"];
+    // Campos de texto libre que la IA pule y enriquece (nunca toca cifras ni selecciones).
+    // Excluidos a propósito: org_nombre (nombre legal), cierre_contacto (correo) y todo campo numérico o de selección.
+    const AI_TEXT_FIELDS = ["org_sector", "org_ubicacion", "org_cadena", "gob_estructura", "gob_responsable", "gob_declaracion", "cierre_logro", "cierre_reto"];
 
     function AE(id, fallback) {
       // Texto mejorado por IA si existe; si no, la respuesta original
@@ -820,7 +821,11 @@
 
     async function aiEnhanceAll() {
       const selected = state.answers["mat_temas"] || [];
-      const fieldIds = [...AI_TEXT_FIELDS, ...selected.map(tid => TOPICS[tid].questions[0].id)];
+      // Incluir los enfoques de gestión de los temas materiales (los indicadores/datos se conservan tal cual)
+      const topicTextIds = selected.flatMap(tid =>
+        TOPICS[tid].questions.filter(q => q.type === "textarea").map(q => q.id)
+      );
+      const fieldIds = [...AI_TEXT_FIELDS, ...topicTextIds];
       const fields = {};
       fieldIds.forEach(id => { if (state.answers[id]) fields[id] = state.answers[id]; });
 
@@ -1412,6 +1417,10 @@
         <h2 class="r-section">Mensaje de la dirección</h2>
         <p style="font-style:italic">"${esc(AE("gob_declaracion"))}"</p>
 
+        ${state.aiTexts && state.aiTexts.resumen_ejecutivo ? `
+        <h2 class="r-section">Resumen ejecutivo</h2>
+        <p>${esc(state.aiTexts.resumen_ejecutivo)}</p>` : ""}
+
         <h2 class="r-section">Acerca de este reporte</h2>
         <p>Este es el reporte de sostenibilidad de <strong>${esc(nombre)}</strong> correspondiente al periodo <strong>${esc(periodo)}</strong>. Ha sido elaborado con referencia a los Estándares GRI 2021, seleccionando los contenidos generales y temáticos aplicables a la escala y madurez actual de la organización.</p>
         <div class="r-grid">
@@ -1425,11 +1434,11 @@
         <div class="r-grid">
           <div class="r-field"><div class="r-label">Nombre legal (GRI 2-1)</div>${esc(nombre)}</div>
           <div class="r-field"><div class="r-label">Naturaleza jurídica (GRI 2-1)</div>${esc(A("org_naturaleza"))}</div>
-          <div class="r-field"><div class="r-label">Ubicación y operaciones (GRI 2-1)</div>${esc(A("org_ubicacion"))}</div>
+          <div class="r-field"><div class="r-label">Ubicación y operaciones (GRI 2-1)</div>${esc(AE("org_ubicacion"))}</div>
           <div class="r-field"><div class="r-label">Empleados (GRI 2-7)</div>${esc(A("org_empleados"))} personas</div>
         </div>
         <h3>Actividades y sector (GRI 2-6)</h3>
-        <p>${esc(A("org_sector"))}</p>
+        <p>${esc(AE("org_sector"))}</p>
         <h3>Cadena de valor (GRI 2-6)</h3>
         <p>${esc(AE("org_cadena"))}</p>
 
@@ -1437,7 +1446,7 @@
         <h3>Estructura de gobernanza (GRI 2-9)</h3>
         <p>${esc(AE("gob_estructura"))}</p>
         <h3>Responsabilidad sobre la sostenibilidad (GRI 2-13)</h3>
-        <p>${esc(A("gob_responsable"))}</p>
+        <p>${esc(AE("gob_responsable"))}</p>
         <h3>Compromisos y políticas formalizadas (GRI 2-23)</h3>
         ${politicasHtml}
 
