@@ -646,7 +646,7 @@
     // ═══════════════ IA DE REDACCIÓN (opcional) ═══════════════
     // Endpoint del proxy seguro (Cloudflare Worker) que guarda la clave de la IA.
     // Vacío = la función de redacción IA no se muestra; el reporte se genera igual.
-    const AI = { endpoint: "" };
+    const AI = { endpoint: "https://pal-ai.projectability-pal.workers.dev/" };
 
     function hasAccess() { return localStorage.getItem(ACCESS_KEY) === "granted"; }
     function grantAccess() { localStorage.setItem(ACCESS_KEY, "granted"); }
