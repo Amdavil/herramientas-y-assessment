@@ -527,6 +527,78 @@
             text: "Mencione los principales programas o iniciativas con la comunidad realizados en el periodo.",
             help: "Liste 1 a 3 iniciativas con una breve descripción de cada una y, si es posible, el número de personas beneficiadas." }
         ]},
+      t203: { gri: "GRI 203", name: "Impactos económicos indirectos", icon: "🌐",
+        questions: [
+          { id: "t203_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Qué impactos económicos indirectos genera su organización en su entorno? (empleo indirecto, desarrollo de proveedores, dinamización local)",
+            help: "Piense más allá de su nómina: ¿su operación genera empleos en su cadena? ¿desarrolla capacidades en proveedores locales? ¿atrae inversión a la zona?" },
+          { id: "t203_ejemplos", type: "text", gri: "GRI 203-2",
+            text: "Mencione los principales impactos económicos indirectos identificados en el periodo.",
+            help: "Ejemplo: '35 familias caficultoras con ingresos estables gracias a contratos de compra' o 'formación de 3 talleres locales como proveedores'." }
+        ]},
+      t301: { gri: "GRI 301", name: "Materiales", icon: "📦",
+        questions: [
+          { id: "t301_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización los materiales e insumos que utiliza? ¿Incorpora materiales reciclados o renovables?",
+            help: "Describa sus principales insumos y si existe alguna estrategia para reducirlos, sustituirlos por alternativas recicladas/renovables o aprovecharlos mejor." },
+          { id: "t301_reciclado", type: "number", unit: "%", gri: "GRI 301-2",
+            text: "¿Qué porcentaje aproximado de sus insumos proviene de materiales reciclados o renovables?",
+            help: "Una estimación honesta es válida. Si no lo ha medido, indique 0 y menciónelo en el enfoque como oportunidad." }
+        ]},
+      t304: { gri: "GRI 304", name: "Biodiversidad", icon: "🦜",
+        questions: [
+          { id: "t304_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo gestiona su organización sus impactos sobre la biodiversidad y los ecosistemas?",
+            help: "Relevante si opera cerca de áreas protegidas o ecosistemas sensibles, o si su cadena de valor depende de recursos naturales. Mencione acciones de conservación, restauración o alianzas." },
+          { id: "t304_acciones", type: "text", gri: "GRI 304-3",
+            text: "Mencione las principales acciones o programas de protección de la biodiversidad realizados en el periodo.",
+            help: "Ejemplo: 'siembra de 500 árboles nativos', 'corredor biológico en la finca', 'alianza con corporación ambiental regional'." }
+        ]},
+      t308: { gri: "GRI 308", name: "Evaluación ambiental de proveedores", icon: "🌿",
+        questions: [
+          { id: "t308_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Evalúa su organización el desempeño ambiental de sus proveedores? ¿Cómo?",
+            help: "Puede ser desde una declaración de cumplimiento ambiental en los contratos hasta auditorías. Si aún no lo hace, indíquelo como oportunidad." },
+          { id: "t308_pct", type: "number", unit: "%", gri: "GRI 308-1",
+            text: "¿Qué porcentaje aproximado de sus proveedores ha sido evaluado con criterios ambientales?",
+            help: "Si no ha evaluado ninguno, indique 0 — reportar el punto de partida es transparencia válida." }
+        ]},
+      t406: { gri: "GRI 406", name: "No discriminación", icon: "🤲",
+        questions: [
+          { id: "t406_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Qué mecanismos tiene su organización para prevenir y atender casos de discriminación?",
+            help: "Mencione políticas, canales de denuncia, comités de convivencia laboral (obligatorio en Colombia) y capacitaciones." },
+          { id: "t406_casos", type: "number", unit: "casos", gri: "GRI 406-1",
+            text: "¿Cuántos casos de discriminación se presentaron en el periodo?",
+            help: "Si no hubo, indique 0. Incluya los casos gestionados por el comité de convivencia o canal de denuncias." }
+        ]},
+      t414: { gri: "GRI 414", name: "Evaluación social de proveedores", icon: "🧾",
+        questions: [
+          { id: "t414_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Evalúa su organización las prácticas laborales y sociales de sus proveedores? ¿Cómo?",
+            help: "Ejemplos: verificación de seguridad social de contratistas, cláusulas de cumplimiento laboral, visitas a proveedores críticos." },
+          { id: "t414_pct", type: "number", unit: "%", gri: "GRI 414-1",
+            text: "¿Qué porcentaje aproximado de sus proveedores ha sido evaluado con criterios sociales?",
+            help: "Si no ha evaluado ninguno, indique 0." }
+        ]},
+      t416: { gri: "GRI 416", name: "Salud y seguridad de los clientes", icon: "🛡️",
+        questions: [
+          { id: "t416_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo garantiza su organización que sus productos o servicios no representen riesgos para la salud o seguridad de sus clientes?",
+            help: "Mencione controles de calidad, certificaciones (INVIMA, ISO, etc.), protocolos de servicio o análisis de riesgos del producto." },
+          { id: "t416_incidentes", type: "number", unit: "incidentes", gri: "GRI 416-2",
+            text: "¿Cuántos incidentes por impactos de sus productos/servicios en la salud o seguridad de clientes se presentaron en el periodo?",
+            help: "Si no hubo, indique 0." }
+        ]},
+      t417: { gri: "GRI 417", name: "Marketing y etiquetado", icon: "🏷️",
+        questions: [
+          { id: "t417_enfoque", type: "textarea", gri: "GRI 3-3",
+            text: "¿Cómo asegura su organización que su publicidad y la información de sus productos/servicios sea veraz y completa?",
+            help: "Relevante para evitar greenwashing: ¿sus afirmaciones ambientales y de sostenibilidad están respaldadas? ¿el etiquetado cumple la normativa?" },
+          { id: "t417_incumplimientos", type: "number", unit: "casos", gri: "GRI 417-3",
+            text: "¿Cuántos incumplimientos relacionados con comunicaciones de marketing se presentaron en el periodo?",
+            help: "Sanciones o reclamos formales por publicidad engañosa. Si no hubo, indique 0." }
+        ]},
       t418: { gri: "GRI 418", name: "Privacidad del cliente", icon: "🔐",
         questions: [
           { id: "t418_enfoque", type: "textarea", gri: "GRI 3-3",
@@ -592,13 +664,17 @@
         text: "¿Cuáles de estas políticas o compromisos tiene formalizados la organización? Seleccione todos los que apliquen." },
 
       // ── Módulo 3: Materialidad ──
+      { module: "m3", id: "mat_stakeholders", type: "chips-multi", gri: "GRI 2-29", max: 12,
+        options: ["Clientes", "Empleados y colaboradores", "Proveedores y contratistas", "Comunidades locales", "Accionistas / inversionistas", "Gobierno y entes reguladores", "Gremios y aliados estratégicos", "Academia y centros de investigación", "ONG y sociedad civil", "Medios de comunicación", "Banca y aseguradoras", "Competidores del sector"],
+        text: "Antes de definir los temas materiales, identifiquemos a sus grupos de interés: ¿cuáles de estos actores se relacionan con su organización o se ven afectados por su operación? Seleccione todos los que apliquen.",
+        help: "Los grupos de interés (stakeholders) son la base del análisis de materialidad GRI: los temas relevantes son los que importan a estos actores y donde su operación genera impactos. Piense en quién le compra, quién trabaja con usted, quién lo regula y quién convive con su operación." },
       { module: "m3", id: "mat_proceso", type: "select", gri: "GRI 3-1",
         options: ["Consultamos a clientes, empleados u otros grupos de interés", "Lo definió internamente el equipo directivo", "Nos basamos en los temas típicos de nuestro sector", "Es la primera vez que hacemos este análisis"],
         text: "Para definir los temas materiales de su reporte: ¿cómo identificó su organización los temas de sostenibilidad más relevantes?",
         help: "No hay respuesta incorrecta. GRI pide transparencia sobre el proceso, no un método específico. Este reporte documentará el método que usted indique." },
-      { module: "m3", id: "mat_temas", type: "chips-topics", gri: "GRI 3-2", min: 3, max: 6,
-        text: "Seleccione entre 3 y 6 temas materiales — los más relevantes para su negocio y sus grupos de interés. Para cada uno le pediré información específica.",
-        help: "Elija los temas donde su organización tiene mayores impactos (positivos o negativos) o los que más le exigen sus clientes y stakeholders. Menos temas bien reportados vale más que muchos temas superficiales." },
+      { module: "m3", id: "mat_temas", type: "chips-topics", gri: "GRI 3-2", min: 3, max: 8,
+        text: "Seleccione entre 3 y 8 temas materiales — los más relevantes para su negocio y los grupos de interés que acaba de identificar. Para cada uno le pediré información específica.",
+        help: "Elija los temas donde su organización tiene mayores impactos (positivos o negativos) o los que más le exigen sus grupos de interés. Menos temas bien reportados vale más que muchos temas superficiales." },
 
       // ── Módulo 5 (cierre) se agrega dinámicamente después de los temas ──
     ];
@@ -834,6 +910,7 @@
         sector: A("org_sector", ""),
         ubicacion: A("org_ubicacion", ""),
         empleados: A("org_empleados", ""),
+        gruposInteres: state.answers["mat_stakeholders"] || [],
         temasMateriales: selected.map(tid => ({ id: tid, nombre: TOPICS[tid].name, gri: TOPICS[tid].gri }))
       };
 
@@ -1394,6 +1471,7 @@
         ["GRI 2-13", "Delegación de la gestión de impactos", "Gobernanza"],
         ["GRI 2-22", "Declaración sobre la estrategia de desarrollo sostenible", "Mensaje de la dirección"],
         ["GRI 2-23", "Compromisos y políticas", "Gobernanza"],
+        ["GRI 2-29", "Enfoque de participación de los grupos de interés", "Análisis de materialidad"],
         ["GRI 3-1", "Proceso de determinación de temas materiales", "Análisis de materialidad"],
         ["GRI 3-2", "Lista de temas materiales", "Análisis de materialidad"],
         ...selected.flatMap(tid => {
@@ -1451,6 +1529,11 @@
         ${politicasHtml}
 
         <h2 class="r-section">Análisis de materialidad</h2>
+        <h3>Grupos de interés (GRI 2-29)</h3>
+        <p>La organización ha identificado los siguientes grupos de interés como actores relevantes de su operación y de su gestión sostenible:</p>
+        ${Array.isArray(state.answers["mat_stakeholders"]) && state.answers["mat_stakeholders"].length
+          ? `<ul>${state.answers["mat_stakeholders"].map(g => `<li>${esc(g)}</li>`).join("")}</ul>`
+          : `<p>La identificación formal de grupos de interés fue reconocida como una oportunidad de mejora para el próximo ciclo de reporte.</p>`}
         <h3>Proceso de determinación (GRI 3-1)</h3>
         <p>Para la determinación de los temas materiales de este reporte, la organización siguió el siguiente proceso: <strong>${esc(A("mat_proceso")).toLowerCase()}</strong>. La priorización consideró los impactos de la organización en la economía, el medio ambiente y las personas, así como la relevancia de cada tema para sus grupos de interés.</p>
         <h3>Temas materiales del periodo (GRI 3-2)</h3>
