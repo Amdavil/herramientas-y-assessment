@@ -218,6 +218,28 @@
       padding: 3px 10px; border-radius: 999px; border: 1px solid #dfe5f0; white-space: nowrap;
     }
 
+    /* ── Vista previa (contenido bloqueado) ── */
+    .locked-zone { position: relative; }
+    .locked-zone .locked-content {
+      filter: blur(7px); user-select: none; pointer-events: none; opacity: .75;
+    }
+    .unlock-banner {
+      background: linear-gradient(120deg, var(--navy), var(--teal)); color: #fff;
+      border-radius: 16px; padding: 28px 30px; text-align: center; margin: 30px 0;
+      box-shadow: 0 14px 40px rgba(15,42,68,.3);
+    }
+    .unlock-banner h3 { color: #fff; font-size: 19px; margin: 0 0 8px; }
+    .unlock-banner p { color: rgba(255,255,255,.88); font-size: 13.5px; margin-bottom: 16px; }
+    .unlock-banner button {
+      border: 0; background: #fff; color: var(--navy); font-weight: 800; font-size: 15px;
+      padding: 13px 30px; border-radius: 10px; cursor: pointer; font-family: inherit;
+    }
+    .preview-ribbon {
+      position: fixed; top: 90px; right: -46px; transform: rotate(45deg);
+      background: var(--amber); color: #fff; font-weight: 800; font-size: 12px;
+      letter-spacing: 2px; padding: 8px 60px; z-index: 80; box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    }
+
     @media print {
       .report-toolbar { display: none; }
       body { background: #fff; }
@@ -249,10 +271,12 @@
   <!-- ══ Vista reporte ══ -->
   <div id="reportView">
     <div class="report-toolbar">
-      <button class="primary-tool" onclick="window.print()">🖨️ Descargar PDF / Imprimir</button>
+      <button class="primary-tool" id="printBtn" onclick="window.print()">🖨️ Descargar PDF / Imprimir</button>
+      <button class="primary-tool" id="unlockToolBtn" style="display:none;background:#c8a951;border-color:#c8a951;color:#172033" onclick="backToChat(); openPaywall();">🔓 Desbloquear reporte completo</button>
       <button onclick="backToChat()">← Volver al asistente</button>
       <span style="margin-left:auto;font-size:12px;opacity:.8">Guarde como PDF desde el diálogo de impresión</span>
     </div>
+    <div class="preview-ribbon" id="previewRibbon" style="display:none">VISTA PREVIA</div>
     <div class="report-page" id="reportContent"></div>
   </div>
 
@@ -457,6 +481,57 @@
         text: "Por último: ¿qué correo o contacto debe aparecer en el reporte para preguntas sobre su contenido?",
         help: "GRI 2-3 requiere un punto de contacto. Usualmente el correo corporativo del responsable de sostenibilidad." }
     ];
+
+    // ═══════════════ PAGO Y ACCESO ═══════════════
+    // Cuando exista la cuenta PayPal Business, poner aquí el Client ID (Developer Dashboard → Apps & Credentials)
+    const PAY = {
+      price: "25.00",
+      currency: "USD",
+      priceLabel: "USD $25",
+      paypalClientId: ""  // ← vacío = solo códigos de acceso; con Client ID se activan los botones PayPal
+    };
+    // Hashes SHA-256 de los códigos de acceso válidos (los códigos en texto plano NO están aquí)
+    const ACCESS_HASHES = new Set([
+      "f866394a29fd4b8dfebce591d8d188fd11981bbccbf0bd61ec411b99ffebd0db",
+      "f9fafed782d74855a40cf3332e7d287263f6e9f0ccb135ba7765f4bcea943bc0",
+      "dbfdde2a3b4210bc707cbd5b8bdcd4ade086d074450aa436317d0d1b7705cafd",
+      "517e32b678f716f1aac54fa24b53b65d21d7e9db86210d970834818c90344d77",
+      "26dad7c625187526fdb4e5ae1afea711df1000601bcd7593d7f1f549ed98c684",
+      "05dc33f50f97632b961cd6b78d7dad33fca04547ee78240e81729e5c79921e91",
+      "e0d8f4e3d91fcc9ac71be05ed3684c653c30ac2236fd01366eaba9a69ea27d7d",
+      "cf3b74a528b57fcfdb9a6e4d8ada733ab7d61dff2628684e02de0461ba9143d4",
+      "887982371bea9a4fea03561a923152a8fb8ad7cd383a4325f2439f14291be2a3",
+      "a21a03e77116a8ebc0702ab915c18f4b7fabc8a55889f703249ddd749bb187d4",
+      "736a57100c652627c8e701c4182d12249cdf161ac943b0229d40371cde5a7a5f",
+      "0fb6baa47cfaf3eee41e0f237cfb9284f4b77459e375e912ebd94dccb4f712f0",
+      "0cbf636f467e0b50e3f41715744b0c673f0fd06e3429fbc731f15b34dc80df3d",
+      "2c011833e5613d83b7b51edb4f29d7fbc13ea2a6f52c1f41bed7c40f91c8ee66",
+      "a17f08dec8eb21ee953f8d5bc613a005121872372da7b0a076d01b10494551be"
+    ]);
+    const ACCESS_KEY = "gri-access-v1";
+
+    function hasAccess() { return localStorage.getItem(ACCESS_KEY) === "granted"; }
+    function grantAccess() { localStorage.setItem(ACCESS_KEY, "granted"); }
+
+    async function sha256(text) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function tryAccessCode(raw, feedbackEl) {
+      const code = raw.trim().toUpperCase();
+      if (!code) return;
+      const h = await sha256(code);
+      if (ACCESS_HASHES.has(h)) {
+        grantAccess();
+        feedbackEl.style.color = "var(--teal)";
+        feedbackEl.textContent = "✓ Código válido. Generando su reporte completo...";
+        setTimeout(() => generateReport(false), 900);
+      } else {
+        feedbackEl.style.color = "var(--red)";
+        feedbackEl.textContent = "✗ Código no válido. Verifique e intente de nuevo.";
+      }
+    }
 
     // ═══════════════ ESTADO ═══════════════
     const STORAGE_KEY = "gri-express-v1";
@@ -743,10 +818,82 @@
         <p>Su reporte incluye el perfil de la organización, la declaración de la dirección, el análisis de materialidad con ${(state.answers["mat_temas"] || []).length} temas materiales, los contenidos de cada tema y el índice de contenidos GRI.</p>
         <p>Puede revisarlo, imprimirlo o guardarlo como PDF. Si desea corregir algo, puede volver al asistente.</p>`, 800);
       dock.style.display = "block";
+      renderFinishDock();
+    }
+
+    function renderFinishDock() {
+      if (hasAccess()) {
+        dockInner.innerHTML = `
+          <div class="dock-row" style="justify-content:center">
+            <button class="send" style="font-size:16px;padding:15px 34px" onclick="generateReport(false)">📄 Generar mi Reporte GRI Express</button>
+          </div>`;
+        return;
+      }
       dockInner.innerHTML = `
-        <div class="dock-row" style="justify-content:center">
-          <button class="send" style="font-size:16px;padding:15px 34px" onclick="generateReport()">📄 Generar mi Reporte GRI Express</button>
+        <div style="text-align:center;padding:4px 0 2px">
+          <div class="dock-row" style="justify-content:center;gap:12px;flex-wrap:wrap">
+            <button class="send" style="background:#fff;color:var(--navy);border:2px solid var(--line)" onclick="generateReport(true)">👁 Ver vista previa gratis</button>
+            <button class="send" style="font-size:15px" onclick="openPaywall()">🔓 Desbloquear reporte completo — ${PAY.priceLabel}</button>
+          </div>
         </div>`;
+    }
+
+    // ═══════════════ PAYWALL ═══════════════
+    function openPaywall() {
+      dock.style.display = "block";
+      dockInner.innerHTML = `
+        <div style="max-width:560px;margin:0 auto">
+          <div style="font-size:14.5px;font-weight:700;color:var(--navy);margin-bottom:4px">Desbloquear el Reporte GRI Express completo · ${PAY.priceLabel}</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:12px">
+            Incluye: reporte completo descargable en PDF, índice de contenidos GRI, todos los capítulos por tema material y uso comercial del documento. Pago único por organización.
+          </div>
+          <div id="paypalZone"></div>
+          <div style="font-size:12.5px;color:var(--muted);margin:10px 0 6px">${PAY.paypalClientId ? "¿Prefiere otro medio de pago o ya tiene un código?" : "¿Cómo obtener acceso?"} Escríbanos a <a href="mailto:projectability.pal@gmail.com?subject=Acceso%20Reporte%20GRI%20Express" style="color:var(--teal);font-weight:600">projectability.pal@gmail.com</a> y le enviaremos su código tras confirmar el pago.</div>
+          <div class="dock-row" style="margin-top:8px">
+            <input type="text" id="accessCodeInput" placeholder="Código de acceso (ej. PAL-XXXX-XXXX)" style="text-transform:uppercase">
+            <button class="send" id="accessCodeBtn">Validar</button>
+          </div>
+          <div id="accessFeedback" style="font-size:12.5px;font-weight:600;margin-top:8px;min-height:16px"></div>
+          <button class="skip" onclick="renderFinishDock()">← Volver</button>
+        </div>`;
+
+      const input = document.getElementById("accessCodeInput");
+      const btn = document.getElementById("accessCodeBtn");
+      const fb = document.getElementById("accessFeedback");
+      btn.onclick = () => tryAccessCode(input.value, fb);
+      input.addEventListener("keydown", e => { if (e.key === "Enter") btn.click(); });
+
+      if (PAY.paypalClientId) loadPayPal();
+      else document.getElementById("paypalZone").innerHTML =
+        `<div style="background:#f0f5f9;border:1px dashed var(--line);border-radius:10px;padding:12px;text-align:center;font-size:12.5px;color:var(--muted)">💳 Pago en línea con tarjeta/PayPal disponible próximamente</div>`;
+    }
+
+    function loadPayPal() {
+      const zone = document.getElementById("paypalZone");
+      zone.innerHTML = `<div id="paypalButtons"></div>`;
+      const render = () => {
+        window.paypal.Buttons({
+          style: { layout: "horizontal", color: "blue", label: "pay", height: 42, tagline: false },
+          createOrder: (data, actions) => actions.order.create({
+            purchase_units: [{
+              description: "Reporte GRI Express — Projectability",
+              amount: { value: PAY.price, currency_code: PAY.currency }
+            }]
+          }),
+          onApprove: (data, actions) => actions.order.capture().then(() => {
+            grantAccess();
+            generateReport(false);
+          }),
+          onError: () => {
+            document.getElementById("accessFeedback").textContent = "Hubo un problema con el pago. Intente de nuevo o use un código de acceso.";
+          }
+        }).render("#paypalButtons");
+      };
+      if (window.paypal) return render();
+      const s = document.createElement("script");
+      s.src = `https://www.paypal.com/sdk/js?client-id=${PAY.paypalClientId}&currency=${PAY.currency}`;
+      s.onload = render;
+      document.head.appendChild(s);
     }
 
     function backToChat() {
@@ -760,7 +907,7 @@
       return (v === undefined || v === "" ) ? fallback : v;
     }
 
-    function generateReport() {
+    function generateReport(preview = !hasAccess()) {
       const selected = state.answers["mat_temas"] || [];
       const periodo = A("org_periodo", "Periodo no especificado");
       const nombre = A("org_nombre", "La organización");
@@ -855,6 +1002,14 @@
         <h3>Temas materiales del periodo (GRI 3-2)</h3>
         <ul>${selected.map(tid => `<li><strong>${TOPICS[tid].icon} ${TOPICS[tid].name}</strong> (${TOPICS[tid].gri})</li>`).join("")}</ul>
 
+        ${preview ? `
+        <div class="unlock-banner">
+          <h3>🔓 Su reporte completo está listo</h3>
+          <p>Los capítulos de sus ${selected.length} temas materiales, los indicadores, el índice de contenidos GRI y la descarga en PDF se desbloquean con el acceso completo (${PAY.priceLabel}, pago único).</p>
+          <button onclick="backToChat(); openPaywall();">Desbloquear reporte completo — ${PAY.priceLabel}</button>
+        </div>
+        <div class="locked-zone"><div class="locked-content">` : ""}
+
         ${topicChapters}
 
         <h2 class="r-section">Logros y compromisos</h2>
@@ -872,7 +1027,13 @@
 
         <div class="r-notice">
           <strong>Alcance y limitaciones:</strong> este reporte fue elaborado bajo la opción "con referencia a los Estándares GRI" (GRI 1: Fundamentos 2021) mediante la herramienta Reporte GRI Express de Projectability. La información fue suministrada y es responsabilidad de ${esc(nombre)}. El reporte no ha sido objeto de verificación externa independiente. Los datos estimados se identifican como tales en el texto. Este documento constituye un primer ejercicio de transparencia y rendición de cuentas, y una base para la mejora continua del proceso de reporte de la organización.
-        </div>`;
+        </div>
+        ${preview ? "</div></div>" : ""}`;
+
+      // Toolbar según modo
+      document.getElementById("printBtn").style.display = preview ? "none" : "inline-block";
+      document.getElementById("unlockToolBtn").style.display = preview ? "inline-block" : "none";
+      document.getElementById("previewRibbon").style.display = preview ? "block" : "none";
 
       document.getElementById("appView").style.display = "none";
       document.getElementById("reportView").style.display = "block";
