@@ -218,6 +218,64 @@
       padding: 3px 10px; border-radius: 999px; border: 1px solid #dfe5f0; white-space: nowrap;
     }
 
+    /* ── Navegación y mapa de avance ── */
+    .topbar .map-btn {
+      border: 1px solid rgba(255,255,255,.45); background: rgba(255,255,255,.12); color: #fff;
+      padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+      font-family: inherit; white-space: nowrap;
+    }
+    .topbar .map-btn:hover { background: rgba(255,255,255,.22); }
+    .progress-label { font-size: 11.5px; opacity: .95; white-space: nowrap; }
+
+    .nav-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .nav-btn {
+      border: 1.5px solid var(--line); background: #fff; color: var(--muted);
+      padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all .15s;
+    }
+    .nav-btn:hover:not(:disabled) { border-color: var(--teal); color: var(--teal); }
+    .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .nav-btn.map-trigger { margin-left: auto; }
+
+    .map-overlay {
+      position: fixed; inset: 0; background: rgba(14,32,52,.55); z-index: 100;
+      display: none; justify-content: flex-end;
+    }
+    .map-overlay.open { display: flex; }
+    .map-panel {
+      background: #fff; width: 100%; max-width: 430px; height: 100%;
+      overflow-y: auto; padding: 22px 20px 40px; box-shadow: -12px 0 40px rgba(0,0,0,.25);
+      animation: slideIn .25s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .map-panel h3 { color: var(--navy); font-size: 17px; margin-bottom: 4px; }
+    .map-panel .map-sub { font-size: 12.5px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+    .map-close {
+      float: right; border: 0; background: var(--soft); border-radius: 8px; width: 32px; height: 32px;
+      font-size: 15px; cursor: pointer; color: var(--muted);
+    }
+    .map-module { margin-bottom: 14px; }
+    .map-module-title {
+      font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--teal); padding: 8px 2px 6px; border-bottom: 2px solid #e3edec; margin-bottom: 6px;
+    }
+    .map-item {
+      display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+      border: 0; background: none; padding: 8px 8px; border-radius: 8px; cursor: pointer;
+      font-family: inherit; font-size: 13px; color: var(--ink); transition: background .12s;
+    }
+    .map-item:hover { background: #f0f7f6; }
+    .map-item.current { background: #e8f4f2; outline: 1.5px solid var(--teal); }
+    .map-item .st { font-size: 14px; width: 20px; flex-shrink: 0; text-align: center; }
+    .map-item .st.done { color: var(--teal); }
+    .map-item .st.pending { color: #c3ccd6; }
+    .map-item .map-q { flex: 1; line-height: 1.35; }
+    .map-item .map-gri { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+    .map-pending-note {
+      background: var(--soft); border: 1px dashed var(--line); border-radius: 10px;
+      padding: 12px; font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 6px;
+    }
+
     /* ── Vista previa (contenido bloqueado) ── */
     .locked-zone { position: relative; }
     .locked-zone .locked-content {
@@ -260,11 +318,23 @@
     <div class="topbar">
       <div class="logo">🌱 Reporte GRI Express <span>· by Projectability</span></div>
       <div class="module-indicator" id="moduleIndicator"></div>
+      <div class="progress-label" id="progressLabel"></div>
+      <button class="map-btn" id="mapBtn" onclick="openMap()" style="display:none">🗺 Mapa de avance</button>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="wrap" id="chat"></div>
     <div class="dock" id="dock" style="display:none">
       <div class="dock-inner" id="dockInner"></div>
+    </div>
+  </div>
+
+  <!-- ══ Mapa de avance ══ -->
+  <div class="map-overlay" id="mapOverlay" onclick="if(event.target===this) closeMap()">
+    <div class="map-panel">
+      <button class="map-close" onclick="closeMap()">✕</button>
+      <h3>🗺 Mapa de avance</h3>
+      <div class="map-sub">Haga clic en cualquier pregunta para ir a ella — puede corregir respuestas anteriores o adelantarse. Su avance se guarda automáticamente.</div>
+      <div id="mapBody"></div>
     </div>
   </div>
 
@@ -598,16 +668,100 @@
       requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
     }
 
+    function answeredCount() {
+      return steps.filter(s => state.answers[s.id] !== undefined).length;
+    }
+
     function updateProgress() {
-      const total = steps.length || BASE_STEPS.length + 12;
-      const pct = Math.max(0, Math.min(100, (stepIndex / total) * 100));
+      const total = steps.length || BASE_STEPS.length;
+      const done = answeredCount();
+      const pct = Math.max(0, Math.min(100, (done / total) * 100));
       document.getElementById("progressFill").style.width = pct + "%";
+      const suffix = state.answers["mat_temas"] ? "" : "+";
+      document.getElementById("progressLabel").textContent = `${done} de ${total}${suffix} · ${Math.round(pct)}%`;
       const step = steps[stepIndex];
       if (step) {
         const mod = MODULES.find(m => m.id === step.module);
         const num = MODULES.findIndex(m => m.id === step.module) + 1;
         document.getElementById("moduleIndicator").textContent = `Módulo ${num}/${MODULES.length} · ${mod.name}`;
       }
+      document.getElementById("mapBtn").style.display = stepIndex >= 0 ? "inline-block" : "none";
+    }
+
+    // ═══════════════ MAPA DE AVANCE ═══════════════
+    function shortLabel(s) {
+      if (s.topicId) {
+        const t = TOPICS[s.topicId];
+        const isEnfoque = s.id.endsWith("_enfoque");
+        return `${t.icon} ${t.name} — ${isEnfoque ? "enfoque de gestión" : "indicador"}`;
+      }
+      const txt = s.text.replace(/^[¿?]/, "");
+      return txt.length > 58 ? txt.slice(0, 56) + "…" : txt;
+    }
+
+    function openMap() {
+      const body = document.getElementById("mapBody");
+      let html = "";
+      MODULES.forEach((mod, mi) => {
+        const modSteps = steps.map((s, i) => ({ s, i })).filter(x => x.s.module === mod.id);
+        if (!modSteps.length) {
+          if (mod.id === "m4" || mod.id === "m5") {
+            html += `<div class="map-module"><div class="map-module-title">Módulo ${mi + 1} · ${mod.name}</div>
+              <div class="map-pending-note">🔒 Se habilita al seleccionar sus temas materiales en el Módulo 3.</div></div>`;
+          }
+          return;
+        }
+        html += `<div class="map-module"><div class="map-module-title">Módulo ${mi + 1} · ${mod.name}</div>`;
+        modSteps.forEach(({ s, i }) => {
+          const done = state.answers[s.id] !== undefined;
+          const current = i === stepIndex;
+          html += `<button class="map-item ${current ? "current" : ""}" onclick="jumpToStep(${i})">
+            <span class="st ${done ? "done" : "pending"}">${done ? "✔" : "○"}</span>
+            <span class="map-q">${esc(shortLabel(s))}</span>
+            <span class="map-gri">${s.gri || ""}</span>
+          </button>`;
+        });
+        html += `</div>`;
+      });
+      const pending = steps.length - answeredCount();
+      html += `<div class="map-pending-note">${pending === 0
+        ? "✅ Todas las preguntas están respondidas. Puede generar su reporte al final de la conversación."
+        : `Le faltan <strong>${pending}</strong> pregunta${pending === 1 ? "" : "s"} por responder.`}</div>`;
+      body.innerHTML = html;
+      document.getElementById("mapOverlay").classList.add("open");
+    }
+
+    function closeMap() {
+      document.getElementById("mapOverlay").classList.remove("open");
+    }
+
+    function jumpToStep(i) {
+      closeMap();
+      goToStep(i, true);
+    }
+
+    function rebuildTranscript(upTo) {
+      chat.innerHTML = "";
+      lastModule = null;
+      for (let k = 0; k < upTo; k++) {
+        if (state.answers[steps[k].id] !== undefined) renderPastStep(steps[k]);
+      }
+    }
+
+    function firstUnansweredFrom(i) {
+      for (let k = Math.max(0, i); k < steps.length; k++) {
+        if (state.answers[steps[k].id] === undefined) return k;
+      }
+      return steps.length;
+    }
+
+    async function goToStep(i, rebuild = false) {
+      if (i >= steps.length) { stepIndex = steps.length; save(); updateProgress(); return renderFinish(); }
+      stepIndex = i;
+      save();
+      updateProgress();
+      if (rebuild) rebuildTranscript(i);
+      await presentStep(steps[i]);
     }
 
     // ═══════════════ BIENVENIDA ═══════════════
@@ -621,9 +775,18 @@
           <p>Le haré preguntas en lenguaje claro, una a la vez, con ayudas para encontrar cada dato. Al final generará un <strong>reporte de sostenibilidad profesional y descargable</strong>, elaborado <strong>con referencia a los Estándares GRI 2021</strong> — el marco de reporte más utilizado del mundo.</p>
           <div class="hero-meta">
             <span>⏱ 30–45 minutos</span>
-            <span>💾 Su avance se guarda solo</span>
+            <span>💾 Guardado automático</span>
             <span>📄 PDF profesional al final</span>
             <span>🔒 Sus datos no salen de su navegador</span>
+          </div>
+          <div style="background:#f0f7f6;border:1px solid #cfe5e2;border-radius:12px;padding:14px 18px;text-align:left;margin-bottom:18px">
+            <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--teal);margin-bottom:8px">Cómo funciona</div>
+            <ul style="margin:0 0 0 18px;font-size:13px;color:#3e5c58;line-height:1.7">
+              <li><strong>Guardado automático:</strong> cada respuesta se guarda al instante en este navegador. Puede cerrar y volver cuando quiera — <strong>use el mismo dispositivo y navegador</strong> para retomar (no use modo incógnito).</li>
+              <li><strong>Navegación libre:</strong> puede <strong>omitir preguntas</strong> y responderlas después, o <strong>volver atrás</strong> para corregir cualquier respuesta.</li>
+              <li><strong>🗺 Mapa de avance:</strong> disponible siempre en la parte superior — muestra qué ha respondido y qué falta, y le permite saltar a cualquier pregunta.</li>
+              <li><strong>Barra de progreso:</strong> arriba verá cuántas preguntas lleva y el porcentaje completado.</li>
+            </ul>
           </div>
           <div class="disclaimer-box">
             <strong>Claridad metodológica importante:</strong> este reporte se elabora bajo la opción <strong>"con referencia a los Estándares GRI"</strong> (GRI 1: Fundamentos 2021), adecuada para organizaciones que inician su camino de reporte. No constituye un reporte "de conformidad con" los Estándares GRI (que exige la totalidad de contenidos obligatorios), ni ha sido verificado por un tercero independiente. Es una base sólida y honesta para licitaciones, clientes corporativos y mejora continua — y así lo declara en su texto.
@@ -648,17 +811,7 @@
 
     function resumeSession() {
       buildSteps();
-      chat.innerHTML = "";
-      lastModule = null;
-      // Reconstruir conversación previa de forma compacta
-      let idx = 0;
-      for (; idx < steps.length; idx++) {
-        const s = steps[idx];
-        if (state.answers[s.id] === undefined) break;
-        renderPastStep(s);
-      }
-      stepIndex = idx - 1;
-      nextStep();
+      goToStep(firstUnansweredFrom(0), true);
     }
 
     function renderPastStep(s) {
@@ -684,17 +837,12 @@
 
     // ═══════════════ MOTOR DE PASOS ═══════════════
     async function nextStep() {
-      stepIndex++;
-      save();
-      updateProgress();
+      // Avanza a la siguiente pregunta sin responder a partir de la posición actual
+      const next = firstUnansweredFrom(stepIndex + 1);
+      await goToStep(next, false);
+    }
 
-      if (stepIndex >= steps.length) {
-        if (steps.length && state.answers["mat_temas"]) return renderFinish();
-        return;
-      }
-
-      const s = steps[stepIndex];
-
+    async function presentStep(s) {
       // Tarjeta de módulo al cambiar de módulo
       if (s.module !== lastModule) {
         const mod = MODULES.find(m => m.id === s.module);
@@ -711,35 +859,43 @@
         if (firstOfTopic) topicIntro = `<p><strong>${t.icon} Ahora hablemos de: ${t.name}</strong> <span class="gri-tag" style="margin-top:0">${t.gri}</span></p>`;
       }
 
-      const html = `${topicIntro}<p>${esc(s.text)}</p>${s.help ? `<div class="help">💡 ${esc(s.help)}</div>` : ""}${s.gri && !topicIntro ? `<span class="gri-tag">${s.gri}</span>` : ""}`;
+      const editing = state.answers[s.id] !== undefined;
+      const editNote = editing ? `<p style="font-size:12.5px;color:var(--amber);font-weight:600">✏️ Está editando una respuesta anterior — la actual aparece precargada abajo.</p>` : "";
+      const html = `${topicIntro}${editNote}<p>${esc(s.text)}</p>${s.help ? `<div class="help">💡 ${esc(s.help)}</div>` : ""}${s.gri && !topicIntro ? `<span class="gri-tag">${s.gri}</span>` : ""}`;
       await addPalMessage(html, stepIndex === 0 ? 400 : 650);
       renderDock(s);
     }
 
     function renderDock(s) {
       dock.style.display = "block";
-      let inner = "";
+      const navRow = `
+        <div class="nav-row">
+          <button class="nav-btn" onclick="goBack()" ${stepIndex === 0 ? "disabled" : ""}>← Anterior</button>
+          <button class="nav-btn" onclick="skipForward()">Omitir por ahora →</button>
+          <button class="nav-btn map-trigger" onclick="openMap()">🗺 Mapa</button>
+        </div>`;
+      let inner = navRow;
+
+      const prev = state.answers[s.id];
 
       if (s.type === "text" || s.type === "number") {
-        inner = `
+        inner += `
           <div class="dock-row">
             <input type="${s.type}" id="dockInput" placeholder="${s.type === "number" ? "Escriba el valor" + (s.unit ? " en " + s.unit : "") : "Escriba su respuesta..."}" ${s.type === "number" ? 'min="0" step="any"' : ""}>
             <button class="send" id="dockSend">Enviar</button>
-          </div>
-          <button class="skip" id="dockSkip">Prefiero omitir este dato por ahora</button>`;
+          </div>`;
       } else if (s.type === "textarea") {
-        inner = `
+        inner += `
           <div class="dock-row">
             <textarea id="dockInput" placeholder="Escriba con sus palabras — PAL le dará formato en el reporte..."></textarea>
             <button class="send" id="dockSend">Enviar</button>
-          </div>
-          <button class="skip" id="dockSkip">Prefiero omitir este dato por ahora</button>`;
+          </div>`;
       } else if (s.type === "select") {
-        inner = `
+        inner += `
           <div class="dock-row">
             <select id="dockInput">
-              <option value="" disabled selected>Seleccione una opción...</option>
-              ${s.options.map(o => `<option>${esc(o)}</option>`).join("")}
+              <option value="" disabled ${prev === undefined ? "selected" : ""}>Seleccione una opción...</option>
+              ${s.options.map(o => `<option ${prev === o ? "selected" : ""}>${esc(o)}</option>`).join("")}
             </select>
             <button class="send" id="dockSend">Enviar</button>
           </div>`;
@@ -747,12 +903,13 @@
         const opts = s.type === "chips-topics"
           ? Object.entries(TOPICS).map(([k, t]) => ({ v: k, label: `${t.icon} ${t.name}` }))
           : s.options.map(o => ({ v: o, label: o }));
-        inner = `
+        const prevArr = Array.isArray(prev) ? prev : [];
+        inner += `
           <div class="chips" id="chipsBox">
-            ${opts.map(o => `<button class="chip" data-v="${esc(o.v)}">${esc(o.label)}</button>`).join("")}
+            ${opts.map(o => `<button class="chip ${prevArr.includes(o.v) ? "selected" : ""}" data-v="${esc(o.v)}">${esc(o.label)}</button>`).join("")}
           </div>
           <div class="chips-actions">
-            <button class="send" id="dockSend" disabled>Confirmar selección</button>
+            <button class="send" id="dockSend" ${prevArr.length ? "" : "disabled"}>Confirmar selección</button>
             <span class="chips-count" id="chipsCount">${s.min ? `Seleccione entre ${s.min} y ${s.max}` : "Seleccione los que apliquen"}</span>
           </div>`;
       }
@@ -764,7 +921,7 @@
       const input = document.getElementById("dockInput");
 
       if (s.type === "chips-multi" || s.type === "chips-topics") {
-        const selected = new Set();
+        const selected = new Set(Array.isArray(prev) ? prev : []);
         document.querySelectorAll("#chipsBox .chip").forEach(chip => {
           chip.onclick = () => {
             const v = chip.dataset.v;
@@ -780,6 +937,8 @@
         });
         sendBtn.onclick = () => submitAnswer(s, [...selected]);
       } else {
+        // Precargar respuesta existente para edición
+        if (prev !== undefined && s.type !== "select") input.value = prev;
         sendBtn.onclick = () => {
           const v = input.value.trim();
           if (!v) { input.focus(); return; }
@@ -789,34 +948,81 @@
           if (e.key === "Enter" && s.type !== "textarea") { e.preventDefault(); sendBtn.click(); }
           if (e.key === "Enter" && e.ctrlKey && s.type === "textarea") sendBtn.click();
         });
-        const skipBtn = document.getElementById("dockSkip");
-        if (skipBtn) skipBtn.onclick = () => submitAnswer(s, "Información no disponible en este periodo");
         setTimeout(() => input.focus(), 100);
       }
     }
 
+    function goBack() {
+      if (stepIndex <= 0) return;
+      goToStep(stepIndex - 1, true);
+    }
+
+    function skipForward() {
+      const s = steps[stepIndex];
+      addUserMessage("⏭ (pregunta omitida por ahora — puede volver desde el mapa)");
+      dock.style.display = "none";
+      // Buscar la siguiente pregunta (respondida o no) hacia adelante
+      if (stepIndex + 1 < steps.length) {
+        const next = firstUnansweredFrom(stepIndex + 1);
+        setTimeout(() => goToStep(next, false), 250);
+      } else {
+        setTimeout(() => goToStep(steps.length, false), 250);
+      }
+    }
+
     function submitAnswer(s, value) {
+      const wasEdit = state.answers[s.id] !== undefined;
       state.answers[s.id] = value;
       dock.style.display = "none";
       const display = Array.isArray(value)
         ? value.map(v => TOPICS[v] ? `${TOPICS[v].icon} ${TOPICS[v].name}` : v).join(", ")
-        : String(value) + (s.unit && value !== "Información no disponible en este periodo" ? " " + s.unit : "");
+        : String(value) + (s.unit ? " " + s.unit : "");
       addUserMessage(display);
 
       // Si acaba de definir los temas materiales, reconstruir el flujo
       if (s.id === "mat_temas") buildSteps();
       save();
-      setTimeout(nextStep, 300);
+      setTimeout(() => {
+        const next = firstUnansweredFrom(wasEdit ? 0 : stepIndex + 1);
+        goToStep(next, wasEdit);
+      }, 300);
     }
 
     // ═══════════════ CIERRE Y REPORTE ═══════════════
     async function renderFinish() {
       updateProgress();
-      document.getElementById("progressFill").style.width = "100%";
+      if (!state.answers["mat_temas"]) {
+        await addPalMessage(`
+          <p>Hemos llegado al final del recorrido, pero aún <strong>no ha seleccionado sus temas materiales</strong> (Módulo 3) — sin ellos no puedo construir los capítulos del reporte.</p>
+          <p>Use el <strong>🗺 Mapa de avance</strong> para ir a esa pregunta.</p>`, 700);
+        dock.style.display = "block";
+        dockInner.innerHTML = `
+          <div class="dock-row" style="justify-content:center">
+            <button class="send" onclick="openMap()">🗺 Abrir mapa de avance</button>
+          </div>`;
+        return;
+      }
+      const pending = steps.filter(s => state.answers[s.id] === undefined).length;
+      if (pending > 0) {
+        await addPalMessage(`
+          <p><strong>Ya casi.</strong> Ha llegado al final del recorrido, pero quedan <strong>${pending} pregunta${pending === 1 ? "" : "s"} sin responder</strong> (las que omitió en el camino).</p>
+          <p>Puede responderlas desde el <strong>🗺 Mapa de avance</strong> — o generar el reporte de una vez: las preguntas sin respuesta aparecerán como <em>"Información no disponible en este periodo"</em>, lo cual es válido en GRI pero hace el reporte menos completo.</p>`, 800);
+        dock.style.display = "block";
+        dockInner.innerHTML = `
+          <div class="dock-row" style="justify-content:center;flex-wrap:wrap;gap:10px">
+            <button class="send" style="background:#fff;color:var(--navy);border:2px solid var(--line)" onclick="openMap()">🗺 Completar preguntas pendientes</button>
+            <button class="send" onclick="finishFlow()">Continuar así al reporte →</button>
+          </div>`;
+        return;
+      }
+      finishFlow();
+    }
+
+    async function finishFlow() {
       await addPalMessage(`
-        <p><strong>🎉 ¡Lo logramos!</strong> Ha completado toda la información necesaria.</p>
+        <p><strong>🎉 ¡Lo logramos!</strong> Ha completado la información de su reporte.</p>
         <p>Su reporte incluye el perfil de la organización, la declaración de la dirección, el análisis de materialidad con ${(state.answers["mat_temas"] || []).length} temas materiales, los contenidos de cada tema y el índice de contenidos GRI.</p>
-        <p>Puede revisarlo, imprimirlo o guardarlo como PDF. Si desea corregir algo, puede volver al asistente.</p>`, 800);
+        <p>Puede revisarlo, imprimirlo o guardarlo como PDF. Si desea corregir algo, use el 🗺 Mapa de avance o el botón "Volver al asistente".</p>`, 800);
       dock.style.display = "block";
       renderFinishDock();
     }
