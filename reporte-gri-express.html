@@ -276,6 +276,41 @@
       padding: 12px; font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 6px;
     }
 
+    /* ── Kit de recolección de datos ── */
+    .kit-check {
+      display: flex; align-items: flex-start; gap: 10px; padding: 8px; border-radius: 8px;
+      cursor: pointer; transition: background .12s; font-size: 13px;
+    }
+    .kit-check:hover { background: #f0f7f6; }
+    .kit-check input { margin-top: 3px; accent-color: var(--teal); width: 15px; height: 15px; flex-shrink: 0; }
+    .kit-check .kc-status { font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+    .kit-check .kc-status.pend { background: #fdf3e3; color: var(--amber); }
+    .kit-check .kc-status.resp { background: #e6f3f1; color: var(--teal); }
+
+    .kit-q {
+      border: 1.5px solid var(--line); border-radius: 12px; padding: 18px 20px;
+      margin-bottom: 18px; page-break-inside: avoid;
+    }
+    .kit-q .kq-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .kit-q .kq-num {
+      background: var(--navy); color: #fff; font-weight: 800; font-size: 12px;
+      width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .kit-q .kq-mod { font-size: 11px; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: .5px; }
+    .kit-q .kq-text { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.5; margin-bottom: 6px; }
+    .kit-q .kq-help { font-size: 12px; color: #3e5c58; background: #f0f7f6; border-left: 3px solid var(--teal); padding: 8px 10px; border-radius: 0 6px 6px 0; margin-bottom: 12px; line-height: 1.5; }
+    .kit-q .kq-answer { border: 1.5px dashed #b8c4d0; border-radius: 8px; min-height: 84px; padding: 8px; margin-bottom: 10px; }
+    .kit-q .kq-answer .kq-answer-label { font-size: 10.5px; color: #98a4b3; font-weight: 700; letter-spacing: 1px; }
+    .kit-q .kq-meta { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+    .kit-q .kq-meta span { border-bottom: 1px solid #c3ccd6; padding: 0 40px 2px 4px; }
+    .kit-instructions {
+      background: #f0f5f9; border: 1px solid #d5e2ec; border-radius: 12px; padding: 16px 20px;
+      font-size: 12.5px; color: #33475c; line-height: 1.65; margin: 18px 0 26px;
+    }
+    .kit-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 3px solid var(--teal); padding-bottom: 14px; flex-wrap: wrap; }
+    .kit-header h1 { font-size: 22px; color: var(--navy); margin: 0; }
+    .kit-header .kit-brand { font-size: 12px; color: var(--muted); text-align: right; line-height: 1.5; }
+
     /* ── Vista previa (contenido bloqueado) ── */
     .locked-zone { position: relative; }
     .locked-zone .locked-content {
@@ -334,8 +369,36 @@
       <button class="map-close" onclick="closeMap()">✕</button>
       <h3>🗺 Mapa de avance</h3>
       <div class="map-sub">Haga clic en cualquier pregunta para ir a ella — puede corregir respuestas anteriores o adelantarse. Su avance se guarda automáticamente.</div>
+      <button class="nav-btn" style="width:100%;margin-bottom:14px;padding:10px" onclick="closeMap(); openKitSelector();">📤 Delegar preguntas a otras áreas</button>
       <div id="mapBody"></div>
     </div>
+  </div>
+
+  <!-- ══ Selector de preguntas a delegar ══ -->
+  <div class="map-overlay" id="kitOverlay" onclick="if(event.target===this) closeKitSelector()">
+    <div class="map-panel">
+      <button class="map-close" onclick="closeKitSelector()">✕</button>
+      <h3>📤 Delegar preguntas</h3>
+      <div class="map-sub">Seleccione las preguntas que desea enviar a otras áreas de su organización. Se generará un documento imprimible para que cada responsable diligencie su parte — usted conserva el control: las respuestas se ingresan aquí, en la aplicación.</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="nav-btn" onclick="kitSelectPending()">Marcar pendientes</button>
+        <button class="nav-btn" onclick="kitSelectNone()">Desmarcar todas</button>
+      </div>
+      <div id="kitBody"></div>
+      <div style="position:sticky;bottom:0;background:#fff;padding:12px 0 4px;border-top:1px solid var(--line);margin-top:10px">
+        <button class="btn-primary" style="width:100%;padding:13px" onclick="generateKit()">Generar documento para delegar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Vista kit de recolección ══ -->
+  <div id="kitView" style="display:none;background:#fff">
+    <div class="report-toolbar">
+      <button class="primary-tool" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+      <button onclick="backFromKit()">← Volver al asistente</button>
+      <span style="margin-left:auto;font-size:12px;opacity:.8">Envíe este documento a las áreas responsables</span>
+    </div>
+    <div class="report-page" id="kitContent"></div>
   </div>
 
   <!-- ══ Vista reporte ══ -->
@@ -738,6 +801,112 @@
     function jumpToStep(i) {
       closeMap();
       goToStep(i, true);
+    }
+
+    // ═══════════════ KIT DE RECOLECCIÓN (delegar preguntas) ═══════════════
+    function openKitSelector() {
+      const body = document.getElementById("kitBody");
+      let html = "";
+      MODULES.forEach((mod, mi) => {
+        const modSteps = steps.map((s, i) => ({ s, i })).filter(x => x.s.module === mod.id);
+        if (!modSteps.length) return;
+        html += `<div class="map-module"><div class="map-module-title">Módulo ${mi + 1} · ${mod.name}</div>`;
+        modSteps.forEach(({ s, i }) => {
+          const done = state.answers[s.id] !== undefined;
+          html += `<label class="kit-check">
+            <input type="checkbox" data-step="${i}" ${done ? "" : "checked"}>
+            <span style="flex:1">${esc(shortLabel(s))}</span>
+            <span class="kc-status ${done ? "resp" : "pend"}">${done ? "respondida" : "pendiente"}</span>
+          </label>`;
+        });
+        html += `</div>`;
+      });
+      body.innerHTML = html || `<div class="map-pending-note">Aún no hay preguntas en el flujo. Comience el cuestionario primero.</div>`;
+      document.getElementById("kitOverlay").classList.add("open");
+    }
+
+    function closeKitSelector() {
+      document.getElementById("kitOverlay").classList.remove("open");
+    }
+
+    function kitSelectPending() {
+      document.querySelectorAll("#kitBody input[type=checkbox]").forEach(cb => {
+        const s = steps[Number(cb.dataset.step)];
+        cb.checked = state.answers[s.id] === undefined;
+      });
+    }
+
+    function kitSelectNone() {
+      document.querySelectorAll("#kitBody input[type=checkbox]").forEach(cb => { cb.checked = false; });
+    }
+
+    function generateKit() {
+      const chosen = [...document.querySelectorAll("#kitBody input[type=checkbox]:checked")]
+        .map(cb => Number(cb.dataset.step)).sort((a, b) => a - b);
+      if (!chosen.length) { alert("Seleccione al menos una pregunta para delegar."); return; }
+      closeKitSelector();
+
+      const nombre = state.answers["org_nombre"] || "________________________________";
+      const hoy = new Date().toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+
+      let qHtml = "";
+      chosen.forEach((idx, n) => {
+        const s = steps[idx];
+        const mod = MODULES.find(m => m.id === s.module);
+        const topicName = s.topicId ? `${TOPICS[s.topicId].icon} ${TOPICS[s.topicId].name}` : mod.name;
+        qHtml += `
+          <div class="kit-q">
+            <div class="kq-head">
+              <span class="kq-num">${n + 1}</span>
+              <span class="kq-mod">${esc(topicName)}</span>
+              ${s.gri ? `<span class="r-gri-code">${s.gri}</span>` : ""}
+            </div>
+            <div class="kq-text">${esc(s.text)}</div>
+            ${s.help ? `<div class="kq-help">💡 Dónde encontrar este dato: ${esc(s.help)}</div>` : ""}
+            ${s.type === "select" || s.type === "chips-multi"
+              ? `<div class="kq-answer"><span class="kq-answer-label">MARQUE LA(S) OPCIÓN(ES):</span><br>${(s.options || []).map(o => `☐ ${esc(o)}`).join("<br>")}</div>`
+              : `<div class="kq-answer"><span class="kq-answer-label">RESPUESTA${s.unit ? " (" + s.unit + ")" : ""}:</span></div>`}
+            <div class="kq-meta">
+              <span>Diligenciado por:</span>
+              <span>Área:</span>
+              <span>Fecha:</span>
+            </div>
+          </div>`;
+      });
+
+      document.getElementById("kitContent").innerHTML = `
+        <div class="kit-header">
+          <h1>📋 Kit de Recolección de Datos<br><span style="font-size:14px;font-weight:400;color:var(--muted)">Reporte de Sostenibilidad — Estándares GRI</span></h1>
+          <div class="kit-brand"><strong>🌱 Projectability</strong><br>Reporte GRI Express<br>www.projectability.net</div>
+        </div>
+        <div class="r-grid" style="margin-top:16px">
+          <div class="r-field"><div class="r-label">Organización</div>${esc(nombre)}</div>
+          <div class="r-field"><div class="r-label">Fecha de emisión</div>${hoy}</div>
+          <div class="r-field"><div class="r-label">Preguntas delegadas</div>${chosen.length}</div>
+          <div class="r-field"><div class="r-label">Devolver a</div>Coordinador(a) del reporte de sostenibilidad</div>
+        </div>
+        <div class="kit-instructions">
+          <strong>Instrucciones para el responsable de área:</strong><br>
+          1. Responda las preguntas asignadas con la información más precisa disponible. Cada pregunta indica dónde suele encontrarse el dato.<br>
+          2. Si un dato no existe o no se ha medido, indíquelo honestamente (ej. "No medido aún") — la transparencia es válida en los Estándares GRI.<br>
+          3. Registre su nombre, área y fecha al pie de cada respuesta.<br>
+          4. Devuelva este documento diligenciado al coordinador del reporte, quien ingresará las respuestas en la aplicación.<br>
+          <em>Este documento es solo un instrumento de recolección: el reporte final se genera exclusivamente en la aplicación Reporte GRI Express.</em>
+        </div>
+        ${qHtml}
+        <div class="r-notice">
+          Documento generado por <strong>Reporte GRI Express</strong> de Projectability (www.projectability.net) — la herramienta guiada para construir el primer reporte de sostenibilidad de su organización con referencia a los Estándares GRI 2021.
+        </div>`;
+
+      document.getElementById("appView").style.display = "none";
+      document.getElementById("kitView").style.display = "block";
+      window.scrollTo(0, 0);
+    }
+
+    function backFromKit() {
+      document.getElementById("kitView").style.display = "none";
+      document.getElementById("appView").style.display = "block";
+      window.scrollTo(0, document.body.scrollHeight);
     }
 
     function rebuildTranscript(upTo) {
