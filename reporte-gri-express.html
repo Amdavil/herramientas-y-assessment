@@ -204,6 +204,17 @@
     }
     .kpi-card .kpi-value { font-size: 22px; font-weight: 800; color: var(--navy); }
     .kpi-card .kpi-label { font-size: 11.5px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+    .phva-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 8px; }
+    .phva-card { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; page-break-inside: avoid; }
+    .phva-card:nth-child(1) { border-left: 4px solid var(--navy); }
+    .phva-card:nth-child(2) { border-left: 4px solid var(--teal); }
+    .phva-card:nth-child(3) { border-left: 4px solid var(--amber); }
+    .phva-card:nth-child(4) { border-left: 4px solid var(--green); }
+    .phva-head { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .phva-icon { font-size: 14px; }
+    .phva-label { font-size: 11.5px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--ink); }
+    .phva-card p { font-size: 12.5px; line-height: 1.55; margin: 0; }
+    @media (max-width: 640px) { .phva-grid { grid-template-columns: 1fr; } }
     table.gri-index { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 12.5px; }
     table.gri-index th { background: var(--navy); color: #fff; text-align: left; padding: 9px 12px; font-size: 12px; }
     table.gri-index td { border-bottom: 1px solid var(--line); padding: 8px 12px; vertical-align: top; }
@@ -759,7 +770,7 @@
     const dockInner = document.getElementById("dockInner");
 
     function save() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers: state.answers, aiTexts: state.aiTexts || null, aiContexts: state.aiContexts || null, stepIndex, steps: steps.map(s => s.id) }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers: state.answers, aiTexts: state.aiTexts || null, aiContexts: state.aiContexts || null, aiPhva: state.aiPhva || null, stepIndex, steps: steps.map(s => s.id) }));
     }
 
     function buildSteps() {
@@ -911,7 +922,17 @@
         ubicacion: A("org_ubicacion", ""),
         empleados: A("org_empleados", ""),
         gruposInteres: state.answers["mat_stakeholders"] || [],
-        temasMateriales: selected.map(tid => ({ id: tid, nombre: TOPICS[tid].name, gri: TOPICS[tid].gri }))
+        temasMateriales: selected.map(tid => {
+          const t = TOPICS[tid];
+          const indicadores = t.questions.slice(1)
+            .map(q => {
+              const v = state.answers[q.id];
+              if (v === undefined || v === "Información no disponible en este periodo") return null;
+              return `${q.text.split("?")[0].replace(/^¿/, "")}: ${v}${q.unit ? " " + q.unit : ""}`;
+            })
+            .filter(Boolean);
+          return { id: tid, nombre: t.name, gri: t.gri, indicadoresMedidos: indicadores };
+        })
       };
 
       dockInner.innerHTML = `
@@ -931,6 +952,7 @@
         if (!data || typeof data.fields !== "object") throw new Error("Respuesta IA inválida");
         state.aiTexts = data.fields;               // { id: texto pulido }
         state.aiContexts = data.contexts || null;  // { topicId: párrafo de contexto sectorial }
+        state.aiPhva = data.phva || null;          // { topicId: { planificar, hacer, verificar, actuar } }
         save();
         generateReport(false);
       } catch (e) {
@@ -1350,7 +1372,7 @@
           </div>
           ${AI.endpoint ? `
           <div style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:8px">PAL redactará sus textos con lenguaje profesional y principios de calidad GRI — nunca modifica sus cifras. Usted revisa el resultado final.</div>
-          <div style="text-align:center"><button class="skip" onclick="state.aiTexts=null;state.aiContexts=null;save();generateReport(false)">Prefiero generar con mis textos originales, sin IA</button></div>` : ""}`;
+          <div style="text-align:center"><button class="skip" onclick="state.aiTexts=null;state.aiContexts=null;state.aiPhva=null;save();generateReport(false)">Prefiero generar con mis textos originales, sin IA</button></div>` : ""}`;
         return;
       }
       dockInner.innerHTML = `
@@ -1443,9 +1465,11 @@
         : `<p>La organización se encuentra en proceso de formalización de sus políticas de sostenibilidad, lo cual ha identificado como compromiso de mejora.</p>`;
 
       // Capítulos por tema
+      const PHVA_LABELS = { planificar: ["📋", "Planificar"], hacer: ["⚙️", "Hacer"], verificar: ["🔍", "Verificar"], actuar: ["🔄", "Actuar"] };
       const topicChapters = selected.map(tid => {
         const t = TOPICS[tid];
         const enfoque = AE(t.questions[0].id);
+        const phva = state.aiPhva && state.aiPhva[tid];
         const sectorCtx = state.aiContexts && state.aiContexts[tid]
           ? `<h3>Contexto de sostenibilidad</h3><p>${esc(state.aiContexts[tid])}</p>` : "";
         const kpis = t.questions.slice(1).map(q => {
@@ -1453,11 +1477,18 @@
           if (val === null || val === "Información no disponible en este periodo") return "";
           return `<div class="kpi-card"><div class="kpi-value">${esc(val)}${q.unit ? ` <span style="font-size:13px;font-weight:600">${q.unit}</span>` : ""}</div><div class="kpi-label">${esc(q.text.split("?")[0].replace(/^¿/, ""))} · ${q.gri}</div></div>`;
         }).join("");
+        const enfoqueBody = phva
+          ? `<div class="phva-grid">${Object.entries(PHVA_LABELS).map(([key, [icon, label]]) => `
+              <div class="phva-card">
+                <div class="phva-head"><span class="phva-icon">${icon}</span><span class="phva-label">${label}</span></div>
+                <p>${esc(phva[key] || "")}</p>
+              </div>`).join("")}</div>`
+          : `<p>${esc(enfoque)}</p>`;
         return `
           <div class="r-topic-header"><h2 class="r-section" style="flex:1">${t.icon} ${t.name}</h2><span class="r-gri-code">${t.gri}</span></div>
           ${sectorCtx}
-          <h3>Enfoque de gestión (GRI 3-3)</h3>
-          <p>${esc(enfoque)}</p>
+          <h3>Enfoque de gestión — Ciclo PHVA (GRI 3-3)</h3>
+          ${enfoqueBody}
           ${kpis ? `<h3>Indicadores del periodo</h3><div class="kpi-row">${kpis}</div>` : ""}`;
       }).join("");
 
