@@ -640,6 +640,9 @@
       { module: "m1", id: "org_nombre", type: "text", gri: "GRI 2-1",
         text: "Empecemos por lo esencial: ¿cuál es el nombre legal completo de su organización?",
         help: "Use el nombre registrado legalmente (el que aparece en su registro mercantil o cámara de comercio), no solo la marca comercial." },
+      { module: "m1", id: "org_logo", type: "logo", gri: "Identidad",
+        text: "¿Desea incluir el logo de su empresa en el reporte? Aparecerá en la portada y en los documentos que genere. Este paso es opcional.",
+        help: "Formatos: PNG o JPG. Idealmente con fondo blanco o transparente. El logo se guarda solo en su navegador, no se sube a ningún servidor. Si no lo tiene a mano, puede omitir este paso y volver después desde el mapa." },
       { module: "m1", id: "org_naturaleza", type: "select", gri: "GRI 2-1",
         options: ["Sociedad por acciones simplificada (S.A.S.)", "Sociedad anónima (S.A.)", "Sociedad limitada (Ltda.)", "Empresa unipersonal", "Entidad sin ánimo de lucro / Fundación", "Cooperativa", "Otra forma jurídica"],
         text: "¿Cuál es la naturaleza jurídica de la organización?" },
@@ -970,7 +973,7 @@
       const body = document.getElementById("kitBody");
       let html = "";
       MODULES.forEach((mod, mi) => {
-        const modSteps = steps.map((s, i) => ({ s, i })).filter(x => x.s.module === mod.id);
+        const modSteps = steps.map((s, i) => ({ s, i })).filter(x => x.s.module === mod.id && x.s.type !== "logo");
         if (!modSteps.length) return;
         html += `<div class="map-module"><div class="map-module-title">Módulo ${mi + 1} · ${mod.name}</div>`;
         modSteps.forEach(({ s, i }) => {
@@ -1036,9 +1039,13 @@
           </div>`;
       });
 
+      const kitLogo = state.answers["org_logo"];
+      const kitLogoHtml = typeof kitLogo === "string" && kitLogo.startsWith("data:image")
+        ? `<img src="${kitLogo}" alt="Logo" style="max-height:52px;max-width:170px">` : "";
+
       document.getElementById("kitContent").innerHTML = `
         <div class="kit-header">
-          <h1>📋 Kit de Recolección de Datos<br><span style="font-size:14px;font-weight:400;color:var(--muted)">Reporte de Sostenibilidad — Estándares GRI</span></h1>
+          <div style="display:flex;align-items:center;gap:16px">${kitLogoHtml}<h1>📋 Kit de Recolección de Datos<br><span style="font-size:14px;font-weight:400;color:var(--muted)">Reporte de Sostenibilidad — Estándares GRI</span></h1></div>
           <div class="kit-brand"><strong>🌱 Projectability</strong><br>Reporte GRI Express<br>www.projectability.net</div>
         </div>
         <div class="r-grid" style="margin-top:16px">
@@ -1156,7 +1163,12 @@
       div.innerHTML = `<div class="avatar">🌱</div><div class="bubble"><div class="pal-name">PAL · Asistente GRI</div><p>${esc(s.text)}</p>${s.gri ? `<span class="gri-tag">${s.gri}</span>` : ""}</div>`;
       chat.appendChild(div);
       const ans = state.answers[s.id];
-      addUserMessage(Array.isArray(ans) ? ans.map(a => TOPICS[a] ? `${TOPICS[a].icon} ${TOPICS[a].name}` : a).join(", ") : String(ans) + (s.unit ? " " + s.unit : ""));
+      const display = s.type === "logo"
+        ? (String(ans).startsWith("data:image") ? "🖼️ Logo cargado correctamente" : "Continuar sin logo")
+        : Array.isArray(ans)
+          ? ans.map(a => TOPICS[a] ? `${TOPICS[a].icon} ${TOPICS[a].name}` : a).join(", ")
+          : String(ans) + (s.unit ? " " + s.unit : "");
+      addUserMessage(display);
     }
 
     function resetSession() {
@@ -1230,6 +1242,15 @@
             </select>
             <button class="send" id="dockSend">Enviar</button>
           </div>`;
+      } else if (s.type === "logo") {
+        const hasLogo = typeof prev === "string" && prev.startsWith("data:image");
+        inner += `
+          ${hasLogo ? `<div style="text-align:center;margin-bottom:10px"><img src="${prev}" alt="Logo actual" style="max-height:64px;max-width:220px;border:1px solid var(--line);border-radius:8px;padding:6px;background:#fff"><div style="font-size:11.5px;color:var(--muted);margin-top:4px">Logo actual — puede reemplazarlo</div></div>` : ""}
+          <div class="dock-row">
+            <input type="file" id="dockLogoInput" accept="image/png,image/jpeg,image/webp" style="flex:1;border:2px dashed var(--line);border-radius:10px;padding:12px 14px;font-size:13px;background:#fbfcfe;cursor:pointer">
+          </div>
+          <div id="logoFeedback" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:15px"></div>
+          <button class="skip" id="logoSkip">Continuar sin logo →</button>`;
       } else if (s.type === "chips-multi" || s.type === "chips-topics") {
         const opts = s.type === "chips-topics"
           ? Object.entries(TOPICS).map(([k, t]) => ({ v: k, label: `${t.icon} ${t.name}` }))
@@ -1251,7 +1272,39 @@
       const sendBtn = document.getElementById("dockSend");
       const input = document.getElementById("dockInput");
 
-      if (s.type === "chips-multi" || s.type === "chips-topics") {
+      if (s.type === "logo") {
+        const fileInput = document.getElementById("dockLogoInput");
+        const feedback = document.getElementById("logoFeedback");
+        document.getElementById("logoSkip").onclick = () => {
+          // Registrar la decisión para que cuente como respondida (sin logo)
+          submitAnswer(s, "sin-logo");
+        };
+        fileInput.onchange = () => {
+          const file = fileInput.files[0];
+          if (!file) return;
+          if (file.size > 4 * 1024 * 1024) { feedback.style.color = "var(--red)"; feedback.textContent = "La imagen supera 4 MB. Use una versión más liviana."; return; }
+          feedback.style.color = "var(--muted)";
+          feedback.textContent = "Procesando imagen...";
+          const reader = new FileReader();
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+              // Redimensionar a máx 400px de ancho conservando proporción
+              const maxW = 400;
+              const scale = Math.min(1, maxW / img.width);
+              const canvas = document.createElement("canvas");
+              canvas.width = Math.round(img.width * scale);
+              canvas.height = Math.round(img.height * scale);
+              canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+              const dataUrl = canvas.toDataURL("image/png");
+              submitAnswer(s, dataUrl);
+            };
+            img.onerror = () => { feedback.style.color = "var(--red)"; feedback.textContent = "No se pudo leer la imagen. Intente con otro archivo PNG o JPG."; };
+            img.src = reader.result;
+          };
+          reader.readAsDataURL(file);
+        };
+      } else if (s.type === "chips-multi" || s.type === "chips-topics") {
         const selected = new Set(Array.isArray(prev) ? prev : []);
         document.querySelectorAll("#chipsBox .chip").forEach(chip => {
           chip.onclick = () => {
@@ -1305,9 +1358,11 @@
       const wasEdit = state.answers[s.id] !== undefined;
       state.answers[s.id] = value;
       dock.style.display = "none";
-      const display = Array.isArray(value)
-        ? value.map(v => TOPICS[v] ? `${TOPICS[v].icon} ${TOPICS[v].name}` : v).join(", ")
-        : String(value) + (s.unit ? " " + s.unit : "");
+      const display = s.type === "logo"
+        ? (String(value).startsWith("data:image") ? "🖼️ Logo cargado correctamente" : "Continuar sin logo")
+        : Array.isArray(value)
+          ? value.map(v => TOPICS[v] ? `${TOPICS[v].icon} ${TOPICS[v].name}` : v).join(", ")
+          : String(value) + (s.unit ? " " + s.unit : "");
       addUserMessage(display);
 
       // Si acaba de definir los temas materiales, reconstruir el flujo
@@ -1514,8 +1569,13 @@
         })
       ];
 
+      const logo = state.answers["org_logo"];
+      const logoHtml = typeof logo === "string" && logo.startsWith("data:image")
+        ? `<img src="${logo}" alt="Logo de ${esc(nombre)}" style="max-height:90px;max-width:260px;margin-bottom:22px">` : "";
+
       document.getElementById("reportContent").innerHTML = `
         <div class="r-cover">
+          ${logoHtml}
           <div class="r-cover-tag">Reporte de Sostenibilidad</div>
           <h1>${esc(nombre)}</h1>
           <div class="r-period">${esc(periodo)}</div>
