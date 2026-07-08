@@ -1,0 +1,1845 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diagnóstico de Oportunidades de Circularidad — Projectability</title>
+  <meta name="description" content="Descubra gratis las oportunidades de economía circular de su empresa y desbloquee el informe completo con plan de acción.">
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #647084;
+      --line: #d9e1ea;
+      --soft: #f5f7fa;
+      --panel: #ffffff;
+      --navy: #1f4e79;
+      --blue: #2f75b5;
+      --teal: #16817a;
+      --green: #5f8d3e;
+      --amber: #c47f1b;
+      --red: #b54a4a;
+      --lav: #6b5ca5;
+      --focus: #0f766e;
+      --gold: #c8a951;
+      --shadow: 0 10px 30px rgba(23, 32, 51, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: #eef3f7;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: var(--blue); }
+
+    button.primary {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    button.ghost { background: transparent; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      background: #f9fbfd;
+      border-right: 1px solid var(--line);
+      padding: 20px 18px;
+    }
+
+    main {
+      min-width: 0;
+      padding: 22px;
+    }
+
+    .brand { display: grid; gap: 8px; margin-bottom: 18px; }
+
+    .brand-logo {
+      width: min(220px, 100%);
+      height: auto;
+      display: block;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .brand h1 { margin: 0; font-size: 20px; line-height: 1.2; }
+
+    .brand p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .status-box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .score-large {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .gauge {
+      width: 88px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--teal) 0deg, #dce6ef 0deg);
+    }
+
+    .gauge strong {
+      display: grid;
+      place-items: center;
+      width: 68px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #fff;
+      font-size: 17px;
+    }
+
+    .score-large small {
+      color: var(--muted);
+      display: block;
+      line-height: 1.35;
+      margin-top: 4px;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress {
+      height: 9px;
+      background: #dbe5ef;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--teal), var(--blue));
+      transition: width .2s ease;
+    }
+
+    .side-counters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .side-counter {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    .side-counter strong { font-size: 22px; display: block; }
+    .side-counter span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .side-counter.opps strong { color: var(--amber); }
+    .side-counter.wins strong { color: var(--teal); }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dot { width: 16px; height: 16px; border-radius: 4px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab { min-width: 120px; }
+    .tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .intro-card {
+      background: linear-gradient(135deg, #eafaf3, #eef5ff);
+      border: 1px solid #cfe3da;
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 16px;
+    }
+
+    .intro-card h2 { margin: 0 0 8px; font-size: 18px; color: var(--navy); }
+    .intro-card p { margin: 0 0 6px; font-size: 13.5px; color: var(--ink); line-height: 1.55; }
+    .intro-card .fine { color: var(--muted); font-size: 12px; }
+
+    .flow-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .flow-header .flow-icon { font-size: 22px; }
+    .flow-header h3 { margin: 0; font-size: 16px; color: var(--navy); }
+    .flow-header span { color: var(--muted); font-size: 12px; }
+
+    .question-list { display: grid; gap: 12px; }
+
+    .question-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .question-head {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .code { font-weight: 800; color: var(--navy); }
+
+    .meta { display: grid; gap: 3px; min-width: 0; }
+    .meta strong { font-size: 15px; line-height: 1.25; }
+    .meta span { color: var(--muted); font-size: 12px; line-height: 1.25; }
+
+    .pill {
+      border-radius: 999px;
+      background: #e8eef5;
+      padding: 5px 8px;
+      color: var(--navy);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .question-text {
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.5;
+      background: #f0f6ff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .levels {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px 14px;
+    }
+
+    .level {
+      min-height: 104px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      gap: 7px;
+      align-content: start;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .level:hover { border-color: var(--blue); background: #f7fbff; }
+
+    .level input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--navy);
+    }
+
+    .level strong { font-size: 13px; }
+
+    .level span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+    .level.selected {
+      border-color: var(--focus);
+      box-shadow: inset 0 0 0 2px rgba(15, 118, 110, .12);
+      background: #f1fbf8;
+    }
+
+    .finish-banner {
+      position: sticky;
+      bottom: 16px;
+      margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 12px 32px rgba(23,32,51,.18);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .finish-banner-text { display: grid; gap: 2px; min-width: 0; }
+    .finish-banner-text strong { font-size: 15px; }
+    .finish-banner-text span { font-size: 12px; color: var(--muted); }
+    .finish-banner.complete {
+      background: linear-gradient(135deg, #eafaf3, #f1fbf8);
+      border-color: var(--focus);
+    }
+    .finish-banner.complete strong { color: var(--focus); }
+    .finish-banner #finishBtn { white-space: nowrap; padding: 11px 22px; font-weight: 700; }
+
+    /* ── RESULTADOS ── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      min-height: 112px;
+      display: grid;
+      align-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--teal), var(--blue));
+    }
+
+    .metric.m-score::before { background: linear-gradient(90deg, var(--navy), var(--blue)); }
+    .metric.m-opps::before { background: linear-gradient(90deg, var(--amber), var(--red)); }
+    .metric.m-wins::before { background: linear-gradient(90deg, var(--teal), var(--green)); }
+    .metric.m-forta::before { background: linear-gradient(90deg, var(--green), var(--teal)); }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      font-weight: 600;
+    }
+
+    .metric strong { font-size: 30px; letter-spacing: -.02em; }
+    .metric small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; margin-top: 4px; }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: minmax(340px, 1fr) minmax(340px, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel > p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+    canvas { width: 100%; height: 340px; display: block; }
+
+    .exec-summary-box {
+      background: linear-gradient(135deg, #f0f7ff, #f0faf5);
+      border: 1px solid #d4dff0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .exec-summary-box .exec-level {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+
+    .exec-summary-box .exec-text { font-size: 14px; line-height: 1.6; }
+
+    /* Tarjetas de oportunidad */
+    .opp-list { display: grid; gap: 14px; }
+
+    .opp-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--amber);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .opp-card.prio-media { border-left-color: var(--blue); }
+    .opp-card.sample { border-left-color: var(--teal); }
+
+    .opp-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px 10px;
+      flex-wrap: wrap;
+    }
+
+    .opp-head h3 { margin: 0; font-size: 15.5px; line-height: 1.3; }
+    .opp-head .opp-flow { font-size: 12px; color: var(--muted); display: block; margin-top: 3px; }
+
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .badge {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      white-space: nowrap;
+    }
+
+    .badge.b-r { background: rgba(95,141,62,.14); color: var(--green); }
+    .badge.b-imp3 { background: rgba(181,74,74,.12); color: var(--red); }
+    .badge.b-imp2 { background: rgba(196,127,27,.14); color: var(--amber); }
+    .badge.b-imp1 { background: rgba(47,117,181,.12); color: var(--blue); }
+    .badge.b-eff1 { background: rgba(22,129,122,.14); color: var(--focus); }
+    .badge.b-eff2 { background: rgba(47,117,181,.12); color: var(--blue); }
+    .badge.b-eff3 { background: rgba(107,92,165,.14); color: var(--lav); }
+    .badge.b-quick { background: var(--teal); color: #fff; }
+    .badge.b-prio { background: rgba(181,74,74,.12); color: var(--red); }
+    .badge.b-prio-media { background: rgba(47,117,181,.12); color: var(--blue); }
+
+    .opp-body { padding: 4px 18px 16px; display: grid; gap: 10px; }
+
+    .opp-body p { margin: 0; font-size: 13.5px; line-height: 1.55; }
+    .opp-body .lbl {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--navy);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .opp-steps { margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.6; }
+    .opp-steps li { margin-bottom: 3px; }
+
+    .opp-kpi {
+      background: #f0f6ff;
+      border: 1px solid #d4e2f2;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    /* Bloqueo / vista previa */
+    .opp-body.locked-content {
+      filter: blur(6px);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .lock-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.55) 60%);
+      z-index: 2;
+    }
+
+    .lock-overlay button {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--ink);
+      font-weight: 700;
+      box-shadow: 0 6px 18px rgba(200,169,81,.45);
+    }
+
+    .preview-ribbon {
+      position: absolute;
+      top: 14px;
+      right: -42px;
+      transform: rotate(38deg);
+      background: var(--amber);
+      color: #fff;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      padding: 5px 48px;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .unlock-banner {
+      background: linear-gradient(135deg, var(--navy), #0f2a44);
+      border-radius: 14px;
+      padding: 26px 28px;
+      margin: 18px 0;
+      box-shadow: 0 14px 40px rgba(15,42,68,.3);
+      color: #fff;
+    }
+
+    .unlock-banner h3 { color: #fff; font-size: 20px; margin: 0 0 8px; }
+    .unlock-banner p { color: rgba(255,255,255,.88); font-size: 13.5px; margin: 0 0 14px; line-height: 1.55; }
+    .unlock-banner ul { color: rgba(255,255,255,.9); font-size: 13px; margin: 0 0 16px; padding-left: 20px; line-height: 1.7; }
+
+    .unlock-price {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--ink);
+      font-weight: 800;
+      font-size: 17px;
+      border-radius: 999px;
+      padding: 6px 18px;
+      margin-bottom: 14px;
+    }
+
+    .pay-columns {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .pay-box {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .pay-box h4 { margin: 0 0 10px; color: #fff; font-size: 14px; }
+
+    .code-row { display: flex; gap: 8px; }
+
+    .code-row input {
+      flex: 1;
+      border: 1px solid rgba(255,255,255,.3);
+      background: rgba(255,255,255,.95);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      min-width: 0;
+    }
+
+    .code-row button {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .code-feedback { font-size: 12.5px; margin-top: 8px; min-height: 16px; }
+
+    .unlock-note { font-size: 12px; color: rgba(255,255,255,.75); margin-top: 14px; }
+    .unlock-note a { color: #9fd8d3; font-weight: 600; }
+
+    .access-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(22,129,122,.14);
+      color: var(--focus);
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 5px 14px;
+      margin-bottom: 14px;
+    }
+
+    /* Matriz impacto × esfuerzo */
+    .matrix {
+      display: grid;
+      grid-template-columns: 90px repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .matrix .mx-corner, .matrix .mx-h {
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      font-size: 10.5px;
+      padding: 6px 4px;
+      text-align: center;
+    }
+
+    .matrix .mx-cell {
+      min-height: 84px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-content: flex-start;
+      background: #fbfcfe;
+    }
+
+    .matrix .mx-cell.hot { background: #f1fbf8; border-color: rgba(15,118,110,.4); }
+    .matrix .mx-cell.warm { background: #fdf8ef; }
+
+    .mx-chip {
+      background: var(--navy);
+      color: #fff;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .mx-chip.media { background: var(--blue); }
+
+    /* Plan de acción */
+    .plan-phase {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+
+    .plan-phase-head {
+      padding: 12px 18px;
+      background: #f0f4f8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .plan-phase-head strong { font-size: 14.5px; color: var(--navy); }
+    .plan-phase-head span { font-size: 12px; color: var(--muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th { background: #f7fafc; color: var(--navy); font-size: 12px; }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      padding: 24px;
+      text-align: center;
+      background: #fff;
+    }
+
+    .strengths { display: grid; gap: 8px; }
+
+    .strength-item {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 10px;
+      align-items: start;
+      background: #f4faf1;
+      border: 1px solid #d8e8cf;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .print-only { display: none; }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .report-grid { grid-template-columns: 1fr; }
+      .levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pay-columns { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      main { padding: 14px; }
+      .topbar { display: grid; grid-template-columns: 1fr; }
+      .actions { justify-content: stretch; }
+      .actions button, .tab { width: 100%; }
+      .dashboard { grid-template-columns: 1fr; }
+      .question-head { grid-template-columns: 1fr; }
+      .levels { grid-template-columns: 1fr; }
+      canvas { height: 280px; }
+      .matrix { grid-template-columns: 70px repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media print {
+      body { background: #fff; }
+      aside, .topbar, .question-list, .intro-card, .finish-banner,
+      .unlock-banner, .lock-overlay, .preview-ribbon, .no-print { display: none !important; }
+      main { padding: 0; }
+      .section { display: block; }
+      .section:not(#resultados) { display: none; }
+      .panel, .metric, .opp-card, .plan-phase { box-shadow: none; break-inside: avoid; }
+      .print-only { display: block; }
+      canvas { height: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <img class="brand-logo" src="assets/projectability-logo.jpg" alt="Projectability">
+        <h1>Diagnóstico de Oportunidades de Circularidad</h1>
+        <p>Descubra dónde está perdiendo valor su empresa y conviértalo en oportunidades concretas de economía circular.</p>
+      </div>
+
+      <div class="status-box">
+        <div class="score-large">
+          <div class="gauge" id="gauge"><strong id="scoreGauge">0%</strong></div>
+          <div>
+            <strong id="maturityLabel">Sin diagnosticar</strong>
+            <small id="maturityText">Responda las preguntas para calcular su índice de circularidad.</small>
+          </div>
+        </div>
+        <div>
+          <div class="progress-row">
+            <span>Avance</span>
+            <strong id="progressText">0 / 24</strong>
+          </div>
+          <div class="progress"><span id="progressBar"></span></div>
+        </div>
+        <div class="side-counters">
+          <div class="side-counter opps">
+            <strong id="sideOpps">0</strong>
+            <span>Oportunidades</span>
+          </div>
+          <div class="side-counter wins">
+            <strong id="sideWins">0</strong>
+            <span>Fortalezas</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:#b54a4a"></span><span>1. Práctica lineal — gran oportunidad</span></div>
+        <div class="legend-item"><span class="dot" style="background:#c47f1b"></span><span>2. Acciones puntuales — oportunidad clara</span></div>
+        <div class="legend-item"><span class="dot" style="background:#2f75b5"></span><span>3. En transición — oportunidad de optimizar</span></div>
+        <div class="legend-item"><span class="dot" style="background:#16817a"></span><span>4. Práctica circular — fortaleza</span></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div class="tabs" role="tablist" aria-label="Vistas del diagnóstico">
+          <button class="tab active" data-view="diagnostico">Diagnóstico</button>
+          <button class="tab" data-view="resultados">Resultados e informe</button>
+        </div>
+        <div class="actions">
+          <button id="fillDemo" class="ghost" type="button">Simular respuestas</button>
+          <button id="clearAll" class="ghost" type="button">Limpiar</button>
+          <button id="printReport" class="primary" type="button">Imprimir informe</button>
+        </div>
+      </div>
+
+      <section id="diagnostico" class="section active">
+        <div class="intro-card">
+          <h2>🔄 ¿Cómo funciona?</h2>
+          <p><strong>1.</strong> Responda 24 preguntas sobre los flujos de materiales, energía, productos y residuos de su empresa (10–15 minutos, sin conocimiento técnico).</p>
+          <p><strong>2.</strong> Obtenga <strong>gratis</strong> su índice de circularidad, el mapa de sus flujos y la lista de oportunidades detectadas, con una oportunidad de muestra desarrollada por completo.</p>
+          <p><strong>3.</strong> Desbloquee por <strong>USD $25</strong> el informe completo: cada oportunidad con su beneficio, primeros pasos y KPI, la matriz de priorización impacto–esfuerzo y el plan de acción por horizontes.</p>
+          <p class="fine">Sus respuestas se guardan solo en este navegador. Herramienta de orientación elaborada por Projectability; no sustituye una asesoría a profundidad.</p>
+        </div>
+
+        <div class="question-card" style="margin-bottom:16px">
+          <div class="question-text" style="background:#fff">🏢 Cuéntenos brevemente de su empresa <span style="font-weight:400;color:var(--muted);font-size:12.5px">(opcional — solo se usa para personalizar la lectura ejecutiva con IA)</span></div>
+          <div style="padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <label style="display:grid;gap:5px;font-size:12px;color:var(--muted)">
+              Nombre de la empresa
+              <input type="text" id="orgNombre" placeholder="Ej. Textiles Andinos SAS">
+            </label>
+            <label style="display:grid;gap:5px;font-size:12px;color:var(--muted)">
+              Sector
+              <input type="text" id="orgSector" placeholder="Ej. manufactura textil, alimentos, logística...">
+            </label>
+          </div>
+        </div>
+
+        <div id="questionList" class="question-list"></div>
+
+        <div class="finish-banner" id="finishBanner">
+          <div class="finish-banner-text">
+            <strong id="finishBannerTitle">0 de 24 preguntas respondidas</strong>
+            <span id="finishBannerSubtitle">Responda todas las preguntas para detectar el máximo de oportunidades.</span>
+          </div>
+          <button id="finishBtn" class="primary" type="button">Ver mis oportunidades →</button>
+        </div>
+      </section>
+
+      <section id="resultados" class="section">
+        <div class="print-only">
+          <h1>Informe de Oportunidades de Circularidad — Projectability</h1>
+          <p id="printDate" style="color:#647084;font-size:13px"></p>
+        </div>
+
+        <div id="resultsBody"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ═══════════════ FLUJOS ═══════════════
+    const FLOWS = {
+      F1: { icon: "🧱", name: "Materiales e insumos", desc: "Lo que entra a su empresa" },
+      F2: { icon: "💡", name: "Diseño y modelo de negocio", desc: "Cómo crea y captura valor" },
+      F3: { icon: "⚙️", name: "Producción y operaciones", desc: "Cómo transforma los recursos" },
+      F4: { icon: "📦", name: "Uso y vida del producto", desc: "Qué pasa mientras el cliente lo usa" },
+      F5: { icon: "♻️", name: "Fin de vida y logística inversa", desc: "Qué pasa cuando ya no se usa" },
+      F6: { icon: "🤝", name: "Ecosistema y gestión circular", desc: "Con quién y cómo se gestiona" }
+    };
+
+    // ═══════════════ PREGUNTAS ═══════════════
+    // Opciones de mejor (4) a peor (1). Respuestas 1-2 detectan oportunidad prioritaria,
+    // 3 detecta oportunidad de optimización, 4 es fortaleza.
+    const QUESTIONS = [
+      ["M1","F1","Origen de los materiales",
+        "¿Qué proporción de sus materias primas o insumos principales proviene de fuentes recicladas, recuperadas o renovables?",
+        ["Más del 50%, con metas y trazabilidad del origen.",
+         "Entre el 10% y el 50%, y la proporción va en aumento.",
+         "Menos del 10%: solo casos puntuales.",
+         "Prácticamente todo es material virgen, o no lo sabemos."]],
+      ["M2","F1","Compras circulares",
+        "¿Sus procesos de compra incluyen criterios de circularidad para elegir proveedores (contenido reciclado, retornabilidad, durabilidad)?",
+        ["Sí: criterios definidos, aplicados y verificados en las compras principales.",
+         "Existen criterios para algunas categorías de compra.",
+         "Se consideran de manera informal cuando alguien lo propone.",
+         "El precio y la disponibilidad son los únicos criterios."]],
+      ["M3","F1","Empaques de proveedores",
+        "¿Qué pasa con los empaques y embalajes en los que recibe sus insumos (estibas, cajas, bidones, plásticos)?",
+        ["La mayoría son retornables o reutilizables por acuerdo con los proveedores.",
+         "Una parte se retorna o reutiliza; el resto se recicla.",
+         "Se reciclan algunos; buena parte termina en la basura.",
+         "Casi todos se desechan sin separar."]],
+      ["M4","F1","Materiales problemáticos",
+        "¿Ha identificado en sus productos o procesos materiales peligrosos, de un solo uso o difíciles de reciclar, y trabaja en sustituirlos?",
+        ["Sí: están identificados y hay un plan de sustitución en marcha.",
+         "Están identificados y se han sustituido algunos.",
+         "Sabemos que existen, pero no están inventariados.",
+         "No lo hemos revisado."]],
+      ["D1","F2","Ecodiseño",
+        "¿El diseño de sus productos o servicios considera desde el inicio la durabilidad, la reparabilidad y la reciclabilidad?",
+        ["Sí: son criterios formales de diseño con lineamientos documentados.",
+         "Se aplican en algunos productos o líneas.",
+         "Se han hecho intentos aislados sin criterios definidos.",
+         "El diseño no considera criterios de circularidad."]],
+      ["D2","F2","Empaque propio",
+        "¿Cómo es el empaque con el que entrega su producto o servicio al cliente?",
+        ["Minimizado, mono-material o retornable, y lo revisamos periódicamente.",
+         "Hemos reducido material o migrado a opciones reciclables.",
+         "Es el empaque de siempre; sabemos que se puede mejorar.",
+         "Usa varios materiales mezclados o plásticos de un solo uso sin revisión."]],
+      ["D3","F2","Modelo de negocio",
+        "¿Ha explorado modelos donde el ingreso no dependa solo de vender más unidades (arriendo, suscripción, pago por uso, recompra)?",
+        ["Sí: al menos un modelo de este tipo ya genera ingresos.",
+         "Hay un piloto o una propuesta en desarrollo.",
+         "Se ha conversado, pero sin avances concretos.",
+         "Nunca lo hemos considerado."]],
+      ["D4","F2","Desmaterialización",
+        "¿Cuánto de su operación y su oferta ha digitalizado para reducir el consumo de materiales (documentos, catálogos, manuales, trámites)?",
+        ["La operación es esencialmente digital; el papel es la excepción.",
+         "Los procesos principales están digitalizados.",
+         "Algunos procesos son digitales, pero se imprime bastante.",
+         "La operación depende del papel y de materiales físicos evitables."]],
+      ["P1","F3","Mermas y subproductos",
+        "¿Mide y aprovecha las mermas, recortes o subproductos que genera su producción u operación?",
+        ["Se miden, se reducen en la fuente y se valorizan (reúso interno o venta).",
+         "Se miden y una parte se aprovecha o se vende.",
+         "Se conocen a grandes rasgos, pero casi todo se desecha.",
+         "No se miden; todo sale como basura."]],
+      ["P2","F3","Gestión del agua",
+        "¿Cómo gestiona el agua en su operación?",
+        ["Medimos el consumo y recirculamos o reusamos agua en procesos clave.",
+         "Medimos el consumo y aplicamos medidas de ahorro.",
+         "Conocemos el consumo por la factura, sin acciones sistemáticas.",
+         "No medimos ni gestionamos el consumo de agua."]],
+      ["P3","F3","Gestión de la energía",
+        "¿Cómo gestiona la energía de su operación (eficiencia y fuentes renovables)?",
+        ["Programa de eficiencia con metas y una parte de energía renovable.",
+         "Medidas de eficiencia implementadas (iluminación, equipos, hábitos).",
+         "Solo conocemos el gasto de la factura.",
+         "No se mide ni se gestiona el consumo energético."]],
+      ["P4","F3","Vida útil de los activos",
+        "¿Cómo mantiene sus equipos, maquinaria e infraestructura?",
+        ["Mantenimiento preventivo/predictivo planificado que alarga la vida útil.",
+         "Mantenimiento preventivo básico en los equipos críticos.",
+         "Principalmente correctivo: se repara cuando falla.",
+         "Sin plan de mantenimiento; los equipos se reemplazan al dañarse."]],
+      ["P5","F3","Inventarios y obsolescencia",
+        "¿Con qué frecuencia se le vencen, dañan u obsoletan productos o insumos en bodega?",
+        ["Casi nunca: la planeación de inventarios lo evita.",
+         "Ocasionalmente, en volúmenes menores.",
+         "Con cierta frecuencia; es un costo asumido.",
+         "Es un problema recurrente y significativo."]],
+      ["U1","F4","Reparación y repuestos",
+        "¿Ofrece a sus clientes reparación, repuestos o garantías extendidas para alargar la vida de su producto?",
+        ["Sí: es parte formal de la oferta y genera ingresos.",
+         "Se ofrece reparación o repuestos para algunos productos.",
+         "Solo se atiende la garantía legal mínima.",
+         "No aplica hoy: el producto se reemplaza, no se repara."]],
+      ["U2","F4","Segunda vida del producto",
+        "¿Existe un canal de segunda mano, reacondicionado o remanufactura para sus productos?",
+        ["Sí: hay un canal activo de reacondicionados o remanufactura.",
+         "Hay experiencias piloto o ventas ocasionales de segunda vida.",
+         "Sabemos que otros lo hacen con nuestros productos, sin participar.",
+         "No existe y no se ha explorado."]],
+      ["U3","F4","Educación al cliente",
+        "¿Informa a sus clientes cómo usar, cuidar y disponer correctamente el producto al final de su vida útil?",
+        ["Sí: instrucciones claras de uso, cuidado y disposición en empaque o canales.",
+         "Hay información parcial (por ejemplo, solo de uso).",
+         "Solo si el cliente pregunta.",
+         "No se entrega ninguna orientación."]],
+      ["R1","F5","Logística inversa",
+        "¿Recupera productos o empaques después del consumo (puntos de retorno, recolección, incentivos de devolución)?",
+        ["Sí: sistema de retorno activo con volúmenes medidos.",
+         "Hay un piloto o recuperación en algunos clientes o zonas.",
+         "Se ha estudiado, pero no se ha implementado.",
+         "No se recupera nada después de la venta."]],
+      ["R2","F5","Gestión de residuos",
+        "¿Cómo gestiona los residuos de su operación?",
+        ["Separación en la fuente, gestores certificados e indicadores de aprovechamiento.",
+         "Separación básica y entrega a recicladores o gestores.",
+         "Separación ocasional; la mayoría va al relleno sanitario.",
+         "Todo se desecha mezclado."]],
+      ["R3","F5","Responsabilidad extendida (REP)",
+        "¿Conoce y gestiona las obligaciones de Responsabilidad Extendida del Productor aplicables a su sector (empaques, electrónicos, llantas, pilas...)?",
+        ["Sí: cumplimos y usamos la norma como ventaja competitiva.",
+         "Conocemos la norma y estamos implementando el cumplimiento.",
+         "La conocemos de oídas; no sabemos si nos aplica.",
+         "No sabemos qué es la REP."]],
+      ["R4","F5","Ingresos por residuos",
+        "¿Vende, intercambia o dona los residuos aprovechables que genera (cartón, metales, plásticos, orgánicos)?",
+        ["Sí: los materiales aprovechables generan ingresos o beneficios medidos.",
+         "Se venden o donan algunos materiales, sin registro sistemático.",
+         "Se regalan al que los recoja, sin control.",
+         "Se pagan como basura; nada se aprovecha."]],
+      ["E1","F6","Simbiosis industrial",
+        "¿Ha explorado si sus residuos pueden ser insumo de otra empresa, o si los residuos de otros pueden ser insumo suyo?",
+        ["Sí: hay intercambios activos con otras empresas.",
+         "Hay conversaciones o un piloto de intercambio.",
+         "La idea nos interesa, pero no hemos buscado aliados.",
+         "Nunca lo hemos considerado."]],
+      ["E2","F6","Indicadores de circularidad",
+        "¿Cuenta con indicadores para medir su circularidad (% de material reciclado, % de residuos aprovechados, consumo por unidad producida)?",
+        ["Sí: línea base, metas y seguimiento periódico.",
+         "Se miden algunos indicadores sin metas formales.",
+         "Solo datos dispersos en facturas y registros.",
+         "No se mide nada relacionado."]],
+      ["E3","F6","Cultura y capacidades",
+        "¿Su equipo conoce los principios de la economía circular y los aplica en su rol?",
+        ["Sí: hay formación periódica y responsables designados.",
+         "Algunas personas clave están formadas y lideran acciones.",
+         "Hay interés, pero sin formación estructurada.",
+         "El tema es desconocido dentro del equipo."]],
+      ["E4","F6","Financiamiento verde",
+        "¿Ha explorado incentivos tributarios, convocatorias o líneas de financiamiento verde para proyectos de circularidad?",
+        ["Sí: hemos accedido a incentivos o financiamiento verde.",
+         "Hemos aplicado o estamos preparando una postulación.",
+         "Sabemos que existen, pero no los hemos explorado.",
+         "No sabíamos que existían."]]
+    ].map(r => ({ code: r[0], flow: r[1], aspect: r[2], question: r[3], options: r[4] }));
+
+    // ═══════════════ CATÁLOGO DE OPORTUNIDADES ═══════════════
+    // impact / effort: 1 bajo · 2 medio · 3 alto
+    const OPPS = {
+      M1: { title: "Sustitución de insumos vírgenes por reciclados o renovables", r: "Reducir · Reciclar", impact: 3, effort: 2,
+        desc: "Reemplazar gradualmente las materias primas vírgenes de mayor volumen por material reciclado, recuperado o de origen renovable con calidad equivalente.",
+        benefit: "Menor exposición a la volatilidad de precios de materias primas, diferenciación comercial frente a clientes con exigencias de sostenibilidad y reducción directa de la huella de la empresa.",
+        steps: ["Inventariar los 5 insumos de mayor volumen y costo, con sus especificaciones técnicas.",
+                "Identificar proveedores de versiones recicladas o renovables y solicitar muestras y fichas técnicas.",
+                "Pilotear la sustitución en una línea o lote, comparando costo, calidad y aceptación del cliente."],
+        kpi: "% de insumos (en peso o en costo) de origen reciclado o renovable." },
+      M2: { title: "Política de compras circulares", r: "Repensar", impact: 2, effort: 1,
+        desc: "Incorporar criterios de circularidad (contenido reciclado, retornabilidad, durabilidad, reparabilidad) en las solicitudes de cotización y la evaluación de proveedores.",
+        benefit: "Traslada parte del esfuerzo circular a la cadena de suministro sin inversión propia y mejora el perfil de la empresa ante clientes corporativos que evalúan proveedores.",
+        steps: ["Definir 3 a 5 criterios circulares simples para las categorías de compra principales.",
+                "Incluir los criterios en las próximas solicitudes de cotización y órdenes de compra.",
+                "Evaluar a los proveedores actuales con esos criterios y priorizar a quienes los cumplan."],
+        kpi: "% de las compras (en valor) realizadas con criterios circulares." },
+      M3: { title: "Acuerdos de retorno y empaques reutilizables con proveedores", r: "Reusar", impact: 2, effort: 1,
+        desc: "Negociar con los principales proveedores esquemas de empaques y embalajes retornables (estibas, canastas, bidones) o, en su defecto, la recompra del material de embalaje.",
+        benefit: "Reduce el costo de disposición de residuos, libera espacio de bodega y suele traducirse en descuentos o menores costos logísticos con los proveedores.",
+        steps: ["Cuantificar durante un mes los empaques recibidos de los 5 proveedores principales.",
+                "Proponer a esos proveedores un esquema de retorno o cambio a embalaje reutilizable.",
+                "Formalizar el acuerdo y definir el punto de acopio y la frecuencia de retorno."],
+        kpi: "% de empaques de proveedores retornados o reutilizados." },
+      M4: { title: "Sustitución de materiales problemáticos", r: "Repensar · Reducir", impact: 2, effort: 2,
+        desc: "Inventariar los materiales peligrosos, de un solo uso o no reciclables presentes en productos y procesos, y construir un plan de sustitución progresiva.",
+        benefit: "Anticipa restricciones regulatorias, reduce costos de manejo de residuos peligrosos y elimina puntos débiles frente a auditorías de clientes.",
+        steps: ["Levantar el inventario de materiales problemáticos con el área de operaciones.",
+                "Priorizar 2 o 3 sustituciones por riesgo regulatorio y facilidad técnica.",
+                "Buscar alternativas con proveedores y pilotear la primera sustitución."],
+        kpi: "Número de materiales problemáticos sustituidos por año." },
+      D1: { title: "Programa de ecodiseño", r: "Repensar", impact: 3, effort: 2,
+        desc: "Incorporar la durabilidad, la reparabilidad y la reciclabilidad como criterios formales en el diseño o rediseño de productos y servicios.",
+        benefit: "El 80% del impacto ambiental de un producto se define en el diseño: es la palanca de circularidad de mayor alcance y abre acceso a mercados y sellos que exigen ecodiseño.",
+        steps: ["Elegir el producto o servicio de mayor venta y evaluarlo con una lista de chequeo de ecodiseño.",
+                "Identificar 3 mejoras de diseño viables (menos material, uniones desmontables, mono-materiales).",
+                "Implementar las mejoras en la próxima versión y documentar los criterios para futuros diseños."],
+        kpi: "% de productos o servicios diseñados con criterios de ecodiseño." },
+      D2: { title: "Rediseño del empaque: menos material, mono-material o retornable", r: "Reducir · Reusar", impact: 2, effort: 1,
+        desc: "Optimizar el empaque propio: reducir gramaje, migrar a un solo material reciclable o implementar esquemas retornables con clientes frecuentes.",
+        benefit: "Ahorro directo en costo de empaque, menor peso logístico y cumplimiento anticipado de las normas de empaques que ya rigen en la región.",
+        steps: ["Pesar y costear el empaque actual por unidad vendida.",
+                "Diseñar una alternativa con menos material o mono-material junto con el proveedor de empaques.",
+                "Probar con un grupo de clientes un esquema retornable o recargable donde aplique."],
+        kpi: "Gramos de empaque por unidad vendida (o % de empaques retornables)." },
+      D3: { title: "Servitización: del producto al servicio", r: "Repensar", impact: 3, effort: 3,
+        desc: "Explorar modelos de ingreso basados en el uso y no en la propiedad: arriendo, suscripción, pago por uso o recompra garantizada del producto.",
+        benefit: "Ingresos recurrentes y mayor vínculo con el cliente; la empresa conserva el activo y captura su valor durante toda la vida útil, no solo en la venta.",
+        steps: ["Identificar qué clientes valorarían pagar por el uso en lugar de comprar.",
+                "Diseñar un piloto con un producto y un segmento acotado, con precio y condiciones simples.",
+                "Medir el resultado 3 a 6 meses (margen, retención, estado de los activos) antes de escalar."],
+        kpi: "% de los ingresos proveniente de modelos de servicio o uso." },
+      D4: { title: "Desmaterialización digital de procesos", r: "Reducir", impact: 1, effort: 1,
+        desc: "Digitalizar documentos, catálogos, manuales, facturas y trámites internos para eliminar consumo evitable de papel y materiales físicos.",
+        benefit: "Ahorro rápido y visible en papelería e impresión, procesos más ágiles y trazables, y una señal de modernización para todo el equipo.",
+        steps: ["Listar los 5 documentos o trámites que más papel consumen.",
+                "Migrarlos a formato digital con las herramientas que la empresa ya tiene.",
+                "Fijar una regla interna de impresión solo justificada y medir el consumo trimestral."],
+        kpi: "Consumo de papel (resmas) por trimestre." },
+      P1: { title: "Valorización de mermas y subproductos", r: "Reciclar · Recuperar", impact: 3, effort: 2,
+        desc: "Medir las mermas y subproductos del proceso, reducirlos en la fuente y convertir los inevitables en insumo interno, producto secundario o venta a terceros.",
+        benefit: "Convierte un costo (disposición) en un ingreso o ahorro; en muchas pymes las mermas valorizables representan entre el 2% y el 10% del costo de producción.",
+        steps: ["Medir durante un mes cuánta merma o subproducto genera cada etapa del proceso.",
+                "Identificar el uso de mayor valor: reincorporar al proceso, vender o transformar.",
+                "Cerrar el primer acuerdo de venta o reincorporación y registrar el beneficio."],
+        kpi: "% de mermas y subproductos valorizados (en peso o en valor)." },
+      P2: { title: "Recirculación y reúso de agua", r: "Reducir · Recuperar", impact: 2, effort: 2,
+        desc: "Medir el consumo de agua por proceso e implementar recirculación, reúso en cascada (usar el agua de un proceso en otro menos exigente) o captación de lluvia.",
+        benefit: "Reduce la factura de acueducto y el riesgo operativo frente a racionamientos, cada vez más frecuentes; mejora indicadores exigidos por clientes corporativos.",
+        steps: ["Instalar medición (aunque sea manual) del consumo por área o proceso.",
+                "Identificar el proceso de mayor consumo y evaluar recirculación o reúso en cascada.",
+                "Implementar la primera medida y comparar la factura antes y después."],
+        kpi: "Litros de agua por unidad producida (o % de agua reusada)." },
+      P3: { title: "Eficiencia energética y energías renovables", r: "Reducir · Recuperar", impact: 2, effort: 2,
+        desc: "Implementar un plan de eficiencia energética (iluminación, motores, hábitos, mantenimiento) y evaluar autogeneración solar o compra de energía renovable.",
+        benefit: "La eficiencia suele recortar entre el 10% y el 30% de la factura con retornos menores a 2 años; además existen incentivos tributarios para estas inversiones.",
+        steps: ["Revisar 12 meses de facturas para establecer la línea base de consumo y costo.",
+                "Aplicar las medidas de retorno rápido: iluminación LED, apagado programado, mantenimiento de equipos.",
+                "Solicitar cotización de solar fotovoltaica o energía renovable certificada."],
+        kpi: "kWh por unidad producida y % de energía de fuente renovable." },
+      P4: { title: "Mantenimiento preventivo y extensión de vida útil de activos", r: "Reparar", impact: 2, effort: 1,
+        desc: "Pasar del mantenimiento correctivo al preventivo planificado para alargar la vida útil de equipos e infraestructura y evitar reemplazos prematuros.",
+        benefit: "Menos paradas imprevistas, menor gasto de capital en reposición de equipos y activos que conservan valor de reventa.",
+        steps: ["Inventariar los equipos críticos con su antigüedad y estado.",
+                "Definir un calendario simple de mantenimiento preventivo por equipo.",
+                "Registrar fallas y costos para comparar contra el escenario correctivo."],
+        kpi: "% de mantenimientos preventivos sobre el total (y vida útil promedio de activos)." },
+      P5: { title: "Gestión de inventarios contra la obsolescencia", r: "Reducir", impact: 2, effort: 1,
+        desc: "Ajustar la planeación de compras e inventarios (rotación, primeras entradas–primeras salidas, lotes menores) para eliminar vencimientos, daños y obsolescencia en bodega.",
+        benefit: "Recupera capital de trabajo inmovilizado y elimina un desperdicio que hoy se paga dos veces: al comprarlo y al desecharlo.",
+        steps: ["Cuantificar el valor perdido por vencimientos u obsolescencia en los últimos 12 meses.",
+                "Implementar rotación PEPS y alertas de vencimiento en los productos críticos.",
+                "Crear un canal de salida anticipada (descuentos, donación) para inventario de baja rotación."],
+        kpi: "Valor del inventario dado de baja por trimestre." },
+      U1: { title: "Servicio de reparación, repuestos y garantías extendidas", r: "Reparar", impact: 2, effort: 2,
+        desc: "Ofrecer formalmente reparación, venta de repuestos o garantías extendidas que alarguen la vida útil del producto en manos del cliente.",
+        benefit: "Nueva línea de ingresos de alto margen, fidelización del cliente y diferenciación frente a competidores que solo venden producto nuevo.",
+        steps: ["Identificar las fallas o desgastes más comunes del producto y su reparabilidad.",
+                "Definir la oferta: servicio propio, red de talleres aliados o venta de repuestos.",
+                "Comunicar la oferta a los clientes existentes y medir la demanda 3 meses."],
+        kpi: "Ingresos por reparación y repuestos como % de las ventas." },
+      U2: { title: "Canal de reacondicionados y remanufactura", r: "Remanufacturar · Reusar", impact: 3, effort: 3,
+        desc: "Recuperar productos usados propios, reacondicionarlos o remanufacturarlos y venderlos por un canal de segunda vida con garantía.",
+        benefit: "Captura un mercado de clientes sensibles al precio sin canibalizar el producto nuevo, y recupera valor de unidades que hoy se pierden.",
+        steps: ["Estimar cuántas unidades usadas del producto quedan disponibles cada año y en qué estado.",
+                "Definir el proceso de recuperación y reacondicionamiento con costos por unidad.",
+                "Lanzar un piloto de venta de reacondicionados con garantía limitada."],
+        kpi: "Unidades reacondicionadas vendidas por trimestre." },
+      U3: { title: "Programa de educación al cliente en uso y disposición", r: "Repensar", impact: 1, effort: 1,
+        desc: "Entregar a los clientes instrucciones claras de buen uso, cuidado y disposición final del producto (etiquetas, empaque, redes, posventa).",
+        benefit: "Alarga la vida del producto en uso, reduce reclamos por mal uso y posiciona la marca como responsable, a un costo casi nulo.",
+        steps: ["Redactar las guías de uso, cuidado y disposición del producto principal.",
+                "Incluirlas en el empaque, el sitio web y los mensajes de posventa.",
+                "Medir su efecto en reclamos y en la percepción de los clientes."],
+        kpi: "% de productos vendidos con guía de uso y disposición incluida." },
+      R1: { title: "Sistema de logística inversa", r: "Reusar · Reciclar", impact: 3, effort: 3,
+        desc: "Implementar mecanismos para recuperar productos o empaques después del consumo: puntos de retorno, recolección programada o incentivos de devolución.",
+        benefit: "Asegura materia prima secundaria propia, cumple las metas de recolección de la normativa REP y fortalece la relación con el cliente mediante incentivos.",
+        steps: ["Definir qué se recupera (producto, empaque o ambos) y qué valor tiene recuperado.",
+                "Diseñar el mecanismo de retorno más simple para sus canales (punto de acopio, recogida con la entrega siguiente).",
+                "Pilotear con los clientes más cercanos, con un incentivo claro por devolver."],
+        kpi: "% de productos o empaques colocados que se recuperan." },
+      R2: { title: "Gestión integral de residuos con separación en la fuente", r: "Reciclar", impact: 2, effort: 1,
+        desc: "Implementar separación en la fuente, cuantificación por corriente y entrega a gestores o recicladores certificados, con indicadores de aprovechamiento.",
+        benefit: "Reduce el costo de disposición final, evita sanciones y genera la información base para cualquier otra iniciativa circular.",
+        steps: ["Caracterizar los residuos de una semana típica: qué se genera, cuánto y de qué tipo.",
+                "Instalar puntos de separación señalizados y capacitar al equipo en su uso.",
+                "Contactar gestores o asociaciones de recicladores y registrar cantidades entregadas."],
+        kpi: "% de residuos aprovechados sobre el total generado." },
+      R3: { title: "Cumplimiento y aprovechamiento estratégico de la normativa REP", r: "Repensar", impact: 2, effort: 2,
+        desc: "Verificar qué obligaciones de Responsabilidad Extendida del Productor aplican (empaques, electrónicos, llantas, pilas...) y convertir el cumplimiento en ventaja competitiva.",
+        benefit: "Evita sanciones y sobrecostos de última hora, y posiciona a la empresa frente a clientes grandes que exigen cumplimiento REP a sus proveedores.",
+        steps: ["Confirmar con la autoridad ambiental o un asesor qué normas REP aplican a la empresa.",
+                "Vincularse a un plan colectivo de aprovechamiento o estructurar el plan individual.",
+                "Comunicar el cumplimiento en la propuesta comercial ante clientes corporativos."],
+        kpi: "% de las metas REP aplicables cumplidas en el periodo." },
+      R4: { title: "Ingresos por venta de materiales secundarios", r: "Reciclar · Recuperar", impact: 2, effort: 1,
+        desc: "Vender de forma organizada los residuos aprovechables (cartón, metales, plásticos, aceites, orgánicos) a compradores o transformadores, con registro de cantidades y precios.",
+        benefit: "Transforma la basura en una fuente de ingresos inmediata; los metales, cartones y aceites usados tienen mercados líquidos con precios establecidos.",
+        steps: ["Cotizar con 2 o 3 compradores el precio de cada corriente aprovechable.",
+                "Acondicionar el acopio (compactar, limpiar, separar) para lograr mejor precio.",
+                "Registrar mensualmente cantidades e ingresos por material."],
+        kpi: "Ingresos mensuales por venta de materiales secundarios." },
+      E1: { title: "Simbiosis industrial: sus residuos como insumo de otros", r: "Recuperar", impact: 3, effort: 2,
+        desc: "Identificar empresas cercanas para las que sus residuos o excedentes (materiales, calor, agua, capacidad instalada) sean un insumo, y viceversa.",
+        benefit: "Crea ingresos o ahorros compartidos sin inversión mayor y teje alianzas locales que suelen derivar en nuevos negocios.",
+        steps: ["Listar los residuos y excedentes propios con cantidades aproximadas.",
+                "Mapear empresas vecinas o del gremio que podrían usarlos (o proveerle a usted los suyos).",
+                "Proponer un primer intercambio simple y formalizarlo si funciona."],
+        kpi: "Número de intercambios de simbiosis activos y su valor anual." },
+      E2: { title: "Línea base e indicadores de circularidad", r: "Repensar", impact: 2, effort: 1,
+        desc: "Construir la línea base de circularidad de la empresa: consumo de materiales, agua y energía por unidad, % de residuos aprovechados y % de insumos circulares, con metas anuales.",
+        benefit: "Lo que no se mide no se gestiona: la línea base permite priorizar, demostrar avances ante clientes y bancos, y postular a reconocimientos y financiamiento verde.",
+        steps: ["Definir 4 a 6 indicadores simples con los datos que ya existen (facturas, registros).",
+                "Calcular la línea base de los últimos 12 meses.",
+                "Fijar metas anuales y revisar el tablero cada trimestre en el comité gerencial."],
+        kpi: "Tablero de circularidad actualizado trimestralmente (sí/no y % de metas cumplidas)." },
+      E3: { title: "Formación y cultura circular del equipo", r: "Repensar", impact: 1, effort: 1,
+        desc: "Formar al equipo en los principios de la economía circular y asignar responsables visibles de las iniciativas, para que las oportunidades se detecten desde la operación.",
+        benefit: "Multiplica el efecto de todas las demás iniciativas: los equipos formados detectan desperdicios y proponen mejoras que la gerencia no ve.",
+        steps: ["Realizar una sesión introductoria de economía circular para todo el equipo.",
+                "Designar un responsable de circularidad con tiempo asignado.",
+                "Abrir un canal de ideas del equipo con reconocimiento a las implementadas."],
+        kpi: "% del equipo formado en economía circular y número de ideas implementadas." },
+      E4: { title: "Acceso a financiamiento e incentivos verdes", r: "Repensar", impact: 2, effort: 1,
+        desc: "Mapear y postular a incentivos tributarios, convocatorias públicas y líneas de crédito verde que financien los proyectos de circularidad priorizados.",
+        benefit: "Reduce el costo de capital de las inversiones circulares: existen exclusiones de IVA, deducciones de renta y líneas de fomento específicas para estos proyectos.",
+        steps: ["Listar los proyectos circulares priorizados con su inversión estimada.",
+                "Identificar los incentivos y convocatorias vigentes aplicables (autoridad ambiental, banca de fomento, cámaras de comercio).",
+                "Preparar y presentar la primera postulación con acompañamiento si es necesario."],
+        kpi: "Valor del financiamiento o incentivos verdes obtenidos por año." }
+    };
+
+    // ═══════════════ PAGO Y ACCESO ═══════════════
+    const PAY = {
+      price: "25.00",
+      currency: "USD",
+      priceLabel: "USD $25",
+      paypalClientId: "AaKYXvti3_r4I4g5K69UvGzJI0vdFxaVIx69NAH6UQT_w8RxpgS3qGn3_X6ysq8PibbTeBCNQTTb7ppX"
+    };
+    // Hashes SHA-256 de los códigos de acceso válidos (los códigos en texto plano NO están aquí)
+    const ACCESS_HASHES = new Set([
+      "8d4eed5c436c54720c16475277926b22e8abdf1e7ab19bfa5a79414a1317a7b8",
+      "916d69a343411e7dd70a1fbbe687e84edb2ead4ae86ec46bcc0fec4042ae4be6",
+      "442f365e04c7c7b98169742126193ecc04bfd529d818f4545838d82960538bfa",
+      "181ae060be8f09da571840d9b467e93c7648c77faf1a1b3cda8e6aa26cf479b3",
+      "178585b4ec44181f9139d34484a24f46e08c38c7ec41072ff077149d7cc84227",
+      "cc2ee4c67d4e7437b7875dbaa298269ce6fc4b6fc322507aafbbc5fefb4ce92a",
+      "e3b71745bb14712acb69707b040084c46261b66bb2e5c5e2a87c0424ecccf221",
+      "851ccc8ec978cb284b22321a823bb0ccd43ad7600648967ebc7692c4bede3ec1",
+      "d25a2eb4e7e593948ef55d0fdb75712ff5438462a5b508c2066facae7e882701",
+      "3e481a5dbab5b1df7ba82829cabe701ecbcb82a99b1d3686fac51872548a9f95",
+      "dfc379b553a3a5e8592d11ed9a2fc0da834d1b80d055b59c9f2e8a888a427e65",
+      "f9c131cc27c2d4debb9864d2020cbe67bdf0ea8f70cb2a8b3815d7c77b4dbc6e",
+      "15f461b11a946d0c347cf87cf41c10efce6bb7089f4e5c3e3bbc77480a6c8eb2",
+      "941fc6a364b82f5bff0f2687e2698c004f87969eeaa7d60aaceff1e4a7fed9be",
+      "9e8bea7a7f5c6f7a72cf62479b270f67a7e3b42338d58d53d0d6e1adc9166b60"
+    ]);
+    const ACCESS_KEY = "circular-access-v1";
+    const STORAGE_KEY = "diagnostico-circularidad-v1";
+
+    // ═══════════════ IA DE REDACCIÓN (opcional) ═══════════════
+    // Mismo proxy seguro (Cloudflare Worker) que usa el Reporte GRI Express.
+    // Vacío = la lectura ejecutiva se genera con la plantilla estática; el diagnóstico funciona igual.
+    const AI = { endpoint: "https://pal-ai.projectability-pal.workers.dev/" };
+
+    function hasAccess() { return localStorage.getItem(ACCESS_KEY) === "granted"; }
+    function grantAccess() { localStorage.setItem(ACCESS_KEY, "granted"); }
+
+    async function sha256(text) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function tryAccessCode(raw, feedbackEl) {
+      const code = raw.trim().toUpperCase();
+      if (!code) return;
+      const h = await sha256(code);
+      if (ACCESS_HASHES.has(h)) {
+        grantAccess();
+        feedbackEl.style.color = "#7be3c7";
+        feedbackEl.textContent = "✓ Código válido. Generando su informe completo...";
+        setTimeout(() => renderResults(), 800);
+      } else {
+        feedbackEl.style.color = "#ffb3b3";
+        feedbackEl.textContent = "✗ Código no válido. Verifique e intente de nuevo.";
+      }
+    }
+
+    // ═══════════════ ESTADO ═══════════════
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"answers":{},"org":{"nombre":"","sector":""},"aiSummary":null}');
+    if (!state.org) state.org = { nombre: "", sector: "" };
+
+    const byId = id => document.getElementById(id);
+    const esc = s => String(s ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+    function bindOrgInputs() {
+      byId("orgNombre").value = state.org.nombre || "";
+      byId("orgSector").value = state.org.sector || "";
+      byId("orgNombre").addEventListener("input", e => { state.org.nombre = e.target.value; state.aiSummary = null; save(); });
+      byId("orgSector").addEventListener("input", e => { state.org.sector = e.target.value; state.aiSummary = null; save(); });
+    }
+
+    // ═══════════════ CÁLCULOS ═══════════════
+    function answeredCount() {
+      return QUESTIONS.filter(q => state.answers[q.code]).length;
+    }
+
+    function circularityIndex() {
+      const vals = QUESTIONS.map(q => state.answers[q.code]).filter(Boolean);
+      if (!vals.length) return null;
+      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+      return Math.round(((avg - 1) / 3) * 100);
+    }
+
+    function flowScores() {
+      return Object.keys(FLOWS).map(fid => {
+        const qs = QUESTIONS.filter(q => q.flow === fid);
+        const vals = qs.map(q => state.answers[q.code]).filter(Boolean);
+        const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        return { fid, name: FLOWS[fid].name, icon: FLOWS[fid].icon, pct: vals.length ? ((avg - 1) / 3) * 100 : 0, answered: vals.length, total: qs.length };
+      });
+    }
+
+    function detectOpportunities() {
+      const opps = [];
+      const strengths = [];
+      QUESTIONS.forEach(q => {
+        const ans = state.answers[q.code];
+        if (!ans) return;
+        const opp = OPPS[q.code];
+        if (ans === 4) {
+          strengths.push({ code: q.code, flow: q.flow, aspect: q.aspect, title: opp.title });
+        } else {
+          opps.push({
+            code: q.code,
+            flow: q.flow,
+            aspect: q.aspect,
+            priority: ans <= 2 ? "alta" : "media",
+            answer: ans,
+            ...opp
+          });
+        }
+      });
+      // Orden: prioridad alta primero, luego mayor impacto, luego menor esfuerzo
+      opps.sort((a, b) =>
+        (a.priority === b.priority ? 0 : a.priority === "alta" ? -1 : 1) ||
+        (b.impact - a.impact) ||
+        (a.effort - b.effort)
+      );
+      return { opps, strengths };
+    }
+
+    function maturityLabel(pct) {
+      if (pct === null) return { label: "Sin diagnosticar", text: "Responda las preguntas para calcular su índice de circularidad." };
+      if (pct < 35) return { label: "Economía lineal", text: "Su empresa opera de forma mayormente lineal: cada oportunidad detectada es valor que hoy se está perdiendo." };
+      if (pct < 65) return { label: "Transición iniciada", text: "Hay prácticas circulares en marcha. Priorizar las oportunidades detectadas acelerará la transición." };
+      if (pct < 85) return { label: "Circularidad avanzada", text: "Su empresa gestiona bien sus flujos. Las oportunidades restantes son de optimización y diferenciación." };
+      return { label: "Empresa circular", text: "Nivel sobresaliente de circularidad. El reto es sostenerlo, medirlo y convertirlo en ventaja comercial." };
+    }
+
+    const IMPACT_TXT = { 1: "Impacto moderado", 2: "Impacto medio", 3: "Impacto alto" };
+    const EFFORT_TXT = { 1: "Esfuerzo bajo", 2: "Esfuerzo medio", 3: "Esfuerzo alto" };
+    const HORIZON = {
+      1: { key: "h1", label: "0–90 días · Victorias tempranas", desc: "Bajo esfuerzo e inversión mínima: empiece por aquí." },
+      2: { key: "h2", label: "3–12 meses · Consolidación", desc: "Requieren coordinación, piloto o inversión moderada." },
+      3: { key: "h3", label: "12–24 meses · Transformación", desc: "Iniciativas estratégicas que cambian el modelo de negocio." }
+    };
+
+    // ═══════════════ RENDER: DIAGNÓSTICO ═══════════════
+    function renderQuestions() {
+      const list = byId("questionList");
+      let html = "";
+      let currentFlow = null;
+      QUESTIONS.forEach(q => {
+        if (q.flow !== currentFlow) {
+          currentFlow = q.flow;
+          const f = FLOWS[q.flow];
+          html += `<div class="flow-header"><span class="flow-icon">${f.icon}</span><div><h3>${f.name}</h3><span>${f.desc}</span></div></div>`;
+        }
+        const ans = state.answers[q.code];
+        html += `<div class="question-card" data-code="${q.code}">
+          <div class="question-head">
+            <div class="code">${q.code}</div>
+            <div class="meta">
+              <strong>${esc(q.aspect)}</strong>
+              <span>${FLOWS[q.flow].icon} ${FLOWS[q.flow].name}</span>
+            </div>
+            <span class="pill">${ans ? "Nivel " + ans : "Pendiente"}</span>
+          </div>
+          <div class="question-text">${esc(q.question)}</div>
+          <div class="levels">
+            ${[4, 3, 2, 1].map(v => `
+              <label class="level ${ans === v ? "selected" : ""}">
+                <input type="radio" name="q-${q.code}" value="${v}" ${ans === v ? "checked" : ""}>
+                <strong>Nivel ${v}</strong>
+                <span>${esc(q.options[4 - v])}</span>
+              </label>`).join("")}
+          </div>
+        </div>`;
+      });
+      list.innerHTML = html;
+
+      list.querySelectorAll("input[type=radio]").forEach(input => {
+        input.addEventListener("change", () => {
+          const code = input.name.slice(2);
+          state.answers[code] = Number(input.value);
+          save();
+          const card = list.querySelector(`[data-code="${code}"]`);
+          card.querySelectorAll(".level").forEach(l => l.classList.toggle("selected", l.querySelector("input").checked));
+          card.querySelector(".pill").textContent = "Nivel " + input.value;
+          updateSidebar();
+        });
+      });
+    }
+
+    function updateSidebar() {
+      const answered = answeredCount();
+      const total = QUESTIONS.length;
+      const pct = circularityIndex();
+      byId("progressText").textContent = `${answered} / ${total}`;
+      byId("progressBar").style.width = `${(answered / total) * 100}%`;
+      byId("scoreGauge").textContent = pct === null ? "0%" : pct + "%";
+      byId("gauge").style.background = `conic-gradient(var(--teal) ${((pct || 0) / 100) * 360}deg, #dce6ef 0deg)`;
+      const m = maturityLabel(pct);
+      byId("maturityLabel").textContent = m.label;
+      byId("maturityText").textContent = m.text;
+
+      const { opps, strengths } = detectOpportunities();
+      byId("sideOpps").textContent = opps.length;
+      byId("sideWins").textContent = strengths.length;
+
+      const banner = byId("finishBanner");
+      byId("finishBannerTitle").textContent = `${answered} de ${total} preguntas respondidas`;
+      if (answered === total) {
+        banner.classList.add("complete");
+        byId("finishBannerTitle").textContent = `✓ Diagnóstico completo: ${opps.length} oportunidades detectadas`;
+        byId("finishBannerSubtitle").textContent = "Vea sus resultados y el informe de oportunidades.";
+      } else {
+        banner.classList.remove("complete");
+        byId("finishBannerSubtitle").textContent = "Responda todas las preguntas para detectar el máximo de oportunidades.";
+      }
+    }
+
+    // ═══════════════ RENDER: RESULTADOS ═══════════════
+    function badgeHtml(o) {
+      return `<div class="badges">
+        <span class="badge ${o.priority === "alta" ? "b-prio" : "b-prio-media"}">${o.priority === "alta" ? "Prioridad alta" : "Optimización"}</span>
+        <span class="badge b-r">${esc(o.r)}</span>
+        <span class="badge b-imp${o.impact}">${IMPACT_TXT[o.impact]}</span>
+        <span class="badge b-eff${o.effort}">${EFFORT_TXT[o.effort]}</span>
+        ${o.effort === 1 ? '<span class="badge b-quick">⚡ Victoria temprana</span>' : ""}
+      </div>`;
+    }
+
+    function oppBodyHtml(o) {
+      return `<div class="opp-body">
+        <p><span class="lbl">En qué consiste</span>${esc(o.desc)}</p>
+        <p><span class="lbl">Beneficio esperado</span>${esc(o.benefit)}</p>
+        <div><span class="lbl">Primeros pasos</span>
+          <ol class="opp-steps">${o.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
+        </div>
+        <div class="opp-kpi">📏 <strong>Indicador sugerido:</strong> ${esc(o.kpi)}</div>
+      </div>`;
+    }
+
+    function oppCardHtml(o, mode) {
+      // mode: "full" | "sample" | "locked"
+      const head = `<div class="opp-head">
+        <div>
+          <h3>${esc(o.title)}</h3>
+          <span class="opp-flow">${FLOWS[o.flow].icon} ${FLOWS[o.flow].name} · ${esc(o.aspect)} (${o.code})</span>
+        </div>
+        ${badgeHtml(o)}
+      </div>`;
+
+      if (mode === "locked") {
+        return `<div class="opp-card ${o.priority === "media" ? "prio-media" : ""}">
+          <div class="preview-ribbon">VISTA PREVIA</div>
+          ${head}
+          <div class="opp-body locked-content" aria-hidden="true">
+            <p><span class="lbl">En qué consiste</span>Contenido disponible en el informe completo. Este texto está bloqueado en la vista previa gratuita de su diagnóstico de circularidad.</p>
+            <p><span class="lbl">Beneficio esperado</span>Contenido disponible en el informe completo, junto con los primeros pasos y el indicador sugerido para esta oportunidad.</p>
+          </div>
+          <div class="lock-overlay"><button type="button" onclick="scrollToPaywall()">🔓 Desbloquear informe completo</button></div>
+        </div>`;
+      }
+      return `<div class="opp-card ${mode === "sample" ? "sample" : ""} ${o.priority === "media" ? "prio-media" : ""}">
+        ${mode === "sample" ? '<div class="opp-head" style="padding-bottom:0"><span class="badge" style="background:rgba(22,129,122,.14);color:var(--focus)">🎁 Oportunidad de muestra — incluida gratis</span></div>' : ""}
+        ${head}
+        ${oppBodyHtml(o)}
+      </div>`;
+    }
+
+    function radarDraw(canvasId, data) {
+      const canvas = byId(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2 + 8, R = Math.min(W, H) / 2 - 78;
+      const n = data.length;
+      const angle = i => (Math.PI * 2 * i) / n - Math.PI / 2;
+
+      // Rejilla
+      ctx.strokeStyle = "#d9e1ea";
+      ctx.fillStyle = "#647084";
+      ctx.font = "12px Inter, Segoe UI, Arial";
+      for (let ring = 1; ring <= 4; ring++) {
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const a = angle(i % n), r = (R * ring) / 4;
+          const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      // Ejes y etiquetas
+      data.forEach((d, i) => {
+        const a = angle(i);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+        ctx.stroke();
+        const lx = cx + (R + 34) * Math.cos(a), ly = cy + (R + 26) * Math.sin(a);
+        ctx.textAlign = Math.abs(Math.cos(a)) < .3 ? "center" : Math.cos(a) > 0 ? "left" : "right";
+        const words = d.name.split(" ");
+        const mid = Math.ceil(words.length / 2);
+        const l1 = d.icon + " " + words.slice(0, mid).join(" ");
+        const l2 = words.slice(mid).join(" ");
+        ctx.fillText(l1, lx, ly - 6);
+        if (l2) ctx.fillText(l2, lx, ly + 8);
+      });
+      // Polígono de datos
+      ctx.beginPath();
+      data.forEach((d, i) => {
+        const a = angle(i), r = R * Math.max(.02, d.pct / 100);
+        const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = "rgba(22,129,122,.18)";
+      ctx.strokeStyle = "#16817a";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+      data.forEach((d, i) => {
+        const a = angle(i), r = R * Math.max(.02, d.pct / 100);
+        ctx.beginPath();
+        ctx.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#16817a";
+        ctx.fill();
+      });
+    }
+
+    function matrixHtml(opps) {
+      const cell = (imp, eff) => {
+        const items = opps.filter(o => o.impact === imp && o.effort === eff);
+        const cls = imp === 3 && eff === 1 ? "hot" : (imp >= 2 && eff <= 2 ? "warm" : "");
+        return `<div class="mx-cell ${cls}">${items.map(o => `<span class="mx-chip ${o.priority === "media" ? "media" : ""}" title="${esc(o.title)}">${o.code} · ${esc(o.title.length > 34 ? o.title.slice(0, 34) + "…" : o.title)}</span>`).join("")}</div>`;
+      };
+      return `<div class="matrix">
+        <div class="mx-corner">Impacto ↓<br>Esfuerzo →</div>
+        <div class="mx-h">Esfuerzo bajo</div><div class="mx-h">Esfuerzo medio</div><div class="mx-h">Esfuerzo alto</div>
+        <div class="mx-h">Impacto alto</div>${cell(3,1)}${cell(3,2)}${cell(3,3)}
+        <div class="mx-h">Impacto medio</div>${cell(2,1)}${cell(2,2)}${cell(2,3)}
+        <div class="mx-h">Impacto moderado</div>${cell(1,1)}${cell(1,2)}${cell(1,3)}
+      </div>`;
+    }
+
+    function planHtml(opps) {
+      return [1, 2, 3].map(eff => {
+        const h = HORIZON[eff];
+        const items = opps.filter(o => o.effort === eff);
+        if (!items.length) return "";
+        return `<div class="plan-phase">
+          <div class="plan-phase-head"><strong>${h.label}</strong><span>${h.desc}</span></div>
+          <table>
+            <thead><tr><th style="width:42%">Oportunidad</th><th>Primer paso</th><th style="width:22%">Indicador de éxito</th></tr></thead>
+            <tbody>
+              ${items.map(o => `<tr>
+                <td><strong>${esc(o.title)}</strong><br><span style="color:var(--muted);font-size:12px">${FLOWS[o.flow].icon} ${FLOWS[o.flow].name} · ${o.priority === "alta" ? "Prioridad alta" : "Optimización"}</span></td>
+                <td>${esc(o.steps[0])}</td>
+                <td>${esc(o.kpi)}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>`;
+      }).join("");
+    }
+
+    function paywallHtml(oppCount) {
+      return `<div class="unlock-banner" id="paywall">
+        <h3>🔓 Desbloquee su informe completo y plan de acción</h3>
+        <p>Su diagnóstico detectó <strong>${oppCount} oportunidades de circularidad</strong>. El informe completo incluye:</p>
+        <ul>
+          <li>Cada oportunidad desarrollada: en qué consiste, beneficio esperado, primeros pasos e indicador de seguimiento.</li>
+          <li>Matriz de priorización impacto–esfuerzo para decidir por dónde empezar.</li>
+          <li>Plan de acción por horizontes: victorias tempranas (0–90 días), consolidación (3–12 meses) y transformación (12–24 meses).</li>
+          <li>Informe imprimible en PDF con la marca de su diagnóstico.</li>
+        </ul>
+        <div class="unlock-price">Pago único · ${PAY.priceLabel}</div>
+        <div class="pay-columns">
+          <div class="pay-box">
+            <h4>💳 Pagar con PayPal o tarjeta</h4>
+            <div id="paypalButtons"></div>
+          </div>
+          <div class="pay-box">
+            <h4>🔑 ¿Ya tiene un código de acceso?</h4>
+            <div class="code-row">
+              <input id="accessCode" placeholder="CIRC-XXXX-XXXX" maxlength="14" autocomplete="off">
+              <button type="button" id="accessBtn">Validar</button>
+            </div>
+            <div class="code-feedback" id="codeFeedback"></div>
+          </div>
+        </div>
+        <div class="unlock-note">¿Prefiere otro medio de pago (transferencia, Nequi)? Escríbanos a
+          <a href="mailto:projectability.pal@gmail.com?subject=Acceso%20Diagn%C3%B3stico%20de%20Circularidad">projectability.pal@gmail.com</a>
+          y le enviaremos su código tras confirmar el pago. El acceso queda guardado en este navegador.</div>
+      </div>`;
+    }
+
+    function renderResults() {
+      const body = byId("resultsBody");
+      const answered = answeredCount();
+      byId("printDate").textContent = "Generado el " + new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+
+      if (!answered) {
+        body.innerHTML = `<div class="empty">Aún no hay respuestas. Complete el diagnóstico para ver sus oportunidades de circularidad.</div>`;
+        return;
+      }
+
+      const pct = circularityIndex();
+      const m = maturityLabel(pct);
+      const { opps, strengths } = detectOpportunities();
+      const quickWins = opps.filter(o => o.effort === 1).length;
+      const unlocked = hasAccess();
+      const summarySig = summarySignature(pct, opps, strengths);
+
+      let html = `
+        <div class="dashboard">
+          <div class="metric m-score">
+            <span>Índice de circularidad</span>
+            <strong>${pct}%</strong>
+            <small>${esc(m.label)}</small>
+          </div>
+          <div class="metric m-opps">
+            <span>Oportunidades detectadas</span>
+            <strong>${opps.length}</strong>
+            <small>${opps.filter(o => o.priority === "alta").length} de prioridad alta</small>
+          </div>
+          <div class="metric m-wins">
+            <span>Victorias tempranas</span>
+            <strong>${quickWins}</strong>
+            <small>Implementables en 0–90 días con esfuerzo bajo</small>
+          </div>
+          <div class="metric m-forta">
+            <span>Fortalezas circulares</span>
+            <strong>${strengths.length}</strong>
+            <small>Prácticas que ya son circulares</small>
+          </div>
+        </div>
+
+        <div class="exec-summary-box">
+          <div class="exec-level">${esc(m.label)} · Índice ${pct}% ${state.aiSummary && state.aiSummary.sig === summarySig ? '<span style="font-weight:600;color:var(--focus);text-transform:none;letter-spacing:0;font-size:11.5px">· ✨ lectura ejecutiva generada por IA</span>' : ""}</div>
+          <div class="exec-text" id="execText">${state.aiSummary && state.aiSummary.sig === summarySig ? esc(state.aiSummary.text) : esc(m.text)}
+          ${answered < QUESTIONS.length ? ` <strong>Nota:</strong> respondió ${answered} de ${QUESTIONS.length} preguntas; complete el diagnóstico para detectar todas las oportunidades.` : ""}</div>
+        </div>
+
+        <div class="report-grid">
+          <div class="panel">
+            <h2>📊 Circularidad por flujo</h2>
+            <p>Puntaje de cada flujo de valor frente al ideal circular (100%). Los flujos más bajos concentran las mayores oportunidades.</p>
+            <canvas id="flowRadar" width="760" height="400"></canvas>
+          </div>
+          <div class="panel">
+            <h2>💪 Fortalezas circulares</h2>
+            <p>Prácticas donde su empresa ya opera de forma circular. Consérvelas y comuníquelas comercialmente.</p>
+            ${strengths.length
+              ? `<div class="strengths">${strengths.map(s => `<div class="strength-item"><span>✅</span><span><strong>${esc(s.aspect)}</strong> — ${esc(s.title)} ya es una práctica instalada.</span></div>`).join("")}</div>`
+              : `<div class="empty">Aún no se detectan prácticas en nivel 4. Cada oportunidad implementada se convertirá en una fortaleza.</div>`}
+          </div>
+        </div>`;
+
+      if (!opps.length) {
+        html += `<div class="panel"><h2>🏆 Sin brechas detectadas</h2><p>Todas sus respuestas están en nivel circular. Excelente desempeño.</p></div>`;
+        body.innerHTML = html;
+        radarDraw("flowRadar", flowScores());
+        return;
+      }
+
+      // ── Informe de oportunidades ──
+      html += `<div class="panel" style="margin-bottom:16px">
+        <h2>🎯 Informe de oportunidades ${unlocked ? "" : "— vista previa"}</h2>
+        ${unlocked
+          ? `<div class="access-chip">✓ Informe completo desbloqueado</div><p>Las ${opps.length} oportunidades detectadas, ordenadas por prioridad, impacto y esfuerzo.</p>`
+          : `<p>Detectamos <strong>${opps.length} oportunidades</strong>. La primera está desarrollada por completo como muestra; desbloquee el informe para ver todas con su plan de acción.</p>`}
+        <div class="opp-list">`;
+
+      opps.forEach((o, i) => {
+        const mode = unlocked ? "full" : (i === 0 ? "sample" : "locked");
+        html += oppCardHtml(o, mode);
+      });
+      html += `</div></div>`;
+
+      if (unlocked) {
+        html += `<div class="panel" style="margin-bottom:16px">
+          <h2>🧭 Matriz de priorización impacto–esfuerzo</h2>
+          <p>Empiece por la esquina superior izquierda: impacto alto con esfuerzo bajo. Las tarjetas azules son oportunidades de optimización.</p>
+          ${matrixHtml(opps)}
+        </div>
+        <div class="panel" style="margin-bottom:16px">
+          <h2>🗓️ Plan de acción por horizontes</h2>
+          <p>Ruta sugerida de implementación. Ajuste los plazos a la capacidad real de su equipo y revise el avance cada trimestre.</p>
+          ${planHtml(opps)}
+        </div>
+        <div class="panel no-print" style="text-align:center">
+          <h2 style="justify-content:center">📄 Su informe está listo</h2>
+          <p>Descárguelo en PDF con el botón "Imprimir informe" (elija "Guardar como PDF" en el destino de impresión).</p>
+          <p style="margin-top:8px">¿Quiere acompañamiento para implementar el plan? Escríbanos a
+            <a href="mailto:projectability.pal@gmail.com?subject=Acompa%C3%B1amiento%20plan%20de%20circularidad" style="color:var(--teal);font-weight:600">projectability.pal@gmail.com</a></p>
+        </div>
+        <div class="print-only" style="margin-top:14px;color:#647084;font-size:11.5px;line-height:1.5">
+          Informe generado por el Diagnóstico de Oportunidades de Circularidad de Projectability (projectability.net).
+          Documento de orientación basado en el autodiagnóstico diligenciado por la organización; no constituye una auditoría
+          ni sustituye una asesoría técnica a profundidad. Los beneficios descritos son típicos del tipo de iniciativa y
+          pueden variar según el sector y la escala de la empresa.
+        </div>`;
+      } else {
+        html += paywallHtml(opps.length);
+      }
+
+      body.innerHTML = html;
+      radarDraw("flowRadar", flowScores());
+
+      if (!unlocked) {
+        byId("accessBtn").addEventListener("click", () => tryAccessCode(byId("accessCode").value, byId("codeFeedback")));
+        byId("accessCode").addEventListener("keydown", e => { if (e.key === "Enter") tryAccessCode(byId("accessCode").value, byId("codeFeedback")); });
+        if (PAY.paypalClientId) loadPayPal();
+      }
+
+      if (AI.endpoint && (!state.aiSummary || state.aiSummary.sig !== summarySig) && !aiSummaryLoading) {
+        aiGenerateSummary(pct, m, opps, strengths, summarySig);
+      }
+    }
+
+    function scrollToPaywall() {
+      const pw = byId("paywall");
+      if (pw) pw.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // ═══════════════ LECTURA EJECUTIVA CON IA ═══════════════
+    function summarySignature(pct, opps, strengths) {
+      const topCodes = opps.slice(0, 5).map(o => o.code).join(",");
+      const winCodes = strengths.map(s => s.code).join(",");
+      return `${pct}|${topCodes}|${winCodes}|${state.org.nombre.trim()}|${state.org.sector.trim()}`;
+    }
+
+    let aiSummaryLoading = false;
+    async function aiGenerateSummary(pct, m, opps, strengths, sig) {
+      aiSummaryLoading = true;
+      const execEl = byId("execText");
+      const context = {
+        empresa: state.org.nombre.trim(),
+        sector: state.org.sector.trim(),
+        indice: pct,
+        nivel: m.label,
+        prioritarias: opps.filter(o => o.priority === "alta").slice(0, 5).map(o => ({ titulo: o.title, flujo: FLOWS[o.flow].name })),
+        fortalezas: strengths.map(s => s.title)
+      };
+      try {
+        const res = await fetch(AI.endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "circular-summary", context })
+        });
+        if (!res.ok) throw new Error("AI endpoint error " + res.status);
+        const data = await res.json();
+        if (!data || typeof data.resumen_ejecutivo !== "string" || !data.resumen_ejecutivo.trim()) throw new Error("Respuesta IA inválida");
+        state.aiSummary = { text: data.resumen_ejecutivo.trim(), sig };
+        save();
+        if (execEl && byId("resultados").classList.contains("active")) renderResults();
+      } catch (e) {
+        // Degradación elegante: el texto estático de la plantilla ya está visible; no se bloquea nada.
+      } finally {
+        aiSummaryLoading = false;
+      }
+    }
+
+    // ═══════════════ PAYPAL ═══════════════
+    let paypalLoading = false;
+    function loadPayPal() {
+      if (window.paypal) return mountPayPal();
+      if (paypalLoading) return;
+      paypalLoading = true;
+      const s = document.createElement("script");
+      s.src = `https://www.paypal.com/sdk/js?client-id=${PAY.paypalClientId}&currency=${PAY.currency}`;
+      s.onload = mountPayPal;
+      s.onerror = () => {
+        const holder = byId("paypalButtons");
+        if (holder) holder.innerHTML = '<div style="color:rgba(255,255,255,.85);font-size:12.5px">No fue posible cargar PayPal. Use un código de acceso o escríbanos por correo.</div>';
+      };
+      document.head.appendChild(s);
+    }
+
+    function mountPayPal() {
+      const holder = byId("paypalButtons");
+      if (!holder || !window.paypal) return;
+      holder.innerHTML = "";
+      paypal.Buttons({
+        style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
+        createOrder: (data, actions) => actions.order.create({
+          purchase_units: [{
+            description: "Diagnóstico de Oportunidades de Circularidad — Informe completo y plan de acción",
+            amount: { value: PAY.price, currency_code: PAY.currency }
+          }]
+        }),
+        onApprove: (data, actions) => actions.order.capture().then(() => {
+          grantAccess();
+          renderResults();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }),
+        onError: () => {
+          const fb = byId("codeFeedback");
+          if (fb) { fb.style.color = "#ffb3b3"; fb.textContent = "Hubo un problema con el pago. Intente de nuevo o use un código de acceso."; }
+        }
+      }).render("#paypalButtons");
+    }
+
+    // ═══════════════ NAVEGACIÓN ═══════════════
+    function switchView(view) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.view === view));
+      document.querySelectorAll(".section").forEach(s => s.classList.toggle("active", s.id === view));
+      if (view === "resultados") renderResults();
+      window.scrollTo({ top: 0 });
+    }
+
+    document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchView(t.dataset.view)));
+    byId("finishBtn").addEventListener("click", () => switchView("resultados"));
+    byId("printReport").addEventListener("click", () => { switchView("resultados"); setTimeout(() => window.print(), 300); });
+
+    byId("fillDemo").addEventListener("click", () => {
+      QUESTIONS.forEach(q => { state.answers[q.code] = 1 + Math.floor(Math.random() * 4); });
+      save();
+      renderQuestions();
+      updateSidebar();
+    });
+
+    byId("clearAll").addEventListener("click", () => {
+      if (!confirm("¿Borrar todas las respuestas de este diagnóstico?")) return;
+      state = { answers: {}, org: { nombre: "", sector: "" }, aiSummary: null };
+      save();
+      renderQuestions();
+      updateSidebar();
+      bindOrgInputs();
+      switchView("diagnostico");
+    });
+
+    // ═══════════════ INICIO ═══════════════
+    renderQuestions();
+    updateSidebar();
+    bindOrgInputs();
+  </script>
+</body>
+</html>
