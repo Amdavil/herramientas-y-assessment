@@ -356,6 +356,19 @@
     .dim-dot.dim-G { background: var(--lav); }
 
     .export-actions { display: flex; gap: 10px; margin: 4px 0 6px; flex-wrap: wrap; }
+    .siguiente-paso-card {
+      margin-top: 22px; background: linear-gradient(135deg, #eef3fb, #eafaf3);
+      border: 1px solid #cfe0f5; border-radius: 12px; padding: 18px 22px;
+    }
+    .siguiente-paso-card h3 { margin: 0 0 8px; font-size: 16px; color: var(--navy); }
+    .siguiente-paso-card p { margin: 0 0 14px; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
+    .gri-upsell-box {
+      background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; max-width: 420px;
+    }
+    .gri-upsell-box h4 { margin: 0 0 4px; font-size: 13.5px; color: var(--navy); }
+    .gri-upsell-box .precio { font-weight: 800; color: var(--teal); }
+    .gri-upsell-box .precio del { color: var(--muted); font-weight: 400; margin-right: 6px; }
+    .gri-access-ok { color: var(--focus); font-size: 13px; font-weight: 600; }
     .print-only { display: none; }
     .print-doc h1 { font-size: 22px; color: var(--navy); margin: 0 0 4px; }
     .print-doc .print-meta { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
@@ -881,8 +894,15 @@
           </div>
           <p class="fine" id="export-status"></p>
 
+          <div class="siguiente-paso-card">
+            <h3>📄 ¿Necesita su Reporte GRI de Sostenibilidad?</h3>
+            <p>Este estudio es justo el insumo que GRI exige (GRI 3-1 y 3-2) para construir un reporte de sostenibilidad. Continúe al <strong>Reporte GRI Express</strong> con su perfil, grupos de interés y temas materiales ya precargados — solo tendrá que revisarlos y completar el resto.</p>
+            <button type="button" class="primary" onclick="continuarAGRIExpress()">Continuar al Reporte GRI Express →</button>
+            <div id="gri-bundle-upsell" style="margin-top:14px"></div>
+          </div>
+
           <div class="disclaimer-box" style="margin-top:20px">
-            <strong>¿Y ahora qué sigue?</strong> Este estudio exprés es un punto de partida de priorización estratégica. Le recomendamos: (1) validar estos resultados directamente con sus grupos de interés reales usando las preguntas sugeridas en el informe, (2) definir metas e indicadores para sus asuntos críticos y altos, y (3) si necesita un reporte de sostenibilidad formal o profundizar esta estrategia, contáctenos en <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
+            <strong>¿Y ahora qué sigue?</strong> Este estudio exprés es un punto de partida de priorización estratégica. Le recomendamos: (1) validar estos resultados directamente con sus grupos de interés reales usando las preguntas sugeridas en el informe, y (2) definir metas e indicadores para sus asuntos críticos y altos. Para profundizar su estrategia de sostenibilidad más allá del reporte, contáctenos en <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
           </div>
         </div>
 
@@ -1311,6 +1331,7 @@
       if (paso === 6) renderEvaluacionEmpresa();
       if (paso === 7) renderMatriz();
       if (paso === 8) renderPaso8();
+      if (paso === 9) renderGriUpsell();
     }
 
     function attemptGoToStep(destino) {
@@ -2527,6 +2548,143 @@
       });
     }
 
+    // ═══════════════ INTEGRACIÓN CON EL REPORTE GRI EXPRESS ═══════════════
+    // Este estudio es el insumo de materialidad que exige GRI 3-1/3-2 para el reporte de
+    // sostenibilidad. Se traspasan perfil, grupos de interés y temas materiales por localStorage
+    // (mismo origen: amdavil.github.io/herramientas-y-assessment) — sin backend nuevo.
+    const GRI_ACCESS_KEY = "gri-access-v1"; // clave de acceso propia del Reporte GRI Express
+    const GRI_HANDOFF_KEY = "materialidad-a-gri-handoff-v1";
+
+    const MAPEO_GRUPO_A_GRI_EXPRESS = {
+      accionistas: "Accionistas / inversionistas",
+      inversionistas: "Accionistas / inversionistas",
+      colaboradores: "Empleados y colaboradores",
+      clientes: "Clientes",
+      consumidores_finales: "Clientes",
+      proveedores: "Proveedores y contratistas",
+      contratistas: "Proveedores y contratistas",
+      comunidades_vecinas: "Comunidades locales",
+      autoridades_ambientales: "Gobierno y entes reguladores",
+      autoridades_laborales: "Gobierno y entes reguladores",
+      entidades_control: "Gobierno y entes reguladores",
+      gremios: "Gremios y aliados estratégicos",
+      aliados_estrategicos: "Gremios y aliados estratégicos",
+      instituciones_financieras: "Banca y aseguradoras",
+      medios_comunicacion: "Medios de comunicación",
+      academia: "Academia y centros de investigación",
+      organizaciones_sociales: "ONG y sociedad civil"
+      // junta_directiva, alta_direccion, recicladores_gestores: sin equivalente directo
+    };
+
+    const MAPEO_ASUNTO_A_TEMA_GRI_EXPRESS = {
+      cambio_climatico: "t305", consumo_energia: "t302", eficiencia_energetica: "t302",
+      emisiones_gei: "t305", calidad_aire: "t305", gestion_agua: "t303", vertimientos: "t303",
+      residuos: "t306", economia_circular: "t301", envases_empaques: "t301", biodiversidad: "t304",
+      materias_primas: "t301", gestion_ambiental_proveedores: "t308",
+      riesgos_climaticos_fisicos_transicion: "t305",
+      salud_seguridad_trabajo: "t403", bienestar_laboral: "t401", diversidad_equidad_inclusion: "t405",
+      formacion_desarrollo_talento: "t404", derechos_humanos: "t406", condiciones_laborales: "t401",
+      relacion_comunidades: "t413", impacto_social: "t203", seguridad_consumidor: "t416",
+      calidad_producto_servicio: "t416", proteccion_datos_personales: "t418",
+      relacionamiento_clientes: "t417", gestion_responsable_proveedores: "t414",
+      etica_transparencia: "t205", anticorrupcion: "t205", ciberseguridad: "t418",
+      privacidad_informacion: "t418", compras_responsables: "t204"
+      // sin equivalente directo en el catálogo del Reporte GRI Express: sustancias_quimicas,
+      // cumplimiento_ambiental, accesibilidad, trabajo_infantil_forzoso, cumplimiento_normativo,
+      // gobierno_corporativo, gestion_riesgos, debida_diligencia, conflictos_interes,
+      // reporte_rendicion_cuentas, cultura_organizacional, innovacion_sostenible, continuidad_negocio
+    };
+
+    function construirHandoffGRIExpress() {
+      const org = {};
+      if (state.empresa.nombre) org.nombre = state.empresa.nombre;
+      if (state.empresa.sector) org.sector = state.empresa.sector;
+      const ubicacion = [state.empresa.pais, state.empresa.ciudad].filter(Boolean).join(", ");
+      if (ubicacion) org.ubicacion = ubicacion;
+      if (state.empresa.empleados) org.empleados = state.empresa.empleados;
+
+      const stakeholders = [...new Set(
+        state.grupos
+          .filter(g => prioridadGrupo(scoreGrupo(g)).nivel !== "baja")
+          .map(g => MAPEO_GRUPO_A_GRI_EXPRESS[g.id])
+          .filter(Boolean)
+      )];
+
+      const temasMateriales = [...new Set(
+        state.asuntos
+          .slice()
+          .sort((a, b) => scoreCombinadoEfectivo(b) - scoreCombinadoEfectivo(a))
+          .map(a => MAPEO_ASUNTO_A_TEMA_GRI_EXPRESS[a.id])
+          .filter(Boolean)
+      )].slice(0, 8);
+
+      return { org, stakeholders, temasMateriales, origen: "materialidad-express", fecha: new Date().toISOString() };
+    }
+
+    function continuarAGRIExpress() {
+      localStorage.setItem(GRI_HANDOFF_KEY, JSON.stringify(construirHandoffGRIExpress()));
+      window.open("reporte-gri-express.html?desde=materialidad", "_blank", "noopener");
+    }
+
+    function hasAccessGRI() { return localStorage.getItem(GRI_ACCESS_KEY) === "granted"; }
+
+    function renderGriUpsell() {
+      const el = byId("gri-bundle-upsell");
+      if (!el) return;
+      if (hasAccessGRI()) {
+        el.innerHTML = `<span class="gri-access-ok">✅ Ya tiene acceso al Reporte GRI Express — sus datos lo estarán esperando.</span>`;
+        return;
+      }
+      el.innerHTML = `<div class="gri-upsell-box">
+        <h4>🎁 Precio preferencial por venir de este estudio</h4>
+        <p class="fine" style="margin:2px 0 10px">Reporte GRI Express: <span class="precio"><del>USD $25</del>USD $15</span> — pago único.</p>
+        <div id="paypalGriBundleButtons"></div>
+        <p class="fine" style="margin:8px 0 0">¿Prefiere otro medio (Nequi, transferencia)? Escríbanos a <a href="mailto:projectability.pal@gmail.com?subject=Precio%20preferencial%20Reporte%20GRI%20Express">projectability.pal@gmail.com</a>.</p>
+      </div>`;
+      loadPayPalGriBundle();
+    }
+
+    let paypalGriBundleLoading = false;
+    function loadPayPalGriBundle() {
+      if (window.paypal) return mountPayPalGriBundle();
+      if (paypalGriBundleLoading) return;
+      paypalGriBundleLoading = true;
+      const existing = document.querySelector('script[src*="paypal.com/sdk/js"]');
+      if (existing) { existing.addEventListener("load", mountPayPalGriBundle); return; }
+      const s = document.createElement("script");
+      s.src = `https://www.paypal.com/sdk/js?client-id=${PAY.paypalClientId}&currency=${PAY.currency}`;
+      s.onload = mountPayPalGriBundle;
+      s.onerror = () => {
+        const holder = byId("paypalGriBundleButtons");
+        if (holder) holder.innerHTML = '<p class="fine" style="margin:0">No fue posible cargar PayPal. Escríbanos para coordinar el pago.</p>';
+      };
+      document.head.appendChild(s);
+    }
+
+    function mountPayPalGriBundle() {
+      const holder = byId("paypalGriBundleButtons");
+      if (!holder || !window.paypal) return;
+      holder.innerHTML = "";
+      paypal.Buttons({
+        style: { layout: "vertical", color: "blue", shape: "rect", label: "pay" },
+        createOrder: (data, actions) => actions.order.create({
+          purchase_units: [{
+            description: "Reporte GRI Express — precio preferencial para clientes del Estudio de Materialidad Exprés",
+            amount: { value: "15.00", currency_code: PAY.currency }
+          }]
+        }),
+        onApprove: (data, actions) => actions.order.capture().then(() => {
+          localStorage.setItem(GRI_ACCESS_KEY, "granted");
+          renderGriUpsell();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }),
+        onError: () => {
+          const holder2 = byId("paypalGriBundleButtons");
+          if (holder2) holder2.insertAdjacentHTML("beforeend", '<p class="fine" style="color:var(--red);margin-top:8px">Hubo un problema con el pago. Intente de nuevo o escríbanos.</p>');
+        }
+      }).render("#paypalGriBundleButtons");
+    }
+
     // ═══════════════ INICIO ═══════════════
     renderStepList();
     showSection(state.paso);
@@ -2539,6 +2697,7 @@
     renderEvaluacionEmpresa();
     renderMatriz();
     if (state.paso === 8) renderPaso8();
+    if (state.paso === 9) renderGriUpsell();
 
     byId("custom-grupo-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addCustomGrupo(); } });
     byId("custom-asunto-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addCustomAsunto(); } });

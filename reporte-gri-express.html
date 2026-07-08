@@ -765,6 +765,32 @@
     // ═══════════════ ESTADO ═══════════════
     const STORAGE_KEY = "gri-express-v1";
     let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"answers":{},"stepIndex":-1,"steps":null,"leadSent":false}');
+
+    // ═══════════════ IMPORTACIÓN DESDE ESTUDIO DE MATERIALIDAD EXPRÉS ═══════════════
+    // Mismo origen (amdavil.github.io/herramientas-y-assessment): si el usuario viene de allá,
+    // se precargan perfil, grupos de interés y temas materiales ya priorizados vía localStorage.
+    (function importarHandoffMaterialidad() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("desde") !== "materialidad") return;
+      const raw = localStorage.getItem("materialidad-a-gri-handoff-v1");
+      if (!raw) return;
+      localStorage.removeItem("materialidad-a-gri-handoff-v1");
+      let handoff;
+      try { handoff = JSON.parse(raw); } catch { return; }
+      const org = handoff.org || {};
+      if (org.nombre && state.answers.org_nombre === undefined) state.answers.org_nombre = org.nombre;
+      if (org.sector && state.answers.org_sector === undefined) state.answers.org_sector = org.sector;
+      if (org.ubicacion && state.answers.org_ubicacion === undefined) state.answers.org_ubicacion = org.ubicacion;
+      if (org.empleados && state.answers.org_empleados === undefined) state.answers.org_empleados = org.empleados;
+      if (Array.isArray(handoff.stakeholders) && handoff.stakeholders.length && state.answers.mat_stakeholders === undefined) {
+        state.answers.mat_stakeholders = handoff.stakeholders;
+      }
+      if (Array.isArray(handoff.temasMateriales) && handoff.temasMateriales.length > 0 && state.answers.mat_temas === undefined) {
+        state.answers.mat_temas = handoff.temasMateriales;
+      }
+      window.__importadoDeMaterialidad = true;
+    })();
+
     let steps = [];        // flujo completo (se reconstruye con temas seleccionados)
     let stepIndex = -1;    // -1 = pantalla de bienvenida
     let lastModule = null;
@@ -1133,7 +1159,11 @@
           <div class="disclaimer-box" style="background:#f0f5f9;border-color:#d5e2ec;color:#33475c">
             <strong>🔐 Tratamiento de datos:</strong> mientras diligencia el cuestionario, la información que usted ingresa (incluido el logo) queda <strong>únicamente en este navegador</strong>. Los textos descriptivos que escriba se envían de forma segura y transitoria a nuestro servicio de redacción con inteligencia artificial con el único fin de generar su reporte; no se almacenan ni se usan para otros propósitos. <strong>Al completar el cuestionario</strong>, todas sus respuestas (perfil, gobernanza, materialidad y contenidos por tema) quedan registradas en Projectability como respaldo de su reporte, junto con el nombre del responsable de sostenibilidad, el nombre de la organización y el correo de contacto, para poder ofrecerle acompañamiento o seguimiento comercial — nunca se comparten con terceros. Al continuar, usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com" style="color:var(--teal)">projectability.pal@gmail.com</a>.
           </div>
-          ${hasProgress
+          ${window.__importadoDeMaterialidad
+            ? `<div class="resume-note">✅ Importamos el perfil, los grupos de interés y los temas materiales de su Estudio de Materialidad Exprés — revíselos y complete lo que falta.</div>
+               <button class="btn-primary" onclick="resumeSession()">Continuar con mis datos precargados →</button>
+               <br><button class="btn-ghost" onclick="resetSession()">Empezar desde cero sin usar esos datos</button>`
+            : hasProgress
             ? `<div class="resume-note">📌 Tiene un reporte en progreso (${Object.keys(state.answers).length} respuestas guardadas)</div>
                <button class="btn-primary" onclick="resumeSession()">Continuar donde quedé →</button>
                <br><button class="btn-ghost" onclick="resetSession()">Empezar un reporte nuevo desde cero</button>`
@@ -1260,13 +1290,14 @@
           ? Object.entries(TOPICS).map(([k, t]) => ({ v: k, label: `${t.icon} ${t.name}` }))
           : s.options.map(o => ({ v: o, label: o }));
         const prevArr = Array.isArray(prev) ? prev : [];
+        const prevValido = s.min ? (prevArr.length >= s.min && prevArr.length <= s.max) : prevArr.length > 0;
         inner += `
           <div class="chips" id="chipsBox">
             ${opts.map(o => `<button class="chip ${prevArr.includes(o.v) ? "selected" : ""}" data-v="${esc(o.v)}">${esc(o.label)}</button>`).join("")}
           </div>
           <div class="chips-actions">
-            <button class="send" id="dockSend" ${prevArr.length ? "" : "disabled"}>Confirmar selección</button>
-            <span class="chips-count" id="chipsCount">${s.min ? `Seleccione entre ${s.min} y ${s.max}` : "Seleccione los que apliquen"}</span>
+            <button class="send" id="dockSend" ${prevValido ? "" : "disabled"}>Confirmar selección</button>
+            <span class="chips-count" id="chipsCount">${s.min ? `${prevArr.length} seleccionado${prevArr.length === 1 ? "" : "s"} (mínimo ${s.min}, máximo ${s.max})` : "Seleccione los que apliquen"}</span>
           </div>`;
       }
 
@@ -1688,6 +1719,7 @@
 
     // ═══════════════ INICIO ═══════════════
     buildSteps();
+    if (window.__importadoDeMaterialidad) save();
     renderWelcome();
   </script>
 </body>
