@@ -9,7 +9,8 @@ const ALLOWED_ORIGINS = [
   "https://www.projectability.net",
   "https://projectability.net",
   "http://localhost:7801", // pruebas locales — Reporte GRI Express
-  "http://localhost:7799"  // pruebas locales — Diagnóstico de Circularidad
+  "http://localhost:7799", // pruebas locales — Diagnóstico de Circularidad
+  "http://localhost:7802"  // pruebas locales — Estudio de Materialidad Exprés
 ];
 
 const SYSTEM_PROMPT = `Eres PAL, redactor experto en reportes de sostenibilidad bajo los Estándares GRI 2021, de la firma Projectability.
@@ -60,6 +61,29 @@ Si "sector" viene vacío, generaliza sin mencionar un sector específico. Nunca 
 Responde ÚNICAMENTE con JSON válido, sin markdown, con esta estructura:
 {"resumen_ejecutivo": "<párrafo>"}`;
 
+const MATERIALIDAD_SYSTEM_PROMPT = `Eres PAL, consultor senior en sostenibilidad corporativa y estudios de materialidad de Projectability, con dominio de GRI Standards, ESRS/CSRD (doble materialidad), IFRS S1/S2, SASB y AA1000.
+
+Recibirás un JSON "context" con:
+- empresa: datos de perfil (sector, tamaño, país, madurez ESG, riesgos y oportunidades declaradas).
+- grupos_interes: lista con nombre, score_total (1-5) y prioridad (alta/media/baja).
+- asuntos: lista con nombre, dimension (A/S/G), score_gi, score_empresa, score_combinado, nivel_materialidad, materialidad_impacto (bool), materialidad_financiera (bool), grupos_vinculados (nombres).
+
+Tu tarea — generar TODO en un solo JSON de salida, con estas reglas transversales:
+1. Español neutro latinoamericano, tono profesional, ejecutivo y cercano (trato de "usted").
+2. NUNCA inventes cifras, certificaciones, incidentes o programas específicos de la empresa que no estén en "context". Puedes usar tu conocimiento general del sector para dar marco (tendencias regulatorias, expectativas típicas de mercado), nunca para atribuir hechos concretos a esta empresa.
+3. Este es un estudio EXPRÉS de priorización estratégica, no una auditoría ni una certificación. No uses lenguaje que sugiera cumplimiento normativo formal o verificación externa. Donde sea relevante, señala explícitamente que el resultado requiere validación con los grupos de interés reales antes de reportarlo externamente.
+4. Si "context" tiene información insuficiente para una sección (ej. pocos asuntos críticos, perfil incompleto), dilo honestamente en esa sección en vez de rellenar con genéricos.
+
+Genera:
+- "resumen_ejecutivo": 6-8 frases sintetizando el proceso, hallazgos principales, grupos prioritarios, asuntos críticos y una línea de recomendación general.
+- "lectura_matriz": un párrafo (5-7 frases) de interpretación estratégica de la matriz en conjunto: qué patrones se observan, qué dimensión ESG domina los críticos, qué implica para la empresa.
+- "phva": objeto {"<nombre exacto del asunto>": {"planificar": "...", "hacer": "...", "verificar": "...", "actuar": "..."}} SOLO para los asuntos con nivel_materialidad "Material crítico" o "Material alto". Cada fase 3-5 frases, concreta y accionable para el sector y tamaño de empresa indicados, sin inventar recursos o cifras que la empresa no declaró.
+- "recomendaciones": objeto {"corto_plazo": [...], "mediano_plazo": [...], "largo_plazo": [...]}, cada lista con 3-4 recomendaciones puntuales derivadas de los asuntos críticos/altos.
+- "preguntas_validacion": lista de 6-10 preguntas concretas que la empresa debería usar para validar estos resultados directamente con sus grupos de interés reales (encuestas, entrevistas o grupos focales).
+- "indicadores_sugeridos": objeto {"<nombre exacto del asunto>": ["indicador 1", "indicador 2"]} para asuntos con nivel_materialidad "Material crítico" o "Material alto", indicadores de gestión típicos del sector (no cifras meta, solo qué medir).
+
+Responde ÚNICAMENTE con JSON válido, sin markdown, con las claves exactas: resumen_ejecutivo, lectura_matriz, phva, recomendaciones, preguntas_validacion, indicadores_sugeridos.`;
+
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
@@ -89,16 +113,28 @@ export default {
     catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: corsHeaders(origin) }); }
 
     const isCircularSummary = body.mode === "circular-summary";
+    const isMaterialidad = body.mode === "materialidad-informe";
+    const usesContextOnly = isCircularSummary || isMaterialidad;
 
-    if (!isCircularSummary && (!body.fields || typeof body.fields !== "object" || Object.keys(body.fields).length === 0)) {
+    if (!usesContextOnly && (!body.fields || typeof body.fields !== "object" || Object.keys(body.fields).length === 0)) {
       return new Response(JSON.stringify({ error: "No fields" }), { status: 400, headers: corsHeaders(origin) });
     }
-    if (isCircularSummary && (!body.context || typeof body.context !== "object")) {
+    if (usesContextOnly && (!body.context || typeof body.context !== "object")) {
       return new Response(JSON.stringify({ error: "No context" }), { status: 400, headers: corsHeaders(origin) });
     }
-    // Límite defensivo de tamaño
-    if (JSON.stringify(body).length > 20000) {
+    // Límite defensivo de tamaño (el informe de materialidad envía más contexto que los otros modos)
+    if (JSON.stringify(body).length > (isMaterialidad ? 40000 : 20000)) {
       return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: corsHeaders(origin) });
+    }
+
+    let systemPrompt = SYSTEM_PROMPT;
+    let userContent = { context: body.context || {}, fields: body.fields };
+    if (isCircularSummary) {
+      systemPrompt = CIRCULAR_SYSTEM_PROMPT;
+      userContent = { context: body.context };
+    } else if (isMaterialidad) {
+      systemPrompt = MATERIALIDAD_SYSTEM_PROMPT;
+      userContent = { context: body.context };
     }
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -110,17 +146,12 @@ export default {
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         temperature: 0.3,
-        max_tokens: 4000,
+        max_tokens: isMaterialidad ? 7000 : 4000,
         response_format: { type: "json_object" },
-        messages: isCircularSummary
-          ? [
-              { role: "system", content: CIRCULAR_SYSTEM_PROMPT },
-              { role: "user", content: JSON.stringify({ context: body.context }) }
-            ]
-          : [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: JSON.stringify({ context: body.context || {}, fields: body.fields }) }
-            ]
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: JSON.stringify(userContent) }
+        ]
       })
     });
 

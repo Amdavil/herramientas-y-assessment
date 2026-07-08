@@ -1,0 +1,25 @@
+{
+  "_nota": "Catálogo base de grupos de interés para el Estudio de Materialidad Exprés (Projectability). sectores_sugeridos usa las mismas claves de tipo_operacion del perfil de empresa: industrial, comercial, servicios, agroindustrial, logistica, tecnologia, alimentos, manufactura, otro. 'todos' = aplica a cualquier tipo de operación.",
+  "grupos": [
+    { "id": "accionistas", "nombre": "Accionistas / socios", "descripcion": "Propietarios del capital de la empresa; esperan retorno sostenible y gestión responsable de riesgos.", "sectores_sugeridos": ["todos"] },
+    { "id": "junta_directiva", "nombre": "Junta directiva", "descripcion": "Órgano de gobierno que define la estrategia y supervisa la gestión de riesgos, incluidos los ESG.", "sectores_sugeridos": ["todos"] },
+    { "id": "alta_direccion", "nombre": "Alta dirección", "descripcion": "Equipo gerencial responsable de ejecutar la estrategia y rendir cuentas de los resultados.", "sectores_sugeridos": ["todos"] },
+    { "id": "colaboradores", "nombre": "Colaboradores", "descripcion": "Empleados directos de la organización; afectados por condiciones laborales, seguridad y cultura organizacional.", "sectores_sugeridos": ["todos"] },
+    { "id": "clientes", "nombre": "Clientes", "descripcion": "Empresas o personas que compran los productos o servicios; esperan calidad, cumplimiento y trazabilidad.", "sectores_sugeridos": ["todos"] },
+    { "id": "consumidores_finales", "nombre": "Consumidores finales", "descripcion": "Usuario final del producto o servicio, cuando es distinto del cliente comercial directo.", "sectores_sugeridos": ["comercial", "alimentos", "manufactura", "tecnologia"] },
+    { "id": "proveedores", "nombre": "Proveedores", "descripcion": "Suministran materias primas, insumos o servicios; clave para la debida diligencia en cadena de valor.", "sectores_sugeridos": ["todos"] },
+    { "id": "contratistas", "nombre": "Contratistas", "descripcion": "Terceros que ejecutan obras, mantenimiento u operaciones tercerizadas dentro o fuera de las instalaciones.", "sectores_sugeridos": ["industrial", "manufactura", "agroindustrial", "logistica"] },
+    { "id": "comunidades_vecinas", "nombre": "Comunidades vecinas", "descripcion": "Población cercana a las operaciones, afectada por impactos ambientales, sociales o de tráfico/ruido.", "sectores_sugeridos": ["industrial", "agroindustrial", "manufactura", "logistica"] },
+    { "id": "autoridades_ambientales", "nombre": "Autoridades ambientales", "descripcion": "Entidades que regulan y vigilan el desempeño ambiental (licencias, permisos, vertimientos, emisiones).", "sectores_sugeridos": ["industrial", "agroindustrial", "manufactura", "logistica", "alimentos"] },
+    { "id": "autoridades_laborales", "nombre": "Autoridades laborales", "descripcion": "Entidades que vigilan el cumplimiento de normas de trabajo, seguridad y salud en el trabajo.", "sectores_sugeridos": ["todos"] },
+    { "id": "entidades_control", "nombre": "Entidades de control", "descripcion": "Organismos de vigilancia y control (superintendencias, contraloría, entes tributarios).", "sectores_sugeridos": ["todos"] },
+    { "id": "gremios", "nombre": "Gremios", "descripcion": "Asociaciones sectoriales que agrupan intereses comunes y suelen fijar estándares de referencia.", "sectores_sugeridos": ["todos"] },
+    { "id": "aliados_estrategicos", "nombre": "Aliados estratégicos", "descripcion": "Organizaciones con las que se ejecutan proyectos conjuntos, alianzas comerciales o de innovación.", "sectores_sugeridos": ["todos"] },
+    { "id": "instituciones_financieras", "nombre": "Instituciones financieras", "descripcion": "Bancos y entidades de crédito; cada vez exigen más criterios ESG para el acceso y costo del capital.", "sectores_sugeridos": ["todos"] },
+    { "id": "inversionistas", "nombre": "Inversionistas", "descripcion": "Fondos o inversionistas externos interesados en el desempeño financiero y de sostenibilidad.", "sectores_sugeridos": ["todos"] },
+    { "id": "medios_comunicacion", "nombre": "Medios de comunicación", "descripcion": "Canales que amplifican la reputación de la empresa, positiva o negativamente.", "sectores_sugeridos": ["todos"] },
+    { "id": "academia", "nombre": "Academia", "descripcion": "Universidades y centros de investigación; aliados en innovación, formación y validación técnica.", "sectores_sugeridos": ["todos"] },
+    { "id": "organizaciones_sociales", "nombre": "Organizaciones sociales", "descripcion": "ONG y organizaciones comunitarias que representan intereses sociales o ambientales específicos.", "sectores_sugeridos": ["todos"] },
+    { "id": "recicladores_gestores", "nombre": "Recicladores, gestores o actores de cadena de valor circular", "descripcion": "Actores que participan en la recuperación, reciclaje o disposición final de materiales y residuos.", "sectores_sugeridos": ["manufactura", "industrial", "alimentos", "agroindustrial", "comercial"] }
+  ]
+}

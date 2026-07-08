@@ -1,0 +1,2250 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estudio de Materialidad Exprés — Projectability</title>
+  <meta name="description" content="Identifique en menos de 90 minutos sus grupos de interés y asuntos ESG prioritarios, con matriz de materialidad e informe asistido por IA.">
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #647084;
+      --line: #d9e1ea;
+      --soft: #f5f7fa;
+      --panel: #ffffff;
+      --navy: #1f4e79;
+      --blue: #2f75b5;
+      --teal: #16817a;
+      --green: #5f8d3e;
+      --amber: #c47f1b;
+      --red: #b54a4a;
+      --lav: #6b5ca5;
+      --focus: #0f766e;
+      --gold: #c8a951;
+      --shadow: 0 10px 30px rgba(23, 32, 51, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: #eef3f7;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: var(--blue); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    button.primary {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    button.ghost { background: transparent; }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    textarea { resize: vertical; min-height: 70px; }
+
+    label.field { display: grid; gap: 5px; font-size: 12.5px; color: var(--muted); }
+    label.field span.req::after { content: " *"; color: var(--red); }
+
+    .app {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      background: #f9fbfd;
+      border-right: 1px solid var(--line);
+      padding: 20px 18px;
+    }
+
+    main {
+      min-width: 0;
+      padding: 22px 22px 100px;
+    }
+
+    .brand { display: grid; gap: 8px; margin-bottom: 18px; }
+
+    .brand-logo {
+      width: min(200px, 100%);
+      height: auto;
+      display: block;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .brand h1 { margin: 0; font-size: 19px; line-height: 1.25; }
+    .brand p { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+
+    .step-list { display: grid; gap: 4px; margin-top: 6px; }
+
+    .step-item {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 8px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      text-align: left;
+    }
+
+    .step-item:hover:not(:disabled) { background: #eef3f8; }
+    .step-item:disabled { cursor: not-allowed; opacity: .5; }
+
+    .step-item .num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: #e3eaf2;
+      color: var(--navy);
+      display: grid; place-items: center;
+      font-size: 12px; font-weight: 700;
+    }
+
+    .step-item.active { background: #eaf1fb; border-color: #cfe0f5; }
+    .step-item.active .num { background: var(--navy); color: #fff; }
+    .step-item.done .num { background: var(--teal); color: #fff; }
+    .step-item .label { font-size: 13px; line-height: 1.3; padding-top: 3px; color: var(--ink); }
+    .step-item.active .label { font-weight: 700; color: var(--navy); }
+
+    .aside-footer { margin-top: 18px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .intro-card {
+      background: linear-gradient(135deg, #eafaf3, #eef5ff);
+      border: 1px solid #cfe3da;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 18px;
+    }
+    .intro-card h2 { margin: 0 0 10px; font-size: 19px; color: var(--navy); }
+    .intro-card p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink); line-height: 1.6; }
+    .intro-card ul { margin: 8px 0; padding-left: 20px; }
+    .intro-card li { font-size: 13.5px; line-height: 1.6; margin-bottom: 4px; }
+    .intro-card .fine { color: var(--muted); font-size: 12px; }
+
+    .disclaimer-box {
+      background: #f0f5f9;
+      border: 1px solid #d5e2ec;
+      color: #33475c;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12.5px;
+      line-height: 1.55;
+      margin-top: 14px;
+    }
+    .disclaimer-box a { color: var(--teal); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .panel h2 { margin: 0 0 4px; font-size: 17px; color: var(--navy); }
+    .panel > p.hint { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    .radio-row { display: flex; gap: 16px; align-items: center; padding-top: 4px; }
+    .radio-row label { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink); cursor: pointer; }
+    .radio-row input { width: auto; }
+
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .chip {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      max-width: 320px;
+      transition: border-color .15s, background .15s;
+    }
+    .chip:hover { border-color: var(--blue); }
+    .chip.selected { border-color: var(--focus); background: #f1fbf8; box-shadow: inset 0 0 0 1px var(--focus); }
+    .chip input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--navy); }
+    .chip .chip-text { display: grid; gap: 2px; }
+    .chip .chip-text strong { font-size: 13px; }
+    .chip .chip-text span { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+    .chip.custom-chip { border-style: dashed; }
+    .chip .remove-custom {
+      margin-left: auto; align-self: center; border: none; background: transparent;
+      color: var(--red); font-size: 15px; min-height: auto; padding: 0 2px;
+    }
+
+    .section-label {
+      display: flex; align-items: center; gap: 8px;
+      margin: 18px 0 10px; font-size: 13px; font-weight: 700; color: var(--navy);
+      text-transform: uppercase; letter-spacing: .4px;
+    }
+    .section-label .count { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+    .add-custom-row { display: flex; gap: 8px; margin-top: 14px; max-width: 460px; }
+
+    .selected-summary {
+      background: #f6f9fc; border: 1px solid var(--line); border-radius: 10px;
+      padding: 12px 14px; font-size: 12.5px; color: var(--muted); margin-top: 16px;
+    }
+    .selected-summary strong { color: var(--ink); }
+
+    details.other-groups { margin-top: 18px; }
+    details.other-groups summary { cursor: pointer; font-size: 13px; color: var(--blue); font-weight: 600; }
+    details.other-groups .chip-grid { margin-top: 12px; }
+
+    .unlock-banner {
+      background: linear-gradient(135deg, var(--navy), #0f2a44);
+      border-radius: 14px;
+      padding: 26px 28px;
+      margin: 18px 0;
+      box-shadow: 0 14px 40px rgba(15,42,68,.3);
+      color: #fff;
+    }
+    .unlock-banner h3 { color: #fff; font-size: 20px; margin: 0 0 8px; }
+    .unlock-banner p { color: rgba(255,255,255,.88); font-size: 13.5px; margin: 0 0 14px; line-height: 1.55; }
+    .unlock-banner ul { color: rgba(255,255,255,.9); font-size: 13px; margin: 0 0 16px; padding-left: 20px; line-height: 1.7; }
+    .unlock-price {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--ink);
+      font-weight: 800;
+      font-size: 17px;
+      border-radius: 999px;
+      padding: 6px 18px;
+      margin-bottom: 14px;
+    }
+    .pay-columns { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr); gap: 18px; align-items: start; }
+    .pay-box { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 16px; }
+    .pay-box h4 { margin: 0 0 10px; color: #fff; font-size: 14px; }
+    .code-row { display: flex; gap: 8px; }
+    .code-row input {
+      flex: 1; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.95);
+      border-radius: 6px; padding: 9px 10px; color: var(--ink); text-transform: uppercase;
+      letter-spacing: 1px; min-width: 0;
+    }
+    .code-row button { background: var(--teal); border-color: var(--teal); color: #fff; font-weight: 700; }
+    .code-feedback { font-size: 12.5px; margin-top: 8px; min-height: 16px; }
+    .unlock-note { font-size: 12px; color: rgba(255,255,255,.75); margin-top: 14px; }
+    .unlock-note a { color: #9fd8d3; font-weight: 600; }
+
+    .wizard-nav {
+      position: sticky;
+      bottom: 16px;
+      margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 20px;
+      box-shadow: 0 12px 32px rgba(23,32,51,.18);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .wizard-nav .hint-text { font-size: 12px; color: var(--muted); }
+    .wizard-nav .buttons { display: flex; gap: 10px; }
+
+    .resumen-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .resumen-chip {
+      border-radius: 999px; padding: 7px 14px; font-size: 12.5px; font-weight: 700;
+      border: 1px solid var(--line);
+    }
+    .resumen-chip.alta { background: #fbe9e9; color: var(--red); border-color: #f2caca; }
+    .resumen-chip.media { background: #fbf1e0; color: var(--amber); border-color: #f0ddb6; }
+    .resumen-chip.baja { background: #eef1f5; color: var(--muted); border-color: var(--line); }
+
+    details summary { cursor: pointer; color: var(--blue); font-weight: 600; font-size: 13px; }
+    .formula-explicacion { margin-top: 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+    .formula-explicacion ul { margin: 8px 0 0; padding-left: 18px; }
+    .formula-explicacion li { margin-bottom: 3px; }
+
+    .grupo-card {
+      background: #fff; border: 1px solid var(--line); border-radius: 10px;
+      padding: 16px 18px; margin-bottom: 14px; box-shadow: var(--shadow);
+    }
+    .grupo-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .grupo-card-head h3 { margin: 0; font-size: 15px; }
+    .grupo-card-head p { margin: 2px 0 0; font-size: 12px; color: var(--muted); max-width: 520px; }
+
+    .prio-badge {
+      border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 700;
+      white-space: nowrap; border: 1px solid transparent;
+    }
+    .prio-badge.alta { background: #fbe9e9; color: var(--red); border-color: #f2caca; }
+    .prio-badge.media { background: #fbf1e0; color: var(--amber); border-color: #f0ddb6; }
+    .prio-badge.baja { background: #eef1f5; color: var(--muted); border-color: var(--line); }
+
+    .criterios-grid {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 24px; margin-top: 14px;
+    }
+    .criterio-item { display: grid; gap: 4px; }
+    .criterio-item .criterio-head { display: flex; justify-content: space-between; font-size: 12.5px; }
+    .criterio-item .criterio-head strong { color: var(--ink); }
+    .criterio-item .criterio-head .val { color: var(--navy); font-weight: 700; }
+    .criterio-item small { color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .criterio-item input[type="range"] { width: 100%; accent-color: var(--navy); margin-top: 2px; }
+
+    .dim-section-label {
+      display: flex; align-items: center; gap: 8px; margin: 18px 0 10px;
+      font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    }
+    .dim-section-label.dim-A { color: var(--green); }
+    .dim-section-label.dim-S { color: var(--blue); }
+    .dim-section-label.dim-G { color: var(--lav); }
+    .dim-section-label .count { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+    .asunto-list { display: grid; gap: 8px; margin-bottom: 6px; }
+    .asunto-row { border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden; }
+    .asunto-check-line { display: grid; grid-template-columns: 20px 1fr; gap: 10px; padding: 10px 12px; cursor: pointer; align-items: start; }
+    .asunto-check-line:hover { background: #f7fbff; }
+    .asunto-check-line input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--navy); }
+    .asunto-title-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .asunto-title-line strong { font-size: 13.5px; }
+    .std-pill { background: #eef3f8; color: var(--navy); border-radius: 999px; padding: 2px 8px; font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+    .asunto-desc { margin: 4px 0 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .asunto-detail { padding: 12px 14px 14px 42px; border-top: 1px dashed var(--line); background: #fafcfe; }
+    .vinculo-grupos { margin-top: 12px; }
+    .link-label { font-size: 12px; font-weight: 700; color: var(--navy); }
+    .chip-grid.small { margin-top: 8px; }
+    .chip.small { padding: 6px 10px; max-width: none; }
+    .chip.small .chip-text strong { font-size: 12px; }
+    .dim-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 3px; flex: none; }
+    .dim-dot.dim-A { background: var(--green); }
+    .dim-dot.dim-S { background: var(--blue); }
+    .dim-dot.dim-G { background: var(--lav); }
+
+    .export-actions { display: flex; gap: 10px; margin: 4px 0 6px; flex-wrap: wrap; }
+    .print-only { display: none; }
+    .print-doc h1 { font-size: 22px; color: var(--navy); margin: 0 0 4px; }
+    .print-doc .print-meta { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
+    .print-doc h2 { font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--line); padding-bottom: 6px; margin: 24px 0 10px; }
+    .print-doc p { font-size: 13.5px; line-height: 1.6; }
+    .print-matriz-img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; margin: 10px 0; display: block; }
+
+    @media print {
+      body { background: #fff; }
+      aside, .wizard-nav, .no-print { display: none !important; }
+      main { padding: 0; }
+      .print-only { display: block; }
+      .panel, .phva-card, .asunto-eval-card, .grupo-card { box-shadow: none; }
+    }
+
+    .informe-seccion { margin-bottom: 22px; }
+    .informe-seccion h3 { margin: 0 0 10px; font-size: 15px; color: var(--navy); border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+    .informe-seccion p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--ink); }
+    .informe-seccion ul { margin: 0; padding-left: 20px; }
+    .informe-seccion li { font-size: 13px; line-height: 1.6; margin-bottom: 4px; }
+
+    .phva-card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+    .phva-card h4 { margin: 0 0 10px; font-size: 14px; color: var(--navy); }
+    .phva-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .phva-grid strong { font-size: 11.5px; color: var(--teal); text-transform: uppercase; letter-spacing: .3px; }
+    .phva-grid p { margin: 4px 0 0; font-size: 12.5px; line-height: 1.5; }
+    .indicadores-sugeridos { margin-top: 10px; font-size: 12px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+
+    .recomendaciones-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .recomendaciones-grid strong { font-size: 12.5px; color: var(--navy); }
+
+    .matriz-canvas-wrap {
+      position: relative; margin-top: 14px; border: 1px solid var(--line); border-radius: 10px;
+      background: #fff; padding: 10px;
+    }
+    #matrizCanvas { width: 100%; height: 420px; display: block; cursor: pointer; }
+    .matriz-legend {
+      display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+      margin-top: 14px; font-size: 12.5px; color: var(--ink);
+    }
+    .matriz-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .matriz-tooltip {
+      position: fixed; z-index: 50; background: var(--ink); color: #fff; padding: 8px 10px; border-radius: 6px;
+      font-size: 12px; line-height: 1.4; pointer-events: none; max-width: 240px; box-shadow: 0 6px 18px rgba(0,0,0,.25);
+      display: none;
+    }
+    .matriz-detalle { margin-top: 16px; background: #f6f9fc; border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+    .matriz-detalle h4 { margin: 0 0 8px; font-size: 14px; color: var(--navy); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .matriz-tabla { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+    .matriz-tabla th, .matriz-tabla td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+    .matriz-tabla th { color: var(--muted); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; }
+    .chip-nivel { border-radius: 999px; padding: 3px 10px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+    .chip-nivel.critico { background: #fbe9e9; color: var(--red); }
+    .chip-nivel.alto { background: #fbf1e0; color: var(--amber); }
+    .chip-nivel.medio { background: #eaf1fb; color: var(--navy); }
+    .chip-nivel.seguimiento { background: #eef1f5; color: var(--muted); }
+
+    .asunto-eval-card {
+      background: #fff; border: 1px solid var(--line); border-radius: 10px;
+      padding: 16px 18px; margin-bottom: 14px; box-shadow: var(--shadow);
+    }
+    .asunto-eval-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .asunto-eval-head h3 { margin: 0 0 6px; font-size: 15px; }
+    .asunto-eval-grupos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .asunto-eval-grupos a { color: var(--blue); }
+    .score-gauge-badge {
+      background: #eaf1fb; color: var(--navy); border: 1px solid #cfe0f5;
+      border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 700; white-space: nowrap;
+    }
+
+    .grupo-justificacion {
+      margin-top: 14px; background: #f6f9fc; border: 1px solid var(--line); border-radius: 8px;
+      padding: 10px 12px; font-size: 12.5px; color: var(--ink); line-height: 1.5;
+    }
+
+    .placeholder-card {
+      background: #fff; border: 1px dashed var(--line); border-radius: 12px;
+      padding: 40px 28px; text-align: center; color: var(--muted);
+    }
+    .placeholder-card .big-icon { font-size: 34px; margin-bottom: 10px; }
+    .placeholder-card h2 { color: var(--navy); margin: 0 0 8px; }
+    .placeholder-card p { max-width: 520px; margin: 0 auto 6px; font-size: 13.5px; line-height: 1.6; }
+
+    .autosave-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11.5px; color: var(--teal); background: #eafaf3;
+      border: 1px solid #cfe3da; border-radius: 999px; padding: 4px 10px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 1000px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .phva-grid, .recomendaciones-grid { grid-template-columns: 1fr; }
+      .pay-columns { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      main { padding: 16px 16px 100px; }
+      .wizard-nav { flex-direction: column; align-items: stretch; }
+      .wizard-nav .buttons { justify-content: stretch; }
+      .wizard-nav .buttons button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <img class="brand-logo" src="assets/projectability-logo.jpg" alt="Projectability">
+        <h1>Estudio de Materialidad Exprés</h1>
+        <p>Identifique sus grupos de interés y asuntos ESG prioritarios, con matriz de materialidad e informe asistido por IA.</p>
+      </div>
+
+      <div class="step-list" id="stepList"></div>
+
+      <div class="aside-footer">
+        Sus respuestas se guardan automáticamente en este navegador. Puede cerrar la página y continuar más tarde desde el mismo equipo.
+      </div>
+    </aside>
+
+    <main>
+      <!-- Paso 0 — Bienvenida -->
+      <section id="paso-0" class="section">
+        <div class="intro-card">
+          <h2>🧭 ¿En qué consiste el Estudio de Materialidad Exprés?</h2>
+          <p>Esta herramienta lo guía, en aproximadamente <strong>45 a 90 minutos</strong>, por un proceso de priorización estratégica inspirado en los estándares GRI, ESRS/CSRD, IFRS S1/S2, SASB y AA1000:</p>
+          <ul>
+            <li><strong>1. Perfil de su empresa</strong> — sector, tamaño y contexto de sostenibilidad.</li>
+            <li><strong>2. Grupos de interés</strong> — identifique y priorice quiénes le afectan o son afectados por su empresa.</li>
+            <li><strong>3. Asuntos ESG</strong> — seleccione los asuntos ambientales, sociales y de gobernanza relevantes para su operación.</li>
+            <li><strong>4. Evaluación</strong> — califique la importancia de cada asunto para sus grupos de interés y para el negocio.</li>
+            <li><strong>5. Matriz de materialidad</strong> — visualice sus resultados y genere un informe profesional con inteligencia artificial.</li>
+          </ul>
+          <p class="fine">Esta es una herramienta de <strong>diagnóstico y priorización estratégica exprés</strong>, elaborada por Projectability / Soluciones PAL S.A.S. No constituye una auditoría, una verificación externa ni una certificación, y no sustituye la consulta directa y documentada a sus grupos de interés que exigen los estándares formales de reporte.</p>
+          <div class="disclaimer-box">
+            <strong>🔐 Tratamiento de datos:</strong> la información que registre en este estudio se almacena <strong>únicamente en este navegador</strong> — Projectability no la recibe ni la guarda en servidores propios en esta etapa de la herramienta. Al usar esta herramienta usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas o solicitudes: <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
+          </div>
+        </div>
+        <div class="wizard-nav">
+          <div class="hint-text">Paso 1 de 10 · Perfil de empresa</div>
+          <div class="buttons">
+            <button class="primary" type="button" onclick="goToStep(1)">Comenzar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 1 — Perfil de empresa -->
+      <section id="paso-1" class="section">
+        <span class="autosave-tag">✓ Guardado automático activo</span>
+        <div class="panel">
+          <h2>🏢 Perfil de la empresa</h2>
+          <p class="hint">Esta información permite adaptar los grupos de interés y asuntos ESG sugeridos en los siguientes pasos.</p>
+
+          <div class="grid-2">
+            <label class="field"><span class="req">Nombre de la empresa</span>
+              <input type="text" id="e_nombre" placeholder="Ej. Textiles Andinos SAS">
+            </label>
+            <label class="field"><span class="req">Sector económico</span>
+              <input type="text" id="e_sector" placeholder="Ej. manufactura textil, alimentos, logística...">
+            </label>
+          </div>
+
+          <div class="grid-3" style="margin-top:14px">
+            <label class="field"><span class="req">Tamaño de la empresa</span>
+              <select id="e_tamano">
+                <option value="">Seleccione...</option>
+                <option value="micro">Microempresa</option>
+                <option value="pequena">Pequeña empresa</option>
+                <option value="mediana">Mediana empresa</option>
+                <option value="grande">Gran empresa</option>
+              </select>
+            </label>
+            <label class="field"><span>País</span>
+              <input type="text" id="e_pais" placeholder="Ej. Colombia">
+            </label>
+            <label class="field"><span>Ciudad</span>
+              <input type="text" id="e_ciudad" placeholder="Ej. Medellín">
+            </label>
+          </div>
+
+          <div class="grid-2" style="margin-top:14px">
+            <label class="field"><span>Número aproximado de empleados</span>
+              <input type="number" min="0" id="e_empleados" placeholder="Ej. 45">
+            </label>
+            <label class="field"><span class="req">Tipo de operación</span>
+              <select id="e_tipoOperacion">
+                <option value="">Seleccione...</option>
+                <option value="industrial">Industrial</option>
+                <option value="comercial">Comercial</option>
+                <option value="servicios">Servicios</option>
+                <option value="agroindustrial">Agroindustrial</option>
+                <option value="logistica">Logística</option>
+                <option value="tecnologia">Tecnología</option>
+                <option value="alimentos">Alimentos</option>
+                <option value="manufactura">Manufactura</option>
+                <option value="otro">Otro</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="grid-2" style="margin-top:14px">
+            <label class="field"><span>Principales productos o servicios</span>
+              <textarea id="e_productos" placeholder="Describa brevemente qué produce u ofrece su empresa"></textarea>
+            </label>
+            <label class="field"><span>Principales mercados atendidos</span>
+              <textarea id="e_mercados" placeholder="Ej. mercado nacional, exportación a EE. UU., B2B industrial..."></textarea>
+            </label>
+          </div>
+
+          <div class="grid-2" style="margin-top:14px">
+            <label class="field"><span>Nivel de madurez en sostenibilidad</span>
+              <select id="e_madurezEsg">
+                <option value="">Seleccione...</option>
+                <option value="inicial">Inicial</option>
+                <option value="intermedio">Intermedio</option>
+                <option value="avanzado">Avanzado</option>
+              </select>
+            </label>
+            <div></div>
+          </div>
+
+          <div class="grid-2" style="margin-top:14px">
+            <label class="field"><span>¿Cuenta con estrategia ESG previa?</span>
+              <div class="radio-row">
+                <label><input type="radio" name="e_tieneEstrategiaEsg" value="si"> Sí</label>
+                <label><input type="radio" name="e_tieneEstrategiaEsg" value="no"> No</label>
+              </div>
+            </label>
+            <label class="field"><span>¿Cuenta con reporte de sostenibilidad previo?</span>
+              <div class="radio-row">
+                <label><input type="radio" name="e_tieneReportePrevio" value="si"> Sí</label>
+                <label><input type="radio" name="e_tieneReportePrevio" value="no"> No</label>
+              </div>
+            </label>
+          </div>
+
+          <div style="margin-top:14px">
+            <label class="field"><span>Certificaciones, compromisos climáticos o políticas ESG existentes</span>
+              <textarea id="e_certificaciones" placeholder="Ej. ISO 14001, compromiso net-zero, política ambiental interna..."></textarea>
+            </label>
+          </div>
+
+          <div class="grid-2" style="margin-top:14px">
+            <label class="field"><span>Principales riesgos percibidos</span>
+              <textarea id="e_riesgosPercibidos" placeholder="Ej. dependencia de un solo proveedor, riesgo regulatorio ambiental..."></textarea>
+            </label>
+            <label class="field"><span>Principales oportunidades estratégicas de sostenibilidad</span>
+              <textarea id="e_oportunidadesPercibidas" placeholder="Ej. eficiencia energética, nuevos mercados exigentes en ESG..."></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div class="wizard-nav">
+          <div class="hint-text" id="p1-hint">Complete los campos marcados con * para continuar.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(0)">← Atrás</button>
+            <button class="primary" type="button" id="p1-continue" onclick="attemptGoToStep(2)">Continuar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 2 — Grupos de interés -->
+      <section id="paso-2" class="section">
+        <div class="panel">
+          <h2>🤝 Grupos de interés</h2>
+          <p class="hint">Con base en el tipo de operación de su empresa, sugerimos los grupos de interés más relevantes. Selecciónelos, quite los que no apliquen o agregue los que hagan falta. En el siguiente módulo evaluará su nivel de prioridad.</p>
+
+          <div class="section-label">Sugeridos para su tipo de operación <span class="count" id="sugeridos-count"></span></div>
+          <div class="chip-grid" id="chips-sugeridos"></div>
+
+          <details class="other-groups">
+            <summary>Ver otros grupos de interés disponibles</summary>
+            <div class="chip-grid" id="chips-otros"></div>
+          </details>
+
+          <div class="add-custom-row">
+            <input type="text" id="custom-grupo-input" placeholder="Agregar un grupo de interés propio (ej. cooperativa local)">
+            <button type="button" class="ghost" onclick="addCustomGrupo()">+ Agregar</button>
+          </div>
+
+          <div class="selected-summary" id="selected-summary"></div>
+        </div>
+
+        <div class="wizard-nav">
+          <div class="hint-text" id="p2-hint">Seleccione al menos un grupo de interés para continuar.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(1)">← Atrás</button>
+            <button class="primary" type="button" id="p2-continue" onclick="attemptGoToStep(3)">Continuar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 3 — Priorización de grupos de interés -->
+      <section id="paso-3" class="section">
+        <div class="panel">
+          <h2>📊 Priorización de grupos de interés</h2>
+          <p class="hint">Califique cada grupo en 8 criterios, de 1 (muy bajo) a 5 (muy alto). Los controles inician en 3 como punto neutral — ajústelos según su conocimiento de cada grupo. La prioridad se calcula automáticamente.</p>
+
+          <div class="resumen-row" id="priorizacion-resumen"></div>
+
+          <details style="margin:16px 0 4px">
+            <summary>¿Cómo se calcula la prioridad?</summary>
+            <div class="formula-explicacion">
+              Cada criterio tiene un peso distinto, inspirado en el modelo de poder, legitimidad y urgencia que soporta el AA1000 Stakeholder Engagement Standard:
+              <ul>
+                <li><strong>Influencia</strong> (peso 1.5) y <strong>Afectación</strong> (peso 1.5) — los de mayor peso.</li>
+                <li><strong>Riesgo reputacional</strong> (peso 1.3).</li>
+                <li><strong>Urgencia / sensibilidad</strong> (peso 1.2).</li>
+                <li><strong>Dependencia</strong>, <strong>Legitimidad</strong> y <strong>Oportunidad estratégica</strong> (peso 1.0 cada uno).</li>
+                <li><strong>Cercanía con la operación</strong> (peso 0.8) — el de menor peso.</li>
+              </ul>
+              El puntaje final es el promedio ponderado, de 1 a 5. <strong>≥ 3.8</strong> = prioridad alta · <strong>2.6–3.79</strong> = prioridad media · <strong>&lt; 2.6</strong> = prioridad baja.
+            </div>
+          </details>
+
+          <div id="grupos-priorizacion-list" style="margin-top:16px"></div>
+        </div>
+
+        <div class="wizard-nav">
+          <div class="hint-text">Los asuntos ESG del siguiente paso se vincularán a estos grupos.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(2)">← Atrás</button>
+            <button class="primary" type="button" onclick="attemptGoToStep(4)">Continuar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 4 — Banco de asuntos ESG -->
+      <section id="paso-4" class="section">
+        <div class="panel">
+          <h2>🌱 Banco de asuntos ESG</h2>
+          <p class="hint">Sugerimos los asuntos ambientales, sociales y de gobernanza más relevantes para su tipo de operación. Selecciónelos, ajuste su nombre si lo requiere, agregue asuntos propios y vincule cada uno con los grupos de interés que ya priorizó.</p>
+
+          <div class="section-label">Sugeridos para su tipo de operación <span class="count" id="sugeridos-asuntos-count"></span></div>
+          <div id="asuntos-sugeridos-list"></div>
+
+          <details class="other-groups">
+            <summary>Ver otros asuntos ESG disponibles</summary>
+            <div id="asuntos-otros-list" style="margin-top:12px"></div>
+          </details>
+
+          <div class="section-label" style="margin-top:22px">Asuntos personalizados</div>
+          <div id="asuntos-personalizados-list"></div>
+          <div class="add-custom-row" style="max-width:620px">
+            <input type="text" id="custom-asunto-input" placeholder="Agregar un asunto ESG propio (ej. seguridad vial de flota)">
+            <select id="custom-asunto-dimension" style="max-width:170px">
+              <option value="">Dimensión...</option>
+              <option value="A">Ambiental</option>
+              <option value="S">Social</option>
+              <option value="G">Gobernanza</option>
+            </select>
+            <button type="button" class="ghost" onclick="addCustomAsunto()">+ Agregar</button>
+          </div>
+
+          <div class="selected-summary" id="asuntos-summary"></div>
+        </div>
+
+        <div class="wizard-nav">
+          <div class="hint-text" id="p4-hint">Seleccione al menos un asunto ESG para continuar.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(3)">← Atrás</button>
+            <button class="primary" type="button" onclick="attemptGoToStep(5)">Continuar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 5 — Evaluación de asuntos: importancia para grupos de interés -->
+      <section id="paso-5" class="section">
+        <div class="panel">
+          <h2>🗣️ Evaluación — importancia para sus grupos de interés</h2>
+          <p class="hint">Para cada asunto, califique de 1 a 5 qué tan importante es desde la perspectiva de sus grupos de interés. Los controles inician en 3 como punto neutral.</p>
+
+          <details style="margin:6px 0 4px">
+            <summary>¿Cómo se calcula esta puntuación?</summary>
+            <div class="formula-explicacion">
+              La puntuación de cada asunto es el promedio de los 5 criterios, ajustado según la prioridad de los grupos de interés que vinculó con ese asunto en el paso anterior: si un asunto está vinculado a grupos de prioridad alta, su puntuación sube ligeramente; si no tiene grupos vinculados, se usa un ajuste neutro. Esta puntuación se combinará en el siguiente paso con la importancia del asunto para su empresa.
+            </div>
+          </details>
+
+          <div id="eval-gi-list" style="margin-top:16px"></div>
+        </div>
+
+        <div class="wizard-nav">
+          <div class="hint-text">A continuación calificará la importancia de estos mismos asuntos para su empresa.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(4)">← Atrás</button>
+            <button class="primary" type="button" onclick="attemptGoToStep(6)">Continuar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 6 — Evaluación de asuntos: importancia para la empresa -->
+      <section id="paso-6" class="section">
+        <div class="panel">
+          <h2>🏭 Evaluación — importancia para su empresa</h2>
+          <p class="hint">Para cada asunto, califique de 1 a 5 su importancia desde la perspectiva del negocio: riesgos, oportunidades y capacidad de gestión actual.</p>
+
+          <details style="margin:6px 0 4px">
+            <summary>¿Cómo se calcula esta puntuación?</summary>
+            <div class="formula-explicacion">
+              La puntuación es el promedio de los 10 criterios. El criterio "Capacidad de gestión actual" se invierte en el cálculo: si la empresa ya gestiona muy bien un asunto (5/5), ese asunto resta urgencia; si no lo gestiona (1/5), suma urgencia. Esta puntuación se combinará con la del paso anterior para calcular el nivel de materialidad final en el siguiente paso.
+            </div>
+          </details>
+
+          <div id="eval-empresa-list" style="margin-top:16px"></div>
+        </div>
+
+        <div class="wizard-nav">
+          <div class="hint-text">A continuación verá la matriz de materialidad con los resultados combinados.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(5)">← Atrás</button>
+            <button class="primary" type="button" onclick="attemptGoToStep(7)">Continuar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 7 — Matriz de materialidad -->
+      <section id="paso-7" class="section">
+        <div class="panel">
+          <h2>🎯 Matriz de materialidad</h2>
+          <p class="hint">Cada punto es un asunto ESG, ubicado según su importancia para sus grupos de interés (eje vertical) y para su empresa (eje horizontal). El tamaño del punto indica el nivel de materialidad combinado. Pase el cursor sobre un punto para verlo, o haga clic para ver el detalle.</p>
+
+          <div class="resumen-row" id="matriz-resumen"></div>
+
+          <div class="matriz-legend">
+            <span><span class="dim-dot dim-A" style="display:inline-block"></span> Ambiental</span>
+            <span><span class="dim-dot dim-S" style="display:inline-block"></span> Social</span>
+            <span><span class="dim-dot dim-G" style="display:inline-block"></span> Gobernanza</span>
+            <span class="hint" style="margin:0">· El tamaño del punto = nivel de materialidad combinado</span>
+          </div>
+
+          <div class="matriz-canvas-wrap" id="matriz-canvas-wrap">
+            <canvas id="matrizCanvas"></canvas>
+          </div>
+          <p class="hint" id="matriz-empty" style="display:none">No ha seleccionado asuntos ESG. <button type="button" class="ghost" onclick="goToStep(4)">Volver al banco de asuntos ESG →</button></p>
+
+          <div id="matriz-detalle" class="matriz-detalle" style="display:none"></div>
+
+          <div class="section-label" style="margin-top:22px">Tabla de puntuaciones</div>
+          <div style="overflow-x:auto">
+            <table class="matriz-tabla" id="matriz-tabla"></table>
+          </div>
+        </div>
+
+        <div class="wizard-nav">
+          <div class="hint-text">A continuación generará el informe con inteligencia artificial.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(6)">← Atrás</button>
+            <button class="primary" type="button" onclick="attemptGoToStep(8)">Continuar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 8 — Informe con IA -->
+      <section id="paso-8" class="section">
+        <div class="panel">
+          <h2>🤖 Informe con inteligencia artificial</h2>
+          <p class="hint">Con base en todo lo que registró, PAL —el asistente de Projectability— redacta el resumen ejecutivo, la lectura de la matriz, los enfoques de gestión PHVA para sus asuntos críticos y altos, y las recomendaciones estratégicas.</p>
+
+          <div id="informe-paywall" class="no-print"></div>
+          <div id="informe-estado"></div>
+          <div id="informe-contenido" style="display:none"></div>
+        </div>
+
+        <div class="wizard-nav">
+          <div class="hint-text">Podrá descargar su informe en el siguiente paso.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(7)">← Atrás</button>
+            <button class="primary" type="button" onclick="attemptGoToStep(9)">Continuar →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 9 — Descarga y siguientes pasos -->
+      <section id="paso-9" class="section">
+        <div class="panel no-print">
+          <h2>📥 Descarga de su Estudio de Materialidad Exprés</h2>
+          <p class="hint">Descargue su informe completo en PDF o sus datos en Excel. Puede volver a cualquier paso anterior para ajustar su información antes de descargar.</p>
+
+          <div class="export-actions">
+            <button class="primary" type="button" onclick="descargarPDF()">🖨️ Imprimir / Guardar PDF</button>
+            <button class="ghost" type="button" onclick="exportarExcel()">📊 Descargar Excel</button>
+          </div>
+          <p class="fine" id="export-status"></p>
+
+          <div class="disclaimer-box" style="margin-top:20px">
+            <strong>¿Y ahora qué sigue?</strong> Este estudio exprés es un punto de partida de priorización estratégica. Le recomendamos: (1) validar estos resultados directamente con sus grupos de interés reales usando las preguntas sugeridas en el informe, (2) definir metas e indicadores para sus asuntos críticos y altos, y (3) si necesita un reporte de sostenibilidad formal o profundizar esta estrategia, contáctenos en <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
+          </div>
+        </div>
+
+        <div id="informe-imprimible" class="print-only"></div>
+
+        <div class="wizard-nav no-print">
+          <div class="hint-text">Gracias por completar el Estudio de Materialidad Exprés de Projectability.</div>
+          <div class="buttons">
+            <button class="ghost" type="button" onclick="goToStep(8)">← Atrás</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="matriz-tooltip" id="matrizTooltip"></div>
+
+  <script>
+    // ═══════════════ CATÁLOGO DE GRUPOS DE INTERÉS ═══════════════
+    // Fuente de verdad: materialidad-express/banco-grupos-interes.json (copiado aquí a mano, sin build step).
+    const GRUPOS_CATALOGO = [
+      { id: "accionistas", nombre: "Accionistas / socios", descripcion: "Propietarios del capital de la empresa; esperan retorno sostenible y gestión responsable de riesgos.", sectores: ["todos"] },
+      { id: "junta_directiva", nombre: "Junta directiva", descripcion: "Órgano de gobierno que define la estrategia y supervisa la gestión de riesgos, incluidos los ESG.", sectores: ["todos"] },
+      { id: "alta_direccion", nombre: "Alta dirección", descripcion: "Equipo gerencial responsable de ejecutar la estrategia y rendir cuentas de los resultados.", sectores: ["todos"] },
+      { id: "colaboradores", nombre: "Colaboradores", descripcion: "Empleados directos de la organización; afectados por condiciones laborales, seguridad y cultura organizacional.", sectores: ["todos"] },
+      { id: "clientes", nombre: "Clientes", descripcion: "Empresas o personas que compran los productos o servicios; esperan calidad, cumplimiento y trazabilidad.", sectores: ["todos"] },
+      { id: "consumidores_finales", nombre: "Consumidores finales", descripcion: "Usuario final del producto o servicio, cuando es distinto del cliente comercial directo.", sectores: ["comercial", "alimentos", "manufactura", "tecnologia"] },
+      { id: "proveedores", nombre: "Proveedores", descripcion: "Suministran materias primas, insumos o servicios; clave para la debida diligencia en cadena de valor.", sectores: ["todos"] },
+      { id: "contratistas", nombre: "Contratistas", descripcion: "Terceros que ejecutan obras, mantenimiento u operaciones tercerizadas dentro o fuera de las instalaciones.", sectores: ["industrial", "manufactura", "agroindustrial", "logistica"] },
+      { id: "comunidades_vecinas", nombre: "Comunidades vecinas", descripcion: "Población cercana a las operaciones, afectada por impactos ambientales, sociales o de tráfico/ruido.", sectores: ["industrial", "agroindustrial", "manufactura", "logistica"] },
+      { id: "autoridades_ambientales", nombre: "Autoridades ambientales", descripcion: "Entidades que regulan y vigilan el desempeño ambiental (licencias, permisos, vertimientos, emisiones).", sectores: ["industrial", "agroindustrial", "manufactura", "logistica", "alimentos"] },
+      { id: "autoridades_laborales", nombre: "Autoridades laborales", descripcion: "Entidades que vigilan el cumplimiento de normas de trabajo, seguridad y salud en el trabajo.", sectores: ["todos"] },
+      { id: "entidades_control", nombre: "Entidades de control", descripcion: "Organismos de vigilancia y control (superintendencias, contraloría, entes tributarios).", sectores: ["todos"] },
+      { id: "gremios", nombre: "Gremios", descripcion: "Asociaciones sectoriales que agrupan intereses comunes y suelen fijar estándares de referencia.", sectores: ["todos"] },
+      { id: "aliados_estrategicos", nombre: "Aliados estratégicos", descripcion: "Organizaciones con las que se ejecutan proyectos conjuntos, alianzas comerciales o de innovación.", sectores: ["todos"] },
+      { id: "instituciones_financieras", nombre: "Instituciones financieras", descripcion: "Bancos y entidades de crédito; cada vez exigen más criterios ESG para el acceso y costo del capital.", sectores: ["todos"] },
+      { id: "inversionistas", nombre: "Inversionistas", descripcion: "Fondos o inversionistas externos interesados en el desempeño financiero y de sostenibilidad.", sectores: ["todos"] },
+      { id: "medios_comunicacion", nombre: "Medios de comunicación", descripcion: "Canales que amplifican la reputación de la empresa, positiva o negativamente.", sectores: ["todos"] },
+      { id: "academia", nombre: "Academia", descripcion: "Universidades y centros de investigación; aliados en innovación, formación y validación técnica.", sectores: ["todos"] },
+      { id: "organizaciones_sociales", nombre: "Organizaciones sociales", descripcion: "ONG y organizaciones comunitarias que representan intereses sociales o ambientales específicos.", sectores: ["todos"] },
+      { id: "recicladores_gestores", nombre: "Recicladores, gestores o actores de cadena de valor circular", descripcion: "Actores que participan en la recuperación, reciclaje o disposición final de materiales y residuos.", sectores: ["manufactura", "industrial", "alimentos", "agroindustrial", "comercial"] }
+    ];
+
+    // ═══════════════ CATÁLOGO DE ASUNTOS ESG ═══════════════
+    // Fuente de verdad: materialidad-express/banco-asuntos-esg.json (copiado aquí a mano, sin build step).
+    // dimension: A = Ambiental, S = Social, G = Gobernanza.
+    const ASUNTOS_CATALOGO = [
+      { id: "cambio_climatico", dimension: "A", nombre: "Cambio climático", descripcion: "Gestión de riesgos y oportunidades derivados del cambio climático, físicos y de transición.", estandares: ["GRI 305", "ESRS E1", "IFRS S2", "ODS 13"], sectores: ["todos"] },
+      { id: "consumo_energia", dimension: "A", nombre: "Consumo de energía", descripcion: "Volumen y fuentes de energía utilizadas en la operación.", estandares: ["GRI 302", "ESRS E1", "ODS 7"], sectores: ["industrial", "manufactura", "agroindustrial", "alimentos", "logistica"] },
+      { id: "eficiencia_energetica", dimension: "A", nombre: "Eficiencia energética", descripcion: "Medidas para reducir el consumo energético por unidad producida o de servicio prestado.", estandares: ["GRI 302", "ESRS E1", "ODS 7"], sectores: ["industrial", "manufactura", "agroindustrial", "alimentos"] },
+      { id: "emisiones_gei", dimension: "A", nombre: "Emisiones de gases de efecto invernadero", descripcion: "Cuantificación y reducción de emisiones directas e indirectas (alcance 1, 2 y 3).", estandares: ["GRI 305", "ESRS E1", "IFRS S2", "ODS 13"], sectores: ["industrial", "manufactura", "logistica", "agroindustrial"] },
+      { id: "calidad_aire", dimension: "A", nombre: "Calidad del aire", descripcion: "Control de emisiones atmosféricas locales (material particulado, gases) distintas del GEI.", estandares: ["GRI 305", "ESRS E2", "SASB sectorial"], sectores: ["industrial", "manufactura", "agroindustrial"] },
+      { id: "gestion_agua", dimension: "A", nombre: "Gestión del agua", descripcion: "Consumo, eficiencia y fuentes de agua utilizadas en la operación.", estandares: ["GRI 303", "ESRS E3", "ODS 6"], sectores: ["industrial", "agroindustrial", "alimentos", "manufactura"] },
+      { id: "vertimientos", dimension: "A", nombre: "Vertimientos", descripcion: "Gestión y tratamiento de aguas residuales antes de su disposición.", estandares: ["GRI 303", "ESRS E3"], sectores: ["industrial", "agroindustrial", "alimentos", "manufactura"] },
+      { id: "residuos", dimension: "A", nombre: "Residuos", descripcion: "Generación, separación, aprovechamiento y disposición final de residuos.", estandares: ["GRI 306", "ESRS E5", "ODS 12"], sectores: ["todos"] },
+      { id: "economia_circular", dimension: "A", nombre: "Economía circular", descripcion: "Modelos de negocio y prácticas que extienden la vida útil de materiales y productos.", estandares: ["ESRS E5", "ODS 12"], sectores: ["manufactura", "industrial", "comercial", "alimentos"] },
+      { id: "envases_empaques", dimension: "A", nombre: "Envases y empaques", descripcion: "Diseño, material y circularidad de los empaques de producto.", estandares: ["ESRS E5", "SASB sectorial", "ODS 12"], sectores: ["alimentos", "manufactura", "comercial"] },
+      { id: "biodiversidad", dimension: "A", nombre: "Biodiversidad", descripcion: "Impactos sobre ecosistemas, especies y servicios ecosistémicos por la operación o cadena de suministro.", estandares: ["GRI 304", "ESRS E4", "ODS 15"], sectores: ["agroindustrial", "industrial"] },
+      { id: "materias_primas", dimension: "A", nombre: "Uso de materias primas", descripcion: "Origen, trazabilidad y eficiencia en el uso de insumos y materias primas.", estandares: ["ESRS E5", "SASB sectorial"], sectores: ["manufactura", "agroindustrial", "alimentos", "industrial"] },
+      { id: "sustancias_quimicas", dimension: "A", nombre: "Sustancias químicas", descripcion: "Manejo seguro de sustancias peligrosas o de alto riesgo ambiental y para la salud.", estandares: ["SASB sectorial", "ESRS E2"], sectores: ["industrial", "manufactura", "agroindustrial"] },
+      { id: "gestion_ambiental_proveedores", dimension: "A", nombre: "Gestión ambiental de proveedores", descripcion: "Criterios y evaluación ambiental aplicados a la cadena de suministro.", estandares: ["GRI 308", "ESRS E1-E5"], sectores: ["todos"] },
+      { id: "cumplimiento_ambiental", dimension: "A", nombre: "Cumplimiento ambiental", descripcion: "Cumplimiento de permisos, licencias y normativa ambiental aplicable.", estandares: ["GRI 2", "ESRS E1-E5"], sectores: ["industrial", "agroindustrial", "manufactura"] },
+      { id: "riesgos_climaticos_fisicos_transicion", dimension: "A", nombre: "Riesgos físicos y de transición climática", descripcion: "Exposición a eventos climáticos extremos y a riesgos regulatorios/de mercado de la transición baja en carbono.", estandares: ["IFRS S2", "ESRS E1"], sectores: ["todos"] },
+
+      { id: "salud_seguridad_trabajo", dimension: "S", nombre: "Salud y seguridad en el trabajo", descripcion: "Prevención de accidentes y enfermedades laborales; condiciones seguras de trabajo.", estandares: ["GRI 403", "ESRS S1", "ODS 3"], sectores: ["todos"] },
+      { id: "bienestar_laboral", dimension: "S", nombre: "Bienestar laboral", descripcion: "Condiciones que favorecen la calidad de vida, balance y satisfacción de los colaboradores.", estandares: ["GRI 401", "ESRS S1"], sectores: ["todos"] },
+      { id: "diversidad_equidad_inclusion", dimension: "S", nombre: "Diversidad, equidad e inclusión", descripcion: "Representación equitativa y condiciones de no discriminación en la fuerza laboral.", estandares: ["GRI 405", "ESRS S1", "ODS 5", "ODS 10"], sectores: ["todos"] },
+      { id: "formacion_desarrollo_talento", dimension: "S", nombre: "Formación y desarrollo del talento", descripcion: "Programas de capacitación, desarrollo de competencias y planes de carrera.", estandares: ["GRI 404", "ESRS S1", "ODS 4"], sectores: ["todos"] },
+      { id: "derechos_humanos", dimension: "S", nombre: "Derechos humanos", descripcion: "Debida diligencia para prevenir vulneraciones de derechos humanos en la operación y cadena de valor.", estandares: ["GRI 2", "ESRS S1-S2", "ODS 8"], sectores: ["todos"] },
+      { id: "condiciones_laborales", dimension: "S", nombre: "Condiciones laborales", descripcion: "Formalización, remuneración justa, horarios y libertad de asociación.", estandares: ["GRI 401", "ESRS S1", "ODS 8"], sectores: ["todos"] },
+      { id: "relacion_comunidades", dimension: "S", nombre: "Relación con comunidades", descripcion: "Diálogo, gestión de impactos y generación de valor compartido con comunidades vecinas.", estandares: ["GRI 413", "ESRS S3", "ODS 11"], sectores: ["industrial", "agroindustrial", "manufactura", "logistica"] },
+      { id: "impacto_social", dimension: "S", nombre: "Impacto social", descripcion: "Contribución social de la operación más allá del cumplimiento (empleo local, desarrollo económico).", estandares: ["GRI 203", "ESRS S3", "ODS 8"], sectores: ["todos"] },
+      { id: "seguridad_consumidor", dimension: "S", nombre: "Seguridad del consumidor", descripcion: "Seguridad e inocuidad del producto o servicio para quien lo usa o consume.", estandares: ["GRI 416", "ESRS S4", "ODS 3"], sectores: ["alimentos", "manufactura", "comercial", "servicios"] },
+      { id: "calidad_producto_servicio", dimension: "S", nombre: "Calidad del producto o servicio", descripcion: "Consistencia y desempeño del producto o servicio frente a las expectativas del cliente.", estandares: ["GRI 416-417", "ESRS S4"], sectores: ["todos"] },
+      { id: "proteccion_datos_personales", dimension: "S", nombre: "Protección de datos personales", descripcion: "Tratamiento seguro y conforme a la ley de los datos personales de clientes y usuarios.", estandares: ["GRI 418", "ESRS S4", "Ley 1581 de 2012"], sectores: ["tecnologia", "servicios", "comercial"] },
+      { id: "accesibilidad", dimension: "S", nombre: "Accesibilidad", descripcion: "Acceso equitativo al producto, servicio o espacio para personas con discapacidad u otras barreras.", estandares: ["ESRS S4", "ODS 10"], sectores: ["servicios", "comercial", "tecnologia"] },
+      { id: "relacionamiento_clientes", dimension: "S", nombre: "Relacionamiento con clientes", descripcion: "Canales de atención, transparencia comercial y gestión de quejas y reclamos.", estandares: ["GRI 417", "ESRS S4"], sectores: ["todos"] },
+      { id: "gestion_responsable_proveedores", dimension: "S", nombre: "Gestión responsable de proveedores", descripcion: "Criterios sociales aplicados en la selección y evaluación de proveedores.", estandares: ["GRI 414", "ESRS S2"], sectores: ["todos"] },
+      { id: "trabajo_infantil_forzoso", dimension: "S", nombre: "Trabajo infantil o forzoso en cadena de suministro", descripcion: "Prevención y debida diligencia frente a riesgos de trabajo infantil o forzoso en proveedores.", estandares: ["GRI 408", "GRI 409", "ESRS S2", "ODS 8"], sectores: ["agroindustrial", "manufactura", "industrial"] },
+
+      { id: "etica_transparencia", dimension: "G", nombre: "Ética y transparencia", descripcion: "Principios y prácticas que orientan un comportamiento íntegro en toda la organización.", estandares: ["GRI 2", "ESRS G1", "ODS 16"], sectores: ["todos"] },
+      { id: "anticorrupcion", dimension: "G", nombre: "Anticorrupción", descripcion: "Prevención, detección y sanción de prácticas de corrupción y soborno.", estandares: ["GRI 205", "ESRS G1", "ODS 16"], sectores: ["todos"] },
+      { id: "cumplimiento_normativo", dimension: "G", nombre: "Cumplimiento normativo", descripcion: "Cumplimiento de la normativa legal aplicable al sector y la operación.", estandares: ["GRI 2", "GRI 419", "ESRS G1"], sectores: ["todos"] },
+      { id: "gobierno_corporativo", dimension: "G", nombre: "Gobierno corporativo", descripcion: "Estructura, composición y funcionamiento de los órganos de gobierno de la empresa.", estandares: ["GRI 2", "ESRS G1"], sectores: ["todos"] },
+      { id: "gestion_riesgos", dimension: "G", nombre: "Gestión de riesgos", descripcion: "Identificación, evaluación y mitigación de riesgos relevantes para el negocio, incluidos los ESG.", estandares: ["GRI 2", "IFRS S1"], sectores: ["todos"] },
+      { id: "ciberseguridad", dimension: "G", nombre: "Ciberseguridad", descripcion: "Protección de sistemas, datos e infraestructura tecnológica frente a amenazas digitales.", estandares: ["SASB sectorial", "ESRS G1"], sectores: ["tecnologia", "servicios", "comercial"] },
+      { id: "privacidad_informacion", dimension: "G", nombre: "Privacidad de la información", descripcion: "Gobernanza sobre el uso y resguardo de información confidencial y de terceros.", estandares: ["GRI 418", "ESRS G1"], sectores: ["tecnologia", "servicios"] },
+      { id: "compras_responsables", dimension: "G", nombre: "Compras responsables", descripcion: "Criterios ESG integrados en las políticas y procesos de compras y contratación.", estandares: ["GRI 308", "GRI 414", "ESRS G1"], sectores: ["todos"] },
+      { id: "debida_diligencia", dimension: "G", nombre: "Debida diligencia", descripcion: "Procesos sistemáticos para identificar y gestionar impactos negativos reales o potenciales.", estandares: ["GRI 2", "ESRS G1", "IFRS S1"], sectores: ["todos"] },
+      { id: "conflictos_interes", dimension: "G", nombre: "Gestión de conflictos de interés", descripcion: "Identificación y manejo transparente de situaciones de conflicto de interés.", estandares: ["GRI 2", "ESRS G1"], sectores: ["todos"] },
+      { id: "reporte_rendicion_cuentas", dimension: "G", nombre: "Reporte y rendición de cuentas", descripcion: "Transparencia y calidad de la información reportada a grupos de interés.", estandares: ["GRI 2", "IFRS S1", "ESRS G1"], sectores: ["todos"] },
+      { id: "cultura_organizacional", dimension: "G", nombre: "Cultura organizacional", descripcion: "Valores compartidos y comportamientos que orientan la toma de decisiones en la empresa.", estandares: ["ESRS G1"], sectores: ["todos"] },
+      { id: "innovacion_sostenible", dimension: "G", nombre: "Innovación sostenible", descripcion: "Desarrollo de productos, servicios o procesos que integran criterios de sostenibilidad.", estandares: ["ODS 9", "ESRS G1"], sectores: ["tecnologia", "manufactura", "industrial"] },
+      { id: "continuidad_negocio", dimension: "G", nombre: "Continuidad del negocio", descripcion: "Capacidad de la organización para operar frente a interrupciones o crisis.", estandares: ["IFRS S1", "ESRS G1"], sectores: ["todos"] }
+    ];
+    const DIMENSIONES = [
+      { key: "A", label: "Ambiental" },
+      { key: "S", label: "Social" },
+      { key: "G", label: "Gobernanza" }
+    ];
+
+    // ═══════════════ CRITERIOS DE PRIORIZACIÓN DE GRUPOS DE INTERÉS ═══════════════
+    // Pesos inspirados en el modelo poder-legitimidad-urgencia (AA1000). Ver PROPUESTA.md sección 8.
+    const CRITERIOS_GRUPO = [
+      { key: "influencia", label: "Influencia", peso: 1.5, ayuda: "¿Qué tanto puede este grupo afectar decisiones importantes de la empresa?" },
+      { key: "afectacion", label: "Afectación", peso: 1.5, ayuda: "¿Qué tanto se ve afectado este grupo por las actividades de la empresa?" },
+      { key: "riesgoReputacional", label: "Riesgo reputacional", peso: 1.3, ayuda: "¿Qué tanto riesgo reputacional representa una mala gestión de este grupo?" },
+      { key: "urgencia", label: "Urgencia / sensibilidad", peso: 1.2, ayuda: "¿Con qué urgencia espera este grupo una respuesta o gestión de la empresa?" },
+      { key: "dependencia", label: "Dependencia", peso: 1.0, ayuda: "¿Qué tan dependiente es este grupo de la empresa, o la empresa de él?" },
+      { key: "legitimidad", label: "Legitimidad", peso: 1.0, ayuda: "¿Qué tan legítimo o reconocido es el interés o reclamo de este grupo?" },
+      { key: "oportunidad", label: "Oportunidad estratégica", peso: 1.0, ayuda: "¿Qué tanta oportunidad de valor o innovación representa este grupo?" },
+      { key: "cercania", label: "Cercanía con la operación", peso: 0.8, ayuda: "¿Qué tan cerca está este grupo de las actividades diarias de la empresa?" }
+    ];
+    const PESO_TOTAL_CRITERIOS = CRITERIOS_GRUPO.reduce((s, c) => s + c.peso, 0);
+
+    function defaultCriteriosGrupo() {
+      const obj = {};
+      CRITERIOS_GRUPO.forEach(c => obj[c.key] = 3);
+      return obj;
+    }
+
+    function scoreGrupo(g) {
+      const suma = CRITERIOS_GRUPO.reduce((acc, c) => acc + (g.criterios?.[c.key] ?? 3) * c.peso, 0);
+      return suma / PESO_TOTAL_CRITERIOS;
+    }
+
+    function prioridadGrupo(score) {
+      if (score >= 3.8) return { nivel: "alta", label: "Prioridad alta" };
+      if (score >= 2.6) return { nivel: "media", label: "Prioridad media" };
+      return { nivel: "baja", label: "Prioridad baja" };
+    }
+
+    function justificacionGrupo(g) {
+      const ordenados = CRITERIOS_GRUPO.map(c => ({ ...c, valor: g.criterios?.[c.key] ?? 3 })).sort((a, b) => b.valor - a.valor);
+      const [top1, top2] = ordenados;
+      const prio = prioridadGrupo(scoreGrupo(g));
+      return `Se clasifica como ${prio.label.toLowerCase()} principalmente por su ${top1.label.toLowerCase()} (${top1.valor}/5) y ${top2.label.toLowerCase()} (${top2.valor}/5).`;
+    }
+
+    // ═══════════════ CRITERIOS DE EVALUACIÓN — IMPORTANCIA PARA GRUPOS DE INTERÉS ═══════════════
+    // Ver PROPUESTA.md sección 9A.
+    const CRITERIOS_GI = [
+      { key: "frecuencia", label: "Frecuencia", ayuda: "¿Con qué frecuencia aparece este asunto en las preocupaciones o expectativas de sus grupos de interés?" },
+      { key: "sensibilidad", label: "Sensibilidad", ayuda: "¿Qué tan sensible es este asunto desde el punto de vista social, ambiental o reputacional?" },
+      { key: "afectacionGI", label: "Afectación sobre el grupo", ayuda: "¿Qué tanto afecta este asunto, directa o indirectamente, a sus grupos de interés vinculados?" },
+      { key: "expectativaGestion", label: "Expectativa de gestión", ayuda: "¿Qué tanto esperan sus grupos de interés que la empresa gestione o responda a este asunto?" },
+      { key: "relevanciaConfianza", label: "Relevancia para la confianza / licencia social", ayuda: "¿Qué tan relevante es este asunto para la confianza o la relación de sus grupos de interés con la empresa?" }
+    ];
+
+    function defaultEvalGI() {
+      const obj = {};
+      CRITERIOS_GI.forEach(c => obj[c.key] = 3);
+      return obj;
+    }
+
+    function pesoGruposAsunto(asunto) {
+      const vinculados = asunto.gruposVinculados || [];
+      if (vinculados.length === 0) return 0.6; // neutro, equivalente a un grupo con score 3/5
+      const scores = vinculados.map(gid => {
+        const g = state.grupos.find(x => x.id === gid);
+        return g ? scoreGrupo(g) : 3;
+      });
+      const promedio = scores.reduce((a, b) => a + b, 0) / scores.length;
+      return promedio / 5;
+    }
+
+    function scoreGiAsunto(a) {
+      const promedio = CRITERIOS_GI.reduce((acc, c) => acc + (a.evalGI?.[c.key] ?? 3), 0) / CRITERIOS_GI.length;
+      const peso = pesoGruposAsunto(a);
+      return promedio * (0.7 + 0.3 * peso);
+    }
+
+    // ═══════════════ CRITERIOS DE EVALUACIÓN — IMPORTANCIA PARA LA EMPRESA ═══════════════
+    // Ver PROPUESTA.md sección 9B. "capacidadGestion" se invierte en el cálculo.
+    const CRITERIOS_EMPRESA = [
+      { key: "impactoFinanciero", label: "Impacto financiero potencial", ayuda: "¿Qué tanto puede afectar este asunto los ingresos, costos o el valor de la empresa?" },
+      { key: "riesgoOperativo", label: "Riesgo operativo", ayuda: "¿Qué tanto riesgo representa este asunto para la continuidad de las operaciones diarias?" },
+      { key: "riesgoLegal", label: "Riesgo legal o regulatorio", ayuda: "¿Qué tanto riesgo legal o normativo implica una mala gestión de este asunto?" },
+      { key: "riesgoReputacional", label: "Riesgo reputacional", ayuda: "¿Qué tanto puede afectar este asunto la reputación de la empresa ante el mercado?" },
+      { key: "continuidad", label: "Impacto sobre continuidad del negocio", ayuda: "¿Qué tanto podría este asunto interrumpir la operación si no se gestiona?" },
+      { key: "oportunidadInnovacion", label: "Oportunidad de innovación", ayuda: "¿Qué tanta oportunidad de innovar en productos, servicios o procesos representa este asunto?" },
+      { key: "oportunidadEficiencia", label: "Oportunidad de eficiencia", ayuda: "¿Qué tanta oportunidad de reducir costos o mejorar la eficiencia representa este asunto?" },
+      { key: "oportunidadComercial", label: "Oportunidad comercial", ayuda: "¿Qué tanta oportunidad comercial o de nuevos mercados representa este asunto?" },
+      { key: "alineacionEstrategica", label: "Alineación con la estrategia corporativa", ayuda: "¿Qué tan alineado está este asunto con la estrategia y prioridades actuales de la empresa?" },
+      { key: "capacidadGestion", label: "Capacidad de gestión actual", ayuda: "¿Qué tan bien gestiona hoy la empresa este asunto? (5 = ya lo gestiona muy bien, 1 = no lo gestiona)", invertido: true, nota: "Se invierte en el cálculo: a menor capacidad actual, mayor materialidad." }
+    ];
+
+    function defaultEvalEmpresa() {
+      const obj = {};
+      CRITERIOS_EMPRESA.forEach(c => obj[c.key] = 3);
+      return obj;
+    }
+
+    function scoreEmpresaAsunto(a) {
+      const e = a.evalEmpresa || {};
+      const vals = CRITERIOS_EMPRESA.map(c => {
+        const v = e[c.key] ?? 3;
+        return c.invertido ? 6 - v : v;
+      });
+      return vals.reduce((acc, v) => acc + v, 0) / vals.length;
+    }
+
+    // ═══════════════ MATERIALIDAD COMBINADA ═══════════════
+    // Ver PROPUESTA.md sección 9C.
+    const DIM_COLORS = { A: "#5f8d3e", S: "#2f75b5", G: "#6b5ca5" };
+
+    function scoreCombinadoAsunto(a) {
+      return scoreGiAsunto(a) * 0.5 + scoreEmpresaAsunto(a) * 0.5;
+    }
+
+    function nivelMaterialidad(scoreCombinado) {
+      if (scoreCombinado >= 4.2) return { key: "critico", label: "Material crítico" };
+      if (scoreCombinado >= 3.4) return { key: "alto", label: "Material alto" };
+      if (scoreCombinado >= 2.5) return { key: "medio", label: "Material medio" };
+      return { key: "seguimiento", label: "No prioritario / seguimiento" };
+    }
+
+    function justificacionAsunto(a) {
+      const gi = scoreGiAsunto(a);
+      const emp = scoreEmpresaAsunto(a);
+      const nivel = nivelMaterialidad(scoreCombinadoAsunto(a));
+      const mayorEsGI = gi >= emp;
+      const mayor = mayorEsGI ? "sus grupos de interés" : "la empresa";
+      const menor = mayorEsGI ? "la empresa" : "sus grupos de interés";
+      const valorMayor = Math.max(gi, emp).toFixed(1);
+      const valorMenor = Math.min(gi, emp).toFixed(1);
+      return `Se clasifica como ${nivel.label.toLowerCase()} principalmente por su importancia para ${mayor} (${valorMayor}/5), por encima de su importancia para ${menor} (${valorMenor}/5).`;
+    }
+
+    const STORAGE_KEY = "materialidad-express-v1";
+    const TOTAL_PASOS = 10; // 0..9, ver STEP_LABELS
+
+    const STEP_LABELS = [
+      "Bienvenida",
+      "Perfil de empresa",
+      "Grupos de interés",
+      "Priorización de grupos",
+      "Banco de asuntos ESG",
+      "Evaluación — grupos de interés",
+      "Evaluación — empresa",
+      "Matriz de materialidad",
+      "Informe con IA",
+      "Descarga y siguientes pasos"
+    ];
+
+    const defaultState = () => ({
+      paso: 0,
+      pasoMaximoAlcanzado: 0,
+      empresa: {
+        nombre: "", sector: "", tamano: "", pais: "", ciudad: "", empleados: "",
+        tipoOperacion: "", productos: "", mercados: "", madurezEsg: "",
+        tieneEstrategiaEsg: "", tieneReportePrevio: "", certificaciones: "",
+        riesgosPercibidos: "", oportunidadesPercibidas: ""
+      },
+      grupos: [], // { id, nombre, descripcion, custom, criterios }
+      asuntos: [], // { id, nombre, dimension, descripcion, estandares, custom, gruposVinculados }
+      informeIA: null // { resumen_ejecutivo, lectura_matriz, phva, recomendaciones, preguntas_validacion, indicadores_sugeridos, sig }
+    });
+
+    // ═══════════════ IA DE REDACCIÓN — INFORME FINAL ═══════════════
+    // Mismo proxy seguro (Cloudflare Worker) que usan el Reporte GRI Express y el Diagnóstico de Circularidad.
+    const AI = { endpoint: "https://pal-ai.projectability-pal.workers.dev/" };
+
+    // ═══════════════ PAGO Y ACCESO ═══════════════
+    const PAY = {
+      price: "29.99",
+      currency: "USD",
+      priceLabel: "USD $29.99",
+      paypalClientId: "AaKYXvti3_r4I4g5K69UvGzJI0vdFxaVIx69NAH6UQT_w8RxpgS3qGn3_X6ysq8PibbTeBCNQTTb7ppX"
+    };
+    // Hashes SHA-256 de los códigos de acceso válidos (los códigos en texto plano NO están aquí)
+    const ACCESS_HASHES = new Set([
+      "02aa5a3d3ec3052e5209dd11f8150494a30f0e8a511217a4eaaf43a115b9076b",
+      "2ee5c06f961182a82e80cecf0423099038febdc52c8a05e5608ba7f863032b79",
+      "c998efa4db3b5335285ac6aa3dd86d62e16ba86ff0b76e6c408de42d387194b5",
+      "1b6e354f18e6de06fbe024a93906ab9345ff6e993b93f3c51c9a9ee2e9cb1d00",
+      "667e69d4f8a8dcedcc551e319ce414ece87af15c635c06d2255c35ac0c06be0b",
+      "6098c11932178dd7b721986721cfd101421586d1f297b0310c80093c57330e34",
+      "d3a08974b1d4343ffb9567ac10116a03dba4ead8b03e116916754e9ddf83d9cf",
+      "008d1dca15d94cf3ca0934bc389e168ed9d7fc0b973c0a3514104cbd9b3bb922",
+      "c6d79bc724040e688e079e1809850ed7bccc8ae611fd7956542b93fb7dc71eb0",
+      "3074fa7c0575b37ef81b6f8b121e61c265eb16ee43ae38789ca3684dacd3bf04",
+      "7d0651fce79073f1d55ff0e0c25844db480fc94c76708eb04905d553917afd44",
+      "70466542983ce3c552aae8d798bca5ff866564fa22f07773addda2d046c02943",
+      "2da1d5b6adef4d01751ca86d6b243b9b6cfcf3705dd160b953c26524e5240abe",
+      "7c55705b5aa42aaf329300d926540ac6fb16bf9a86e14316a471e92361176231",
+      "26221656519cff8f7aa08ec3ed463d99c4f4b674c54134bac14f859db4984cff",
+      // Código maestro (equipo/socios/demos) — no es de venta, no cuenta en el registro de códigos vendidos
+      "c9158c01a658580c7674b6f76622a4e145cf232f9e135d666fa53a7373f3e9e5"
+    ]);
+    const ACCESS_KEY = "materialidad-access-v1";
+
+    function hasAccess() { return localStorage.getItem(ACCESS_KEY) === "granted"; }
+    function grantAccess() { localStorage.setItem(ACCESS_KEY, "granted"); }
+
+    async function sha256(text) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function tryAccessCode(raw, feedbackEl) {
+      const code = raw.trim().toUpperCase();
+      if (!code) return;
+      const h = await sha256(code);
+      if (ACCESS_HASHES.has(h)) {
+        grantAccess();
+        feedbackEl.style.color = "#7be3c7";
+        feedbackEl.textContent = "✓ Código válido. Generando su informe completo...";
+        setTimeout(() => renderPaso8(), 800);
+      } else {
+        feedbackEl.style.color = "#ffb3b3";
+        feedbackEl.textContent = "✗ Código no válido. Verifique e intente de nuevo.";
+      }
+    }
+
+    let paypalLoading = false;
+    function loadPayPal() {
+      if (window.paypal) return mountPayPal();
+      if (paypalLoading) return;
+      paypalLoading = true;
+      const s = document.createElement("script");
+      s.src = `https://www.paypal.com/sdk/js?client-id=${PAY.paypalClientId}&currency=${PAY.currency}`;
+      s.onload = mountPayPal;
+      s.onerror = () => {
+        const holder = byId("paypalButtons");
+        if (holder) holder.innerHTML = '<div style="color:rgba(255,255,255,.85);font-size:12.5px">No fue posible cargar PayPal. Use un código de acceso o escríbanos por correo.</div>';
+      };
+      document.head.appendChild(s);
+    }
+
+    function mountPayPal() {
+      const holder = byId("paypalButtons");
+      if (!holder || !window.paypal) return;
+      holder.innerHTML = "";
+      paypal.Buttons({
+        style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
+        createOrder: (data, actions) => actions.order.create({
+          purchase_units: [{
+            description: "Estudio de Materialidad Exprés — Informe completo con IA",
+            amount: { value: PAY.price, currency_code: PAY.currency }
+          }]
+        }),
+        onApprove: (data, actions) => actions.order.capture().then(() => {
+          grantAccess();
+          renderPaso8();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }),
+        onError: () => {
+          const fb = byId("codeFeedback");
+          if (fb) { fb.style.color = "#ffb3b3"; fb.textContent = "Hubo un problema con el pago. Intente de nuevo o use un código de acceso."; }
+        }
+      }).render("#paypalButtons");
+    }
+
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || defaultState();
+    // Compatibilidad hacia adelante si el objeto guardado es de una versión anterior incompleta
+    state = Object.assign(defaultState(), state, { empresa: Object.assign(defaultState().empresa, state.empresa || {}) });
+
+    const byId = id => document.getElementById(id);
+    const esc = s => String(s ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+    // ═══════════════ NAVEGACIÓN DEL WIZARD ═══════════════
+    function renderStepList() {
+      const list = byId("stepList");
+      list.innerHTML = STEP_LABELS.map((label, i) => {
+        const done = i < state.paso && i <= state.pasoMaximoAlcanzado;
+        const active = i === state.paso;
+        const disabled = i > state.pasoMaximoAlcanzado;
+        return `<button type="button" class="step-item ${active ? "active" : ""} ${done ? "done" : ""}"
+                  ${disabled ? "disabled" : ""} onclick="goToStep(${i})">
+            <span class="num">${done ? "✓" : i}</span>
+            <span class="label">${esc(label)}</span>
+          </button>`;
+      }).join("");
+    }
+
+    function showSection(paso) {
+      document.querySelectorAll("main > .section").forEach(s => s.classList.remove("active"));
+      byId("paso-" + paso).classList.add("active");
+      window.scrollTo({ top: 0 });
+    }
+
+    function goToStep(paso) {
+      state.paso = paso;
+      if (paso > state.pasoMaximoAlcanzado) state.pasoMaximoAlcanzado = paso;
+      save();
+      renderStepList();
+      showSection(paso);
+      if (paso === 2) renderGrupos();
+      if (paso === 3) renderPriorizacionGrupos();
+      if (paso === 4) renderAsuntos();
+      if (paso === 5) renderEvaluacionGI();
+      if (paso === 6) renderEvaluacionEmpresa();
+      if (paso === 7) renderMatriz();
+      if (paso === 8) renderPaso8();
+    }
+
+    function attemptGoToStep(destino) {
+      if (destino === 2 && !validarPerfilEmpresa()) return;
+      if (destino === 3 && state.grupos.length === 0) {
+        byId("p2-hint").style.color = "var(--red)";
+        byId("p2-hint").textContent = "Seleccione al menos un grupo de interés para continuar.";
+        return;
+      }
+      if (destino === 5 && state.asuntos.length === 0) {
+        byId("p4-hint").style.color = "var(--red)";
+        byId("p4-hint").textContent = "Seleccione al menos un asunto ESG para continuar.";
+        return;
+      }
+      goToStep(destino);
+    }
+
+    // ═══════════════ PASO 1 — PERFIL DE EMPRESA ═══════════════
+    const EMPRESA_FIELDS = ["e_nombre", "e_sector", "e_tamano", "e_pais", "e_ciudad", "e_empleados",
+      "e_tipoOperacion", "e_productos", "e_mercados", "e_madurezEsg", "e_certificaciones",
+      "e_riesgosPercibidos", "e_oportunidadesPercibidas"];
+    const FIELD_TO_KEY = {
+      e_nombre: "nombre", e_sector: "sector", e_tamano: "tamano", e_pais: "pais", e_ciudad: "ciudad",
+      e_empleados: "empleados", e_tipoOperacion: "tipoOperacion", e_productos: "productos",
+      e_mercados: "mercados", e_madurezEsg: "madurezEsg", e_certificaciones: "certificaciones",
+      e_riesgosPercibidos: "riesgosPercibidos", e_oportunidadesPercibidas: "oportunidadesPercibidas"
+    };
+
+    function bindEmpresaForm() {
+      EMPRESA_FIELDS.forEach(id => {
+        const el = byId(id);
+        const key = FIELD_TO_KEY[id];
+        el.value = state.empresa[key] || "";
+        el.addEventListener("input", () => { state.empresa[key] = el.value; save(); clearP1Hint(); });
+        el.addEventListener("change", () => { state.empresa[key] = el.value; save(); clearP1Hint(); });
+      });
+      ["e_tieneEstrategiaEsg", "e_tieneReportePrevio"].forEach(name => {
+        const key = name.replace("e_", "");
+        document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+          radio.checked = state.empresa[key] === radio.value;
+          radio.addEventListener("change", () => { state.empresa[key] = radio.value; save(); });
+        });
+      });
+    }
+
+    function clearP1Hint() {
+      const hint = byId("p1-hint");
+      hint.style.color = "var(--muted)";
+      hint.textContent = "Complete los campos marcados con * para continuar.";
+    }
+
+    function validarPerfilEmpresa() {
+      const req = { nombre: "nombre de la empresa", sector: "sector económico", tamano: "tamaño de la empresa", tipoOperacion: "tipo de operación" };
+      const faltantes = Object.keys(req).filter(k => !String(state.empresa[k] || "").trim());
+      const hint = byId("p1-hint");
+      if (faltantes.length) {
+        hint.style.color = "var(--red)";
+        hint.textContent = "Falta diligenciar: " + faltantes.map(k => req[k]).join(", ") + ".";
+        return false;
+      }
+      return true;
+    }
+
+    // ═══════════════ PASO 2 — GRUPOS DE INTERÉS ═══════════════
+    function grupoSeleccionado(id) { return state.grupos.some(g => g.id === id); }
+
+    function toggleGrupo(catGrupo) {
+      const idx = state.grupos.findIndex(g => g.id === catGrupo.id);
+      if (idx >= 0) {
+        state.grupos.splice(idx, 1);
+      } else {
+        state.grupos.push({ id: catGrupo.id, nombre: catGrupo.nombre, descripcion: catGrupo.descripcion, custom: false, criterios: defaultCriteriosGrupo() });
+      }
+      save();
+      renderGrupos();
+    }
+
+    function addCustomGrupo() {
+      const input = byId("custom-grupo-input");
+      const nombre = input.value.trim();
+      if (!nombre) return;
+      const id = "custom_" + nombre.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 40) + "_" + Date.now();
+      state.grupos.push({ id, nombre, descripcion: "Grupo de interés agregado por la empresa.", custom: true, criterios: defaultCriteriosGrupo() });
+      input.value = "";
+      save();
+      renderGrupos();
+    }
+
+    function removeCustomGrupo(id) {
+      state.grupos = state.grupos.filter(g => g.id !== id);
+      save();
+      renderGrupos();
+    }
+
+    function chipHtml(catGrupo) {
+      const selected = grupoSeleccionado(catGrupo.id);
+      return `<label class="chip ${selected ? "selected" : ""}" onclick="event.preventDefault(); toggleGrupo(${JSON.stringify(catGrupo).replace(/"/g, "&quot;")})">
+        <input type="checkbox" ${selected ? "checked" : ""} readonly>
+        <span class="chip-text"><strong>${esc(catGrupo.nombre)}</strong><span>${esc(catGrupo.descripcion)}</span></span>
+      </label>`;
+    }
+
+    function renderGrupos() {
+      const tipoOperacion = state.empresa.tipoOperacion;
+      const sugeridos = GRUPOS_CATALOGO.filter(g => !tipoOperacion || g.sectores.includes("todos") || g.sectores.includes(tipoOperacion));
+      const otros = GRUPOS_CATALOGO.filter(g => !sugeridos.includes(g));
+
+      byId("sugeridos-count").textContent = `(${sugeridos.length})`;
+      byId("chips-sugeridos").innerHTML = sugeridos.map(chipHtml).join("");
+      byId("chips-otros").innerHTML = otros.length
+        ? otros.map(chipHtml).join("")
+        : `<p class="hint" style="margin:0">Ya se muestran todos los grupos disponibles del catálogo base.</p>`;
+
+      const customs = state.grupos.filter(g => g.custom);
+      const totalSeleccionados = state.grupos.length;
+      const summary = byId("selected-summary");
+      if (totalSeleccionados === 0) {
+        summary.innerHTML = "Aún no ha seleccionado ningún grupo de interés.";
+      } else {
+        summary.innerHTML = `<strong>${totalSeleccionados} grupo(s) seleccionado(s):</strong> ` +
+          state.grupos.map(g => esc(g.nombre) + (g.custom ? ` <button type="button" class="remove-custom" title="Quitar" onclick="removeCustomGrupo('${g.id}')" style="border:none;background:none;color:var(--red);cursor:pointer;font-weight:700">×</button>` : "")).join(", ");
+      }
+
+      if (totalSeleccionados > 0) {
+        byId("p2-hint").style.color = "var(--muted)";
+        byId("p2-hint").textContent = "Puede continuar cuando esté conforme con su selección.";
+      }
+    }
+
+    // ═══════════════ PASO 3 — PRIORIZACIÓN DE GRUPOS DE INTERÉS ═══════════════
+    function grupoCardHtml(g) {
+      const score = scoreGrupo(g);
+      const prio = prioridadGrupo(score);
+      return `<div class="grupo-card" data-grupo-id="${g.id}">
+        <div class="grupo-card-head">
+          <div><h3>${esc(g.nombre)}</h3><p>${esc(g.descripcion)}</p></div>
+          <span class="prio-badge ${prio.nivel}" data-role="badge">${prio.label} · <span data-role="score">${score.toFixed(1)}</span>/5</span>
+        </div>
+        <div class="criterios-grid">
+          ${CRITERIOS_GRUPO.map(c => {
+            const valor = g.criterios?.[c.key] ?? 3;
+            return `<div class="criterio-item">
+              <div class="criterio-head"><strong>${c.label}</strong><span class="val" data-role="val-${c.key}">${valor}</span></div>
+              <small>${c.ayuda}</small>
+              <input type="range" min="1" max="5" step="1" value="${valor}" data-grupo="${g.id}" data-criterio="${c.key}">
+            </div>`;
+          }).join("")}
+        </div>
+        <div class="grupo-justificacion" data-role="justificacion">${esc(justificacionGrupo(g))}</div>
+      </div>`;
+    }
+
+    function renderPriorizacionGrupos() {
+      state.grupos.forEach(g => { if (!g.criterios) g.criterios = defaultCriteriosGrupo(); });
+      save();
+      const list = byId("grupos-priorizacion-list");
+      if (state.grupos.length === 0) {
+        list.innerHTML = `<p class="hint">Aún no ha seleccionado grupos de interés. <button type="button" class="ghost" onclick="goToStep(2)">Volver a seleccionar grupos →</button></p>`;
+        byId("priorizacion-resumen").innerHTML = "";
+        return;
+      }
+      list.innerHTML = state.grupos.map(grupoCardHtml).join("");
+      updateResumenPriorizacion();
+    }
+
+    function updateGrupoCard(grupoId) {
+      const grupo = state.grupos.find(g => g.id === grupoId);
+      const card = document.querySelector(`.grupo-card[data-grupo-id="${CSS.escape(grupoId)}"]`);
+      if (!grupo || !card) return;
+      const score = scoreGrupo(grupo);
+      const prio = prioridadGrupo(score);
+      CRITERIOS_GRUPO.forEach(c => {
+        const span = card.querySelector(`[data-role="val-${c.key}"]`);
+        if (span) span.textContent = grupo.criterios[c.key];
+      });
+      const badge = card.querySelector('[data-role="badge"]');
+      badge.className = `prio-badge ${prio.nivel}`;
+      badge.innerHTML = `${prio.label} · <span data-role="score">${score.toFixed(1)}</span>/5`;
+      card.querySelector('[data-role="justificacion"]').textContent = justificacionGrupo(grupo);
+    }
+
+    function updateResumenPriorizacion() {
+      const counts = { alta: 0, media: 0, baja: 0 };
+      state.grupos.forEach(g => { counts[prioridadGrupo(scoreGrupo(g)).nivel]++; });
+      byId("priorizacion-resumen").innerHTML = `
+        <div class="resumen-chip alta">${counts.alta} prioridad alta</div>
+        <div class="resumen-chip media">${counts.media} prioridad media</div>
+        <div class="resumen-chip baja">${counts.baja} prioridad baja</div>`;
+    }
+
+    // ═══════════════ PASO 4 — BANCO DE ASUNTOS ESG ═══════════════
+    function asuntoSeleccionado(id) { return state.asuntos.some(a => a.id === id); }
+
+    function toggleAsunto(cat) {
+      const idx = state.asuntos.findIndex(a => a.id === cat.id);
+      if (idx >= 0) {
+        state.asuntos.splice(idx, 1);
+      } else {
+        state.asuntos.push({ id: cat.id, nombre: cat.nombre, dimension: cat.dimension, descripcion: cat.descripcion, estandares: cat.estandares || [], custom: false, gruposVinculados: [], evalGI: defaultEvalGI(), evalEmpresa: defaultEvalEmpresa() });
+      }
+      save();
+      renderAsuntos();
+    }
+
+    function addCustomAsunto() {
+      const input = byId("custom-asunto-input");
+      const dimSelect = byId("custom-asunto-dimension");
+      const nombre = input.value.trim();
+      const dimension = dimSelect.value;
+      if (!nombre || !dimension) return;
+      const id = "custom_" + nombre.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 40) + "_" + Date.now();
+      state.asuntos.push({ id, nombre, dimension, descripcion: "Asunto ESG agregado por la empresa.", estandares: [], custom: true, gruposVinculados: [], evalGI: defaultEvalGI(), evalEmpresa: defaultEvalEmpresa() });
+      input.value = "";
+      dimSelect.value = "";
+      save();
+      renderAsuntos();
+    }
+
+    function removeCustomAsunto(id) {
+      state.asuntos = state.asuntos.filter(a => a.id !== id);
+      save();
+      renderAsuntos();
+    }
+
+    function toggleGrupoVinculado(asuntoId, grupoId) {
+      const asunto = state.asuntos.find(a => a.id === asuntoId);
+      if (!asunto) return;
+      const idx = asunto.gruposVinculados.indexOf(grupoId);
+      if (idx >= 0) asunto.gruposVinculados.splice(idx, 1);
+      else asunto.gruposVinculados.push(grupoId);
+      save();
+      renderAsuntos();
+    }
+
+    function asuntoDetailHtml(sel) {
+      const gruposDisponibles = state.grupos;
+      return `<div class="asunto-detail">
+        <label class="field" style="max-width:420px">
+          <span>Nombre del asunto (puede ajustarlo)</span>
+          <input type="text" value="${esc(sel.nombre)}" data-asunto-nombre="${sel.id}">
+        </label>
+        ${sel.custom ? `<button type="button" class="ghost" style="margin-top:8px" onclick="removeCustomAsunto('${sel.id}')">Quitar este asunto personalizado</button>` : ""}
+        <div class="vinculo-grupos">
+          <span class="link-label">Grupos de interés vinculados</span>
+          ${gruposDisponibles.length === 0
+            ? `<p class="hint" style="margin:6px 0 0">Seleccione grupos de interés en el paso 2 para poder vincularlos aquí.</p>`
+            : `<div class="chip-grid small">${gruposDisponibles.map(g => `
+                <label class="chip small ${sel.gruposVinculados.includes(g.id) ? "selected" : ""}" onclick="event.preventDefault(); toggleGrupoVinculado('${sel.id}','${g.id}')">
+                  <input type="checkbox" ${sel.gruposVinculados.includes(g.id) ? "checked" : ""} readonly>
+                  <span class="chip-text"><strong>${esc(g.nombre)}</strong></span>
+                </label>`).join("")}</div>`}
+        </div>
+      </div>`;
+    }
+
+    function asuntoRowHtml(cat) {
+      const sel = state.asuntos.find(a => a.id === cat.id);
+      const isSelected = !!sel;
+      return `<div class="asunto-row">
+        <label class="asunto-check-line" onclick="event.preventDefault(); toggleAsunto(${JSON.stringify(cat).replace(/"/g, "&quot;")})">
+          <input type="checkbox" ${isSelected ? "checked" : ""} readonly>
+          <div class="asunto-main">
+            <div class="asunto-title-line">
+              <strong>${esc(cat.nombre)}</strong>
+              ${(cat.estandares || []).map(e => `<span class="std-pill">${esc(e)}</span>`).join("")}
+            </div>
+            <p class="asunto-desc">${esc(cat.descripcion)}</p>
+          </div>
+        </label>
+        ${isSelected ? asuntoDetailHtml(sel) : ""}
+      </div>`;
+    }
+
+    function renderAsuntosPorDimension(lista) {
+      return DIMENSIONES.map(d => {
+        const items = lista.filter(a => a.dimension === d.key);
+        if (!items.length) return "";
+        return `<div class="dim-section-label dim-${d.key}">${d.label} <span class="count">(${items.length})</span></div>
+          <div class="asunto-list">${items.map(asuntoRowHtml).join("")}</div>`;
+      }).join("");
+    }
+
+    function renderAsuntosPersonalizados() {
+      const customs = state.asuntos.filter(a => a.custom);
+      byId("asuntos-personalizados-list").innerHTML = customs.length
+        ? `<div class="asunto-list">${customs.map(a => `<div class="asunto-row">
+            <div class="asunto-check-line" style="cursor:default">
+              <span class="dim-dot dim-${a.dimension}"></span>
+              <div class="asunto-main">
+                <div class="asunto-title-line"><strong>${esc(a.nombre)}</strong></div>
+                <p class="asunto-desc">${esc(a.descripcion)}</p>
+              </div>
+            </div>
+            ${asuntoDetailHtml(a)}
+          </div>`).join("")}</div>`
+        : `<p class="hint" style="margin:0">Aún no ha agregado asuntos personalizados.</p>`;
+    }
+
+    function updateAsuntosSummary() {
+      const total = state.asuntos.length;
+      const summary = byId("asuntos-summary");
+      if (total === 0) {
+        summary.innerHTML = "Aún no ha seleccionado ningún asunto ESG.";
+      } else {
+        const counts = { A: 0, S: 0, G: 0 };
+        state.asuntos.forEach(a => counts[a.dimension]++);
+        summary.innerHTML = `<strong>${total} asunto(s) seleccionado(s):</strong> ${counts.A} ambiental(es) · ${counts.S} social(es) · ${counts.G} de gobernanza.`;
+      }
+      if (total > 0) {
+        byId("p4-hint").style.color = "var(--muted)";
+        byId("p4-hint").textContent = "Puede continuar cuando esté conforme con su selección.";
+      }
+    }
+
+    function renderAsuntos() {
+      const tipoOperacion = state.empresa.tipoOperacion;
+      const matches = a => !tipoOperacion || a.sectores.includes("todos") || a.sectores.includes(tipoOperacion);
+      const sugeridos = ASUNTOS_CATALOGO.filter(matches);
+      const otros = ASUNTOS_CATALOGO.filter(a => !matches(a));
+
+      byId("sugeridos-asuntos-count").textContent = `(${sugeridos.length})`;
+      byId("asuntos-sugeridos-list").innerHTML = renderAsuntosPorDimension(sugeridos);
+      byId("asuntos-otros-list").innerHTML = otros.length
+        ? renderAsuntosPorDimension(otros)
+        : `<p class="hint" style="margin:0">Ya se muestran todos los asuntos disponibles del catálogo base.</p>`;
+
+      renderAsuntosPersonalizados();
+      updateAsuntosSummary();
+    }
+
+    // ═══════════════ PASO 5 — EVALUACIÓN: IMPORTANCIA PARA GRUPOS DE INTERÉS ═══════════════
+    function asuntoEvalGiCardHtml(a) {
+      const score = scoreGiAsunto(a);
+      const vinculados = (a.gruposVinculados || []).map(gid => state.grupos.find(g => g.id === gid)).filter(Boolean);
+      return `<div class="asunto-eval-card" data-asunto-id="${a.id}">
+        <div class="asunto-eval-head">
+          <div>
+            <h3>${esc(a.nombre)}</h3>
+            <div class="asunto-eval-grupos">
+              ${vinculados.length
+                ? vinculados.map(g => `<span class="std-pill" style="background:#eafaf3;color:var(--focus)">${esc(g.nombre)}</span>`).join("")
+                : `<span class="hint" style="margin:0;font-size:11.5px">Sin grupos de interés vinculados — se usa un ajuste neutro. <a href="#" onclick="event.preventDefault(); goToStep(4)">Vincular en el paso 4</a></span>`}
+            </div>
+          </div>
+          <span class="score-gauge-badge" data-role="score-gi">${score.toFixed(1)}/5</span>
+        </div>
+        <div class="criterios-grid">
+          ${CRITERIOS_GI.map(c => {
+            const valor = a.evalGI?.[c.key] ?? 3;
+            return `<div class="criterio-item">
+              <div class="criterio-head"><strong>${c.label}</strong><span class="val" data-role="val-${c.key}">${valor}</span></div>
+              <small>${c.ayuda}</small>
+              <input type="range" min="1" max="5" step="1" value="${valor}" data-asunto="${a.id}" data-criterio="${c.key}">
+            </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+    }
+
+    function renderEvaluacionGI() {
+      state.asuntos.forEach(a => { if (!a.evalGI) a.evalGI = defaultEvalGI(); });
+      save();
+      const list = byId("eval-gi-list");
+      if (state.asuntos.length === 0) {
+        list.innerHTML = `<p class="hint">No ha seleccionado asuntos ESG. <button type="button" class="ghost" onclick="goToStep(4)">Volver al banco de asuntos ESG →</button></p>`;
+        return;
+      }
+      list.innerHTML = DIMENSIONES.map(d => {
+        const items = state.asuntos.filter(a => a.dimension === d.key);
+        if (!items.length) return "";
+        return `<div class="dim-section-label dim-${d.key}">${d.label} <span class="count">(${items.length})</span></div>
+          <div class="asunto-list">${items.map(asuntoEvalGiCardHtml).join("")}</div>`;
+      }).join("");
+    }
+
+    function updateAsuntoEvalGiCard(asuntoId) {
+      const asunto = state.asuntos.find(a => a.id === asuntoId);
+      const card = document.querySelector(`#eval-gi-list .asunto-eval-card[data-asunto-id="${CSS.escape(asuntoId)}"]`);
+      if (!asunto || !card) return;
+      CRITERIOS_GI.forEach(c => {
+        const span = card.querySelector(`[data-role="val-${c.key}"]`);
+        if (span) span.textContent = asunto.evalGI[c.key];
+      });
+      card.querySelector('[data-role="score-gi"]').textContent = scoreGiAsunto(asunto).toFixed(1) + "/5";
+    }
+
+    // ═══════════════ PASO 6 — EVALUACIÓN: IMPORTANCIA PARA LA EMPRESA ═══════════════
+    function asuntoEvalEmpresaCardHtml(a) {
+      const score = scoreEmpresaAsunto(a);
+      return `<div class="asunto-eval-card" data-asunto-id="${a.id}">
+        <div class="asunto-eval-head">
+          <div><h3>${esc(a.nombre)}</h3></div>
+          <span class="score-gauge-badge" data-role="score-empresa">${score.toFixed(1)}/5</span>
+        </div>
+        <div class="criterios-grid">
+          ${CRITERIOS_EMPRESA.map(c => {
+            const valor = a.evalEmpresa?.[c.key] ?? 3;
+            return `<div class="criterio-item">
+              <div class="criterio-head"><strong>${c.label}</strong><span class="val" data-role="val-${c.key}">${valor}</span></div>
+              <small>${c.ayuda}</small>
+              ${c.nota ? `<small style="font-style:italic;color:var(--amber)">${c.nota}</small>` : ""}
+              <input type="range" min="1" max="5" step="1" value="${valor}" data-asunto="${a.id}" data-criterio="${c.key}">
+            </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+    }
+
+    function renderEvaluacionEmpresa() {
+      state.asuntos.forEach(a => { if (!a.evalEmpresa) a.evalEmpresa = defaultEvalEmpresa(); });
+      save();
+      const list = byId("eval-empresa-list");
+      if (state.asuntos.length === 0) {
+        list.innerHTML = `<p class="hint">No ha seleccionado asuntos ESG. <button type="button" class="ghost" onclick="goToStep(4)">Volver al banco de asuntos ESG →</button></p>`;
+        return;
+      }
+      list.innerHTML = DIMENSIONES.map(d => {
+        const items = state.asuntos.filter(a => a.dimension === d.key);
+        if (!items.length) return "";
+        return `<div class="dim-section-label dim-${d.key}">${d.label} <span class="count">(${items.length})</span></div>
+          <div class="asunto-list">${items.map(asuntoEvalEmpresaCardHtml).join("")}</div>`;
+      }).join("");
+    }
+
+    function updateAsuntoEvalEmpresaCard(asuntoId) {
+      const asunto = state.asuntos.find(a => a.id === asuntoId);
+      const card = document.querySelector(`#eval-empresa-list .asunto-eval-card[data-asunto-id="${CSS.escape(asuntoId)}"]`);
+      if (!asunto || !card) return;
+      CRITERIOS_EMPRESA.forEach(c => {
+        const span = card.querySelector(`[data-role="val-${c.key}"]`);
+        if (span) span.textContent = asunto.evalEmpresa[c.key];
+      });
+      card.querySelector('[data-role="score-empresa"]').textContent = scoreEmpresaAsunto(asunto).toFixed(1) + "/5";
+    }
+
+    // ═══════════════ PASO 7 — MATRIZ DE MATERIALIDAD ═══════════════
+    let matrizPuntosCache = []; // { asunto, cx, cy, r } en píxeles CSS del canvas, para hover/click
+
+    function setupCanvasDPR(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const cssWidth = canvas.clientWidth || 760;
+      const cssHeight = canvas.clientHeight || 420;
+      canvas.width = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(cssHeight * dpr);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, W: cssWidth, H: cssHeight };
+    }
+
+    function drawMatriz() {
+      const canvas = byId("matrizCanvas");
+      if (!canvas) return;
+      const { ctx, W, H } = setupCanvasDPR(canvas);
+      ctx.clearRect(0, 0, W, H);
+
+      const marginLeft = 46, marginBottom = 40, marginTop = 14, marginRight = 14;
+      const plotW = W - marginLeft - marginRight;
+      const plotH = H - marginTop - marginBottom;
+      const domainMin = 1, domainMax = 5, mid = 3;
+      const toX = v => marginLeft + ((v - domainMin) / (domainMax - domainMin)) * plotW;
+      const toY = v => marginTop + plotH - ((v - domainMin) / (domainMax - domainMin)) * plotH;
+
+      // Cuadrantes de fondo
+      ctx.fillStyle = "#fdf0ef"; // arriba-derecha: alta GI + alta empresa (zona crítica)
+      ctx.fillRect(toX(mid), marginTop, toX(domainMax) - toX(mid), toY(mid) - marginTop);
+      ctx.fillStyle = "#eef3fb"; // arriba-izquierda: alta GI + baja empresa (material por impacto)
+      ctx.fillRect(marginLeft, marginTop, toX(mid) - marginLeft, toY(mid) - marginTop);
+      ctx.fillStyle = "#fdf8ec"; // abajo-derecha: baja GI + alta empresa (material financiero)
+      ctx.fillRect(toX(mid), toY(mid), toX(domainMax) - toX(mid), toY(domainMin) - toY(mid));
+      ctx.fillStyle = "#f4f6f8"; // abajo-izquierda: baja GI + baja empresa (seguimiento)
+      ctx.fillRect(marginLeft, toY(mid), toX(mid) - marginLeft, toY(domainMin) - toY(mid));
+
+      // Rejilla y ejes
+      ctx.strokeStyle = "#d9e1ea";
+      ctx.fillStyle = "#647084";
+      ctx.font = "11px Inter, Segoe UI, Arial";
+      ctx.lineWidth = 1;
+      for (let v = domainMin; v <= domainMax; v++) {
+        ctx.beginPath();
+        ctx.moveTo(toX(v), marginTop);
+        ctx.lineTo(toX(v), toY(domainMin));
+        ctx.stroke();
+        ctx.textAlign = "center";
+        ctx.fillText(String(v), toX(v), toY(domainMin) + 16);
+
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, toY(v));
+        ctx.lineTo(toX(domainMax), toY(v));
+        ctx.stroke();
+        ctx.textAlign = "right";
+        ctx.fillText(String(v), marginLeft - 8, toY(v) + 3);
+      }
+      ctx.strokeStyle = "#a9b6c4";
+      ctx.beginPath(); ctx.moveTo(marginLeft, marginTop); ctx.lineTo(marginLeft, toY(domainMin)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(marginLeft, toY(domainMin)); ctx.lineTo(toX(domainMax), toY(domainMin)); ctx.stroke();
+
+      ctx.fillStyle = "#33475c";
+      ctx.font = "600 12px Inter, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Importancia para la empresa →", marginLeft + plotW / 2, H - 6);
+      ctx.save();
+      ctx.translate(14, marginTop + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("Importancia para grupos de interés →", 0, 0);
+      ctx.restore();
+
+      // Puntos
+      matrizPuntosCache = [];
+      state.asuntos.forEach(a => {
+        const x = scoreEmpresaAsunto(a);
+        const y = scoreGiAsunto(a);
+        const combinado = scoreCombinadoAsunto(a);
+        const cx = toX(x), cy = toY(y);
+        const r = 5 + ((combinado - 1) / 4) * 9;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = DIM_COLORS[a.dimension] || "#647084";
+        ctx.globalAlpha = 0.85;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#ffffff";
+        ctx.stroke();
+        matrizPuntosCache.push({ asunto: a, cx, cy, r });
+      });
+    }
+
+    function matrizPuntoEnPosicion(mx, my) {
+      // Recorrido inverso: el último dibujado (más al frente) gana en solapamientos
+      for (let i = matrizPuntosCache.length - 1; i >= 0; i--) {
+        const p = matrizPuntosCache[i];
+        const dist = Math.hypot(mx - p.cx, my - p.cy);
+        if (dist <= p.r + 3) return p;
+      }
+      return null;
+    }
+
+    function ocultarTooltipMatriz() {
+      byId("matrizTooltip").style.display = "none";
+    }
+
+    function manejarMouseMoveMatriz(e) {
+      const canvas = byId("matrizCanvas");
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const punto = matrizPuntoEnPosicion(mx, my);
+      const tooltip = byId("matrizTooltip");
+      if (!punto) { ocultarTooltipMatriz(); return; }
+      const a = punto.asunto;
+      const nivel = nivelMaterialidad(scoreCombinadoAsunto(a));
+      tooltip.innerHTML = `<strong>${esc(a.nombre)}</strong><br>${nivel.label}<br>GI: ${scoreGiAsunto(a).toFixed(1)}/5 · Empresa: ${scoreEmpresaAsunto(a).toFixed(1)}/5`;
+      tooltip.style.left = (e.clientX + 14) + "px";
+      tooltip.style.top = (e.clientY + 14) + "px";
+      tooltip.style.display = "block";
+    }
+
+    function manejarClickMatriz(e) {
+      const canvas = byId("matrizCanvas");
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const punto = matrizPuntoEnPosicion(mx, my);
+      if (!punto) return;
+      mostrarDetalleAsunto(punto.asunto.id);
+    }
+
+    function mostrarDetalleAsunto(asuntoId) {
+      const a = state.asuntos.find(x => x.id === asuntoId);
+      if (!a) return;
+      const gi = scoreGiAsunto(a), emp = scoreEmpresaAsunto(a), comb = scoreCombinadoAsunto(a);
+      const nivel = nivelMaterialidad(comb);
+      const detalle = byId("matriz-detalle");
+      detalle.style.display = "block";
+      detalle.innerHTML = `
+        <h4>${esc(a.nombre)} <span class="chip-nivel ${nivel.key}">${nivel.label}</span></h4>
+        <p style="margin:0 0 10px;font-size:12.5px;color:var(--ink);line-height:1.5">${esc(justificacionAsunto(a))}</p>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:12.5px">
+          <div><strong>Importancia para grupos de interés:</strong> ${gi.toFixed(1)}/5</div>
+          <div><strong>Importancia para la empresa:</strong> ${emp.toFixed(1)}/5</div>
+          <div><strong>Puntuación combinada:</strong> ${comb.toFixed(1)}/5</div>
+        </div>`;
+    }
+
+    function renderMatrizResumen() {
+      const counts = { critico: 0, alto: 0, medio: 0, seguimiento: 0 };
+      state.asuntos.forEach(a => counts[nivelMaterialidad(scoreCombinadoAsunto(a)).key]++);
+      byId("matriz-resumen").innerHTML = `
+        <div class="chip-nivel critico">${counts.critico} crítico(s)</div>
+        <div class="chip-nivel alto">${counts.alto} alto(s)</div>
+        <div class="chip-nivel medio">${counts.medio} medio(s)</div>
+        <div class="chip-nivel seguimiento">${counts.seguimiento} de seguimiento</div>`;
+    }
+
+    function renderMatrizTabla() {
+      const filas = state.asuntos.map(a => ({
+        a, gi: scoreGiAsunto(a), emp: scoreEmpresaAsunto(a), comb: scoreCombinadoAsunto(a)
+      })).sort((x, y) => y.comb - x.comb);
+      byId("matriz-tabla").innerHTML = `<thead><tr>
+          <th>Asunto</th><th>Dim.</th><th>Grupos de interés</th><th>Empresa</th><th>Combinado</th><th>Nivel</th>
+        </tr></thead>
+        <tbody>${filas.map(f => {
+          const nivel = nivelMaterialidad(f.comb);
+          return `<tr>
+            <td>${esc(f.a.nombre)}</td>
+            <td><span class="dim-dot dim-${f.a.dimension}" style="display:inline-block;vertical-align:middle"></span></td>
+            <td>${f.gi.toFixed(1)}</td>
+            <td>${f.emp.toFixed(1)}</td>
+            <td><strong>${f.comb.toFixed(1)}</strong></td>
+            <td><span class="chip-nivel ${nivel.key}">${nivel.label}</span></td>
+          </tr>`;
+        }).join("")}</tbody>`;
+    }
+
+    function renderMatriz() {
+      const hayAsuntos = state.asuntos.length > 0;
+      byId("matriz-canvas-wrap").style.display = hayAsuntos ? "block" : "none";
+      byId("matriz-empty").style.display = hayAsuntos ? "none" : "block";
+      byId("matriz-detalle").style.display = "none";
+      if (!hayAsuntos) {
+        byId("matriz-resumen").innerHTML = "";
+        byId("matriz-tabla").innerHTML = "";
+        return;
+      }
+      renderMatrizResumen();
+      drawMatriz();
+      renderMatrizTabla();
+    }
+
+    // ═══════════════ PASO 8 — INFORME CON IA ═══════════════
+    function construirContextoInforme() {
+      const gruposRelevantes = state.grupos
+        .filter(g => prioridadGrupo(scoreGrupo(g)).nivel !== "baja")
+        .map(g => ({
+          nombre: g.nombre,
+          score_total: Number(scoreGrupo(g).toFixed(1)),
+          prioridad: prioridadGrupo(scoreGrupo(g)).nivel
+        }));
+
+      const asuntos = state.asuntos.map(a => ({
+        nombre: a.nombre,
+        dimension: a.dimension,
+        score_gi: Number(scoreGiAsunto(a).toFixed(1)),
+        score_empresa: Number(scoreEmpresaAsunto(a).toFixed(1)),
+        score_combinado: Number(scoreCombinadoAsunto(a).toFixed(1)),
+        nivel_materialidad: nivelMaterialidad(scoreCombinadoAsunto(a)).label,
+        materialidad_impacto: scoreGiAsunto(a) >= 3.4,
+        materialidad_financiera: scoreEmpresaAsunto(a) >= 3.4,
+        grupos_vinculados: (a.gruposVinculados || [])
+          .map(gid => state.grupos.find(g => g.id === gid))
+          .filter(Boolean)
+          .map(g => g.nombre)
+      }));
+
+      return {
+        empresa: {
+          nombre: state.empresa.nombre, sector: state.empresa.sector, tamano: state.empresa.tamano,
+          pais: state.empresa.pais, tipoOperacion: state.empresa.tipoOperacion, madurezEsg: state.empresa.madurezEsg,
+          riesgosPercibidos: state.empresa.riesgosPercibidos, oportunidadesPercibidas: state.empresa.oportunidadesPercibidas
+        },
+        grupos_interes: gruposRelevantes,
+        asuntos
+      };
+    }
+
+    function informeSignature() {
+      const asuntosSig = state.asuntos.map(a => `${a.id}:${scoreCombinadoAsunto(a).toFixed(1)}`).join(",");
+      const gruposSig = state.grupos.map(g => `${g.id}:${scoreGrupo(g).toFixed(1)}`).join(",");
+      return `${asuntosSig}|${gruposSig}`;
+    }
+
+    function asuntosCriticosAltos() {
+      return state.asuntos.filter(a => ["critico", "alto"].includes(nivelMaterialidad(scoreCombinadoAsunto(a)).key));
+    }
+
+    function renderInformeEstado(kind) {
+      const el = byId("informe-estado");
+      if (kind === "cargando") {
+        el.innerHTML = `<p class="hint">⏳ Generando su informe con inteligencia artificial... esto puede tardar unos segundos.</p>`;
+        byId("informe-contenido").style.display = "none";
+      } else if (kind === "error") {
+        el.innerHTML = `<div class="disclaimer-box" style="border-color:#f2caca;background:#fdf2f2;color:#7a2e2e">
+          No fue posible generar el informe con inteligencia artificial en este momento. Puede intentarlo de nuevo, o continuar: su matriz y sus evaluaciones ya están completas y disponibles para exportar.
+          <div style="margin-top:10px"><button type="button" class="ghost" onclick="generarInformeIA(true)">Reintentar</button></div>
+        </div>`;
+        byId("informe-contenido").style.display = "none";
+      } else if (kind === "bloqueado") {
+        el.innerHTML = "";
+        byId("informe-contenido").style.display = "none";
+      } else {
+        el.innerHTML = "";
+      }
+    }
+
+    function renderInformeContenido() {
+      const informe = state.informeIA;
+      const cont = byId("informe-contenido");
+      if (!informe) { cont.style.display = "none"; return; }
+      cont.style.display = "block";
+
+      const criticosAltos = asuntosCriticosAltos();
+
+      cont.innerHTML = `
+        <div class="informe-seccion">
+          <h3>Resumen ejecutivo</h3>
+          <p>${esc(informe.resumen_ejecutivo || "")}</p>
+        </div>
+        <div class="informe-seccion">
+          <h3>Lectura de la matriz</h3>
+          <p>${esc(informe.lectura_matriz || "")}</p>
+        </div>
+        ${criticosAltos.length ? `<div class="informe-seccion">
+          <h3>Enfoques de gestión PHVA — asuntos críticos y altos</h3>
+          ${criticosAltos.map(a => {
+            const p = (informe.phva || {})[a.nombre];
+            if (!p) return "";
+            const indicadores = (informe.indicadores_sugeridos || {})[a.nombre];
+            return `<div class="phva-card">
+              <h4>${esc(a.nombre)}</h4>
+              <div class="phva-grid">
+                <div><strong>Planificar</strong><p>${esc(p.planificar || "")}</p></div>
+                <div><strong>Hacer</strong><p>${esc(p.hacer || "")}</p></div>
+                <div><strong>Verificar</strong><p>${esc(p.verificar || "")}</p></div>
+                <div><strong>Actuar</strong><p>${esc(p.actuar || "")}</p></div>
+              </div>
+              ${indicadores && indicadores.length ? `<div class="indicadores-sugeridos"><strong>Indicadores sugeridos:</strong> ${indicadores.map(esc).join(" · ")}</div>` : ""}
+            </div>`;
+          }).join("")}
+        </div>` : ""}
+        <div class="informe-seccion">
+          <h3>Recomendaciones estratégicas</h3>
+          <div class="recomendaciones-grid">
+            <div><strong>Corto plazo</strong><ul>${(informe.recomendaciones?.corto_plazo || []).map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>
+            <div><strong>Mediano plazo</strong><ul>${(informe.recomendaciones?.mediano_plazo || []).map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>
+            <div><strong>Largo plazo</strong><ul>${(informe.recomendaciones?.largo_plazo || []).map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>
+          </div>
+        </div>
+        <div class="informe-seccion">
+          <h3>Preguntas para validar con sus grupos de interés</h3>
+          <ul>${(informe.preguntas_validacion || []).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+        </div>
+        <div class="disclaimer-box">
+          <strong>⚠️ Advertencia metodológica:</strong> este informe fue generado con apoyo de inteligencia artificial a partir de la información y las calificaciones registradas por su empresa en este estudio exprés. No constituye una auditoría, una verificación externa ni una certificación, y no sustituye la consulta directa y documentada a sus grupos de interés reales. PAL actúa como copiloto consultivo: revise, valide y ajuste este contenido con su equipo antes de usarlo externamente.
+        </div>`;
+    }
+
+    function renderPaywallInforme() {
+      const pendientes = asuntosCriticosAltos().length;
+      byId("informe-paywall").innerHTML = `<div class="unlock-banner" id="paywall">
+        <h3>🔓 Desbloquee su informe completo con inteligencia artificial</h3>
+        <p>Su matriz detectó <strong>${pendientes} asunto(s) crítico(s) o alto(s)</strong>. El informe completo incluye:</p>
+        <ul>
+          <li>Resumen ejecutivo y lectura estratégica de su matriz, redactados por PAL.</li>
+          <li>Enfoque de gestión PHVA (Planear-Hacer-Verificar-Actuar) para cada asunto crítico y alto.</li>
+          <li>Indicadores de gestión sugeridos por asunto.</li>
+          <li>Recomendaciones estratégicas de corto, mediano y largo plazo.</li>
+          <li>Preguntas listas para validar estos resultados con sus grupos de interés reales.</li>
+          <li>Informe imprimible en PDF.</li>
+        </ul>
+        <div class="unlock-price">Pago único · ${PAY.priceLabel}</div>
+        <div class="pay-columns">
+          <div class="pay-box">
+            <h4>💳 Pagar con PayPal o tarjeta</h4>
+            <div id="paypalButtons"></div>
+          </div>
+          <div class="pay-box">
+            <h4>🔑 ¿Ya tiene un código de acceso?</h4>
+            <div class="code-row">
+              <input id="accessCode" placeholder="MAT-XXXX-XXXX" maxlength="13" autocomplete="off">
+              <button type="button" id="accessBtn">Validar</button>
+            </div>
+            <div class="code-feedback" id="codeFeedback"></div>
+          </div>
+        </div>
+        <div class="unlock-note">¿Prefiere otro medio de pago (transferencia, Nequi)? Escríbanos a
+          <a href="mailto:projectability.pal@gmail.com?subject=Acceso%20Estudio%20de%20Materialidad%20Expr%C3%A9s">projectability.pal@gmail.com</a>
+          y le enviaremos su código tras confirmar el pago. El acceso queda guardado en este navegador.</div>
+      </div>`;
+
+      byId("accessBtn").addEventListener("click", () => tryAccessCode(byId("accessCode").value, byId("codeFeedback")));
+      byId("accessCode").addEventListener("keydown", e => { if (e.key === "Enter") tryAccessCode(byId("accessCode").value, byId("codeFeedback")); });
+      if (PAY.paypalClientId) loadPayPal();
+    }
+
+    function renderPaso8() {
+      if (hasAccess()) {
+        byId("informe-paywall").innerHTML = "";
+        generarInformeIA(false);
+      } else {
+        renderInformeEstado("bloqueado");
+        renderPaywallInforme();
+      }
+    }
+
+    let informeLoading = false;
+    async function generarInformeIA(forzar) {
+      if (!hasAccess() || informeLoading || state.asuntos.length === 0) return;
+      const sig = informeSignature();
+      if (!forzar && state.informeIA && state.informeIA.sig === sig) {
+        renderInformeEstado("listo");
+        renderInformeContenido();
+        return;
+      }
+      informeLoading = true;
+      renderInformeEstado("cargando");
+      try {
+        const context = construirContextoInforme();
+        const res = await fetch(AI.endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "materialidad-informe", context })
+        });
+        if (!res.ok) throw new Error("AI endpoint error " + res.status);
+        const data = await res.json();
+        if (!data || typeof data.resumen_ejecutivo !== "string" || !data.resumen_ejecutivo.trim()) throw new Error("Respuesta IA inválida");
+        state.informeIA = { ...data, sig };
+        save();
+        renderInformeEstado("listo");
+        renderInformeContenido();
+      } catch (e) {
+        renderInformeEstado("error");
+      } finally {
+        informeLoading = false;
+      }
+    }
+
+    // ═══════════════ PASO 9 — DESCARGA (PDF Y EXCEL) ═══════════════
+    function metodologiaTextoFijo() {
+      return "Este documento presenta los resultados del Estudio de Materialidad Exprés, una herramienta de diagnóstico y priorización estratégica desarrollada por Projectability / Soluciones PAL S.A.S. El proceso se inspira en enfoques reconocidos de sostenibilidad corporativa — GRI Standards, ESRS/CSRD (doble materialidad), IFRS S1/S2, SASB, AA1000 Stakeholder Engagement Standard y el ciclo PHVA (Planear-Hacer-Verificar-Actuar) — combinados en una metodología exprés propia. Este NO es un estudio de materialidad formal conforme a un estándar específico, no constituye una auditoría, no incluye verificación externa y no reemplaza la consulta directa y documentada a los grupos de interés reales de la organización. Es un punto de partida riguroso para orientar la estrategia de sostenibilidad, que la organización debe validar y profundizar con sus grupos de interés antes de comunicarlo externamente o incluirlo en un reporte formal.";
+    }
+
+    function tablaGruposImprimibleHtml() {
+      if (!state.grupos.length) return "<p>No se registraron grupos de interés.</p>";
+      const filas = state.grupos.map(g => ({ g, score: scoreGrupo(g) })).sort((a, b) => b.score - a.score);
+      return `<table class="matriz-tabla"><thead><tr><th>Grupo de interés</th><th>Puntuación</th><th>Prioridad</th></tr></thead>
+        <tbody>${filas.map(({ g, score }) => `<tr><td>${esc(g.nombre)}</td><td>${score.toFixed(1)}</td><td>${esc(prioridadGrupo(score).label)}</td></tr>`).join("")}</tbody></table>`;
+    }
+
+    function renderInformeImprimible() {
+      renderMatriz();
+      const canvas = byId("matrizCanvas");
+      const imagenMatriz = state.asuntos.length ? canvas.toDataURL("image/png") : null;
+      const tablaAsuntos = state.asuntos.length ? byId("matriz-tabla").outerHTML : "";
+      const informeIAHtml = state.informeIA
+        ? byId("informe-contenido").innerHTML
+        : `<p>Aún no ha generado el informe con inteligencia artificial (paso 8). Vuelva a ese paso para generarlo antes de imprimir la versión completa.</p>`;
+      const fecha = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+
+      byId("informe-imprimible").innerHTML = `
+        <div class="print-doc">
+          <h1>${esc(state.empresa.nombre || "Empresa")} — Estudio de Materialidad Exprés</h1>
+          <p class="print-meta">Elaborado con apoyo de Projectability / Soluciones PAL S.A.S. · ${fecha}</p>
+
+          <h2>Contexto de la organización</h2>
+          <p>
+            <strong>Sector:</strong> ${esc(state.empresa.sector || "No especificado")}<br>
+            <strong>Tamaño:</strong> ${esc(state.empresa.tamano || "No especificado")}<br>
+            <strong>País / ciudad:</strong> ${esc([state.empresa.pais, state.empresa.ciudad].filter(Boolean).join(" / ") || "No especificado")}<br>
+            <strong>Tipo de operación:</strong> ${esc(state.empresa.tipoOperacion || "No especificado")}<br>
+            <strong>Nivel de madurez en sostenibilidad:</strong> ${esc(state.empresa.madurezEsg || "No especificado")}
+          </p>
+
+          <h2>Metodología aplicada</h2>
+          <p>${esc(metodologiaTextoFijo())}</p>
+
+          <h2>Grupos de interés priorizados</h2>
+          ${tablaGruposImprimibleHtml()}
+
+          <h2>Matriz de materialidad</h2>
+          ${imagenMatriz ? `<img class="print-matriz-img" src="${imagenMatriz}" alt="Matriz de materialidad">` : "<p>No hay asuntos evaluados.</p>"}
+          ${tablaAsuntos}
+
+          ${informeIAHtml}
+        </div>`;
+    }
+
+    function descargarPDF() {
+      renderInformeImprimible();
+      setTimeout(() => window.print(), 200);
+    }
+
+    let xlsxLoading = false;
+    function loadXLSX(callback) {
+      if (window.XLSX) return callback();
+      if (xlsxLoading) return;
+      xlsxLoading = true;
+      const s = document.createElement("script");
+      s.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+      s.onload = () => { xlsxLoading = false; callback(); };
+      s.onerror = () => {
+        xlsxLoading = false;
+        byId("export-status").textContent = "No fue posible cargar el módulo de exportación a Excel. Verifique su conexión a internet e intente de nuevo.";
+      };
+      document.head.appendChild(s);
+    }
+
+    function construirLibroExcel() {
+      const wb = XLSX.utils.book_new();
+
+      const wsEmpresa = XLSX.utils.json_to_sheet([{
+        Nombre: state.empresa.nombre, Sector: state.empresa.sector, Tamaño: state.empresa.tamano,
+        País: state.empresa.pais, Ciudad: state.empresa.ciudad, "Tipo de operación": state.empresa.tipoOperacion,
+        "Madurez ESG": state.empresa.madurezEsg
+      }]);
+      XLSX.utils.book_append_sheet(wb, wsEmpresa, "Empresa");
+
+      const wsGrupos = XLSX.utils.json_to_sheet(state.grupos.map(g => ({
+        "Grupo de interés": g.nombre,
+        "Puntuación": Number(scoreGrupo(g).toFixed(2)),
+        "Prioridad": prioridadGrupo(scoreGrupo(g)).label
+      })));
+      XLSX.utils.book_append_sheet(wb, wsGrupos, "Grupos de interés");
+
+      const wsAsuntos = XLSX.utils.json_to_sheet(state.asuntos.map(a => ({
+        "Asunto ESG": a.nombre,
+        "Dimensión": a.dimension,
+        "Importancia grupos de interés": Number(scoreGiAsunto(a).toFixed(2)),
+        "Importancia empresa": Number(scoreEmpresaAsunto(a).toFixed(2)),
+        "Puntuación combinada": Number(scoreCombinadoAsunto(a).toFixed(2)),
+        "Nivel de materialidad": nivelMaterialidad(scoreCombinadoAsunto(a)).label,
+        "Grupos vinculados": (a.gruposVinculados || [])
+          .map(gid => state.grupos.find(g => g.id === gid))
+          .filter(Boolean)
+          .map(g => g.nombre)
+          .join(", ")
+      })));
+      XLSX.utils.book_append_sheet(wb, wsAsuntos, "Asuntos ESG");
+
+      return wb;
+    }
+
+    function exportarExcel() {
+      byId("export-status").textContent = "Preparando archivo Excel...";
+      loadXLSX(() => {
+        const wb = construirLibroExcel();
+        const nombreArchivo = `Estudio-Materialidad-${(state.empresa.nombre || "empresa").replace(/[^a-z0-9]+/gi, "_")}.xlsx`;
+        XLSX.writeFile(wb, nombreArchivo);
+        byId("export-status").textContent = "";
+      });
+    }
+
+    // ═══════════════ INICIO ═══════════════
+    renderStepList();
+    showSection(state.paso);
+    bindEmpresaForm();
+    clearP1Hint();
+    renderGrupos();
+    renderPriorizacionGrupos();
+    renderAsuntos();
+    renderEvaluacionGI();
+    renderEvaluacionEmpresa();
+    renderMatriz();
+    if (state.paso === 8) renderPaso8();
+
+    byId("custom-grupo-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addCustomGrupo(); } });
+    byId("custom-asunto-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addCustomAsunto(); } });
+
+    byId("grupos-priorizacion-list").addEventListener("input", e => {
+      const input = e.target.closest('input[type="range"]');
+      if (!input) return;
+      const grupo = state.grupos.find(g => g.id === input.dataset.grupo);
+      if (!grupo) return;
+      grupo.criterios[input.dataset.criterio] = Number(input.value);
+      save();
+      updateGrupoCard(grupo.id);
+      updateResumenPriorizacion();
+    });
+
+    // Delegación sobre el paso 4 completo: los inputs de nombre viven en tres contenedores distintos
+    // (sugeridos, otros, personalizados) y no deben perder el foco al escribir, por eso no se re-renderiza.
+    byId("paso-4").addEventListener("input", e => {
+      const input = e.target.closest("input[data-asunto-nombre]");
+      if (!input) return;
+      const asunto = state.asuntos.find(a => a.id === input.dataset.asuntoNombre);
+      if (!asunto) return;
+      asunto.nombre = input.value;
+      save();
+    });
+
+    byId("eval-gi-list").addEventListener("input", e => {
+      const input = e.target.closest('input[type="range"]');
+      if (!input) return;
+      const asunto = state.asuntos.find(a => a.id === input.dataset.asunto);
+      if (!asunto) return;
+      asunto.evalGI[input.dataset.criterio] = Number(input.value);
+      save();
+      updateAsuntoEvalGiCard(asunto.id);
+    });
+
+    byId("eval-empresa-list").addEventListener("input", e => {
+      const input = e.target.closest('input[type="range"]');
+      if (!input) return;
+      const asunto = state.asuntos.find(a => a.id === input.dataset.asunto);
+      if (!asunto) return;
+      asunto.evalEmpresa[input.dataset.criterio] = Number(input.value);
+      save();
+      updateAsuntoEvalEmpresaCard(asunto.id);
+    });
+
+    byId("matrizCanvas").addEventListener("mousemove", manejarMouseMoveMatriz);
+    byId("matrizCanvas").addEventListener("mouseleave", ocultarTooltipMatriz);
+    byId("matrizCanvas").addEventListener("click", manejarClickMatriz);
+    window.addEventListener("resize", () => {
+      if (byId("paso-7").classList.contains("active")) drawMatriz();
+    });
+  </script>
+</body>
+</html>
