@@ -66,7 +66,7 @@ const MATERIALIDAD_SYSTEM_PROMPT = `Eres PAL, consultor senior en sostenibilidad
 Recibirás un JSON "context" con:
 - empresa: datos de perfil (sector, tamaño, país, madurez ESG, riesgos y oportunidades declaradas).
 - grupos_interes: lista con nombre, score_total (1-5) y prioridad (alta/media/baja).
-- asuntos: lista con nombre, dimension (A/S/G), score_gi, score_empresa, score_combinado, nivel_materialidad, materialidad_impacto (bool), materialidad_financiera (bool), grupos_vinculados (nombres).
+- asuntos: lista con nombre, dimension (A/S/G), score_gi, score_empresa, score_combinado, nivel_materialidad, materialidad_impacto (bool), materialidad_financiera (bool), ajuste_manual (texto de justificación si la empresa ajustó la ubicación del asunto, o null), grupos_vinculados (nombres).
 
 Tu tarea — generar TODO en un solo JSON de salida, con estas reglas transversales:
 1. Español neutro latinoamericano, tono profesional, ejecutivo y cercano (trato de "usted").
@@ -83,6 +83,32 @@ Genera:
 - "indicadores_sugeridos": objeto {"<nombre exacto del asunto>": ["indicador 1", "indicador 2"]} para asuntos con nivel_materialidad "Material crítico" o "Material alto", indicadores de gestión típicos del sector (no cifras meta, solo qué medir).
 
 Responde ÚNICAMENTE con JSON válido, sin markdown, con las claves exactas: resumen_ejecutivo, lectura_matriz, phva, recomendaciones, preguntas_validacion, indicadores_sugeridos.`;
+
+const MATERIALIDAD_SUGERIR_ASUNTOS_PROMPT = `Eres PAL, consultor senior en sostenibilidad corporativa de Projectability, experto en GRI, ESRS y SASB por sector.
+
+Recibirás un JSON "context" con:
+- sector: sector económico declarado por la empresa, en texto libre (puede ser específico o poco común).
+- tipoOperacion: categoría general de operación (industrial, comercial, servicios, agroindustrial, logistica, tecnologia, alimentos, manufactura, otro).
+- asuntosYaCubiertos: lista de nombres de asuntos ESG que la empresa ya tiene disponibles en su banco (catálogo estándar + personalizados).
+
+Tu tarea: proponer hasta 4 asuntos ESG ADICIONALES que sean específicamente relevantes para el sector declarado y que NO estén ya en "asuntosYaCubiertos" (evita duplicar o parafrasear algo ya cubierto). Prioriza asuntos sectoriales específicos (ej. SASB por industria) sobre asuntos genéricos que ya suelen estar cubiertos por un catálogo estándar. Si el sector es muy genérico o ya está bien cubierto, puedes proponer menos de 4, incluso ninguno — no fuerces sugerencias irrelevantes.
+
+Para cada asunto propuesto entrega: "nombre" (corto, tipo título), "dimension" ("A" ambiental, "S" social o "G" gobernanza), "descripcion" (1 frase), "estandares" (lista corta de referencias orientativas como GRI, ESRS, SASB u ODS, sin inventar códigos que no existan).
+
+Responde ÚNICAMENTE con JSON válido, sin markdown, con esta estructura:
+{"sugerencias": [{"nombre": "...", "dimension": "A", "descripcion": "...", "estandares": ["..."]}]}`;
+
+const MATERIALIDAD_EXPLICAR_SCORE_PROMPT = `Eres PAL, consultor senior en sostenibilidad corporativa de Projectability.
+
+Recibirás un JSON "context" con el resultado de la evaluación de un asunto ESG específico de una empresa:
+- asunto, dimension, sector, tipoOperacion.
+- scoreGi (importancia para grupos de interés, 1-5), scoreEmpresa (importancia para la empresa, 1-5), nivelMaterialidad (etiqueta ya calculada).
+- criteriosGiTop y criteriosEmpresaTop: los 2 criterios de mayor puntaje de cada evaluación, con su label y valor.
+
+Tu tarea: escribir un único párrafo pedagógico (3-5 frases, español neutro latinoamericano, trato de "usted") que explique, en términos de negocio y con base en tendencias generales del sector indicado, por qué este asunto obtuvo ese nivel de materialidad. Conecta los criterios de mayor puntaje con implicaciones prácticas (riesgo, oportunidad, expectativa de grupos de interés). NUNCA inventes cifras, hechos o programas específicos de esta empresa que no estén en "context" — puedes usar tu conocimiento general del sector solo como marco. No uses viñetas ni encabezados, solo el párrafo.
+
+Responde ÚNICAMENTE con JSON válido, sin markdown, con esta estructura:
+{"explicacion": "<párrafo>"}`;
 
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -112,9 +138,12 @@ export default {
     try { body = await request.json(); }
     catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: corsHeaders(origin) }); }
 
+    const CONTEXT_ONLY_MODES = new Set(["circular-summary", "materialidad-informe", "materialidad-sugerir-asuntos", "materialidad-explicar-score"]);
     const isCircularSummary = body.mode === "circular-summary";
     const isMaterialidad = body.mode === "materialidad-informe";
-    const usesContextOnly = isCircularSummary || isMaterialidad;
+    const isMaterialidadSugerir = body.mode === "materialidad-sugerir-asuntos";
+    const isMaterialidadExplicar = body.mode === "materialidad-explicar-score";
+    const usesContextOnly = CONTEXT_ONLY_MODES.has(body.mode);
 
     if (!usesContextOnly && (!body.fields || typeof body.fields !== "object" || Object.keys(body.fields).length === 0)) {
       return new Response(JSON.stringify({ error: "No fields" }), { status: 400, headers: corsHeaders(origin) });
@@ -129,12 +158,22 @@ export default {
 
     let systemPrompt = SYSTEM_PROMPT;
     let userContent = { context: body.context || {}, fields: body.fields };
+    let maxTokens = 4000;
     if (isCircularSummary) {
       systemPrompt = CIRCULAR_SYSTEM_PROMPT;
       userContent = { context: body.context };
     } else if (isMaterialidad) {
       systemPrompt = MATERIALIDAD_SYSTEM_PROMPT;
       userContent = { context: body.context };
+      maxTokens = 7000;
+    } else if (isMaterialidadSugerir) {
+      systemPrompt = MATERIALIDAD_SUGERIR_ASUNTOS_PROMPT;
+      userContent = { context: body.context };
+      maxTokens = 900;
+    } else if (isMaterialidadExplicar) {
+      systemPrompt = MATERIALIDAD_EXPLICAR_SCORE_PROMPT;
+      userContent = { context: body.context };
+      maxTokens = 500;
     }
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -146,7 +185,7 @@ export default {
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         temperature: 0.3,
-        max_tokens: isMaterialidad ? 7000 : 4000,
+        max_tokens: maxTokens,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },

@@ -412,6 +412,39 @@
     .chip-nivel.alto { background: #fbf1e0; color: var(--amber); }
     .chip-nivel.medio { background: #eaf1fb; color: var(--navy); }
     .chip-nivel.seguimiento { background: #eef1f5; color: var(--muted); }
+    .chip-nivel.doble { background: #f6e3ea; color: #8b1e3f; }
+    .chip-nivel.impacto { background: #eaf1fb; color: #2f75b5; }
+    .chip-nivel.financiero { background: #fbf1e0; color: #c47f1b; }
+    .chip-nivel.no_material { background: #eef1f5; color: #93a0ae; }
+
+    .matriz-vista-toggle { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .vista-btn { font-size: 12.5px; padding: 7px 14px; }
+    .vista-btn.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+    .ajuste-manual-toggle { margin-top: 14px; }
+    .ajuste-manual-toggle summary { font-size: 12.5px; }
+    .ajuste-form { display: grid; gap: 12px; margin-top: 10px; max-width: 460px; }
+    .ajuste-form label { display: grid; gap: 5px; font-size: 12.5px; color: var(--muted); }
+    .ajuste-form input[type="range"] { accent-color: var(--navy); }
+    .ajuste-form .ajuste-slider-row { display: flex; align-items: center; gap: 10px; }
+    .ajuste-form .ajuste-slider-row input[type="range"] { flex: 1; }
+    .ajuste-form .ajuste-slider-row span { min-width: 32px; text-align: right; font-weight: 700; color: var(--navy); }
+    .ajuste-form textarea { min-height: 60px; }
+    .ajuste-form .ajuste-error { color: var(--red); font-size: 12px; display: none; }
+    .ajuste-activo {
+      margin-top: 12px; background: #fff7e6; border: 1px solid #f0ddb6; border-radius: 8px;
+      padding: 10px 12px; font-size: 12px; color: #6b4f10; line-height: 1.5;
+    }
+    .ajuste-activo em { display: block; margin: 4px 0; }
+
+    .sugerencias-ia { background: #f6f9fc; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+    .sugerencia-item {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      padding: 8px 0; border-bottom: 1px dashed var(--line);
+    }
+    .sugerencia-item:last-child { border-bottom: none; }
+    .explicacion-ia { margin-top: 8px; font-size: 12.5px; color: var(--ink); line-height: 1.55; }
+    .explicacion-ia:empty { display: none; }
 
     .asunto-eval-card {
       background: #fff; border: 1px solid var(--line); border-radius: 10px;
@@ -712,6 +745,11 @@
             <button type="button" class="ghost" onclick="addCustomAsunto()">+ Agregar</button>
           </div>
 
+          <div style="margin-top:14px">
+            <button type="button" class="ghost" id="sugerir-asuntos-btn" onclick="sugerirAsuntosIA()">💡 Sugerir asuntos adicionales para mi sector con IA</button>
+            <div id="sugerir-asuntos-status" style="margin-top:10px"></div>
+          </div>
+
           <div class="selected-summary" id="asuntos-summary"></div>
         </div>
 
@@ -778,16 +816,16 @@
       <section id="paso-7" class="section">
         <div class="panel">
           <h2>🎯 Matriz de materialidad</h2>
-          <p class="hint">Cada punto es un asunto ESG, ubicado según su importancia para sus grupos de interés (eje vertical) y para su empresa (eje horizontal). El tamaño del punto indica el nivel de materialidad combinado. Pase el cursor sobre un punto para verlo, o haga clic para ver el detalle.</p>
+          <p class="hint">Cada punto es un asunto ESG, ubicado según su importancia para sus grupos de interés (eje vertical) y para su empresa (eje horizontal). El tamaño del punto indica el nivel de materialidad combinado. Pase el cursor sobre un punto para verlo, haga clic para ver el detalle, o arrástrelo (hasta ±0.5) si necesita ajustar su ubicación con criterio experto — le pediremos una justificación.</p>
 
           <div class="resumen-row" id="matriz-resumen"></div>
 
-          <div class="matriz-legend">
-            <span><span class="dim-dot dim-A" style="display:inline-block"></span> Ambiental</span>
-            <span><span class="dim-dot dim-S" style="display:inline-block"></span> Social</span>
-            <span><span class="dim-dot dim-G" style="display:inline-block"></span> Gobernanza</span>
-            <span class="hint" style="margin:0">· El tamaño del punto = nivel de materialidad combinado</span>
+          <div class="matriz-vista-toggle no-print">
+            <button type="button" class="vista-btn active" data-vista="combinada" onclick="cambiarVistaMatriz('combinada')">Materialidad combinada</button>
+            <button type="button" class="vista-btn" data-vista="doble" onclick="cambiarVistaMatriz('doble')">Doble materialidad (ESRS-lite)</button>
           </div>
+
+          <div class="matriz-legend" id="matriz-legend"></div>
 
           <div class="matriz-canvas-wrap" id="matriz-canvas-wrap">
             <canvas id="matrizCanvas"></canvas>
@@ -1055,6 +1093,20 @@
       return scoreGiAsunto(a) * 0.5 + scoreEmpresaAsunto(a) * 0.5;
     }
 
+    // ═══════════════ AJUSTE MANUAL (EXPERTO) DE LA MATRIZ ═══════════════
+    // Ver PROPUESTA.md sección 10. a.ajusteManual = { deltaX, deltaY, justificacion } | null
+    function clamp15(v) { return Math.min(5, Math.max(1, v)); }
+
+    function scoreGiEfectivo(a) {
+      return clamp15(scoreGiAsunto(a) + (a.ajusteManual?.deltaY || 0));
+    }
+    function scoreEmpresaEfectivo(a) {
+      return clamp15(scoreEmpresaAsunto(a) + (a.ajusteManual?.deltaX || 0));
+    }
+    function scoreCombinadoEfectivo(a) {
+      return scoreGiEfectivo(a) * 0.5 + scoreEmpresaEfectivo(a) * 0.5;
+    }
+
     function nivelMaterialidad(scoreCombinado) {
       if (scoreCombinado >= 4.2) return { key: "critico", label: "Material crítico" };
       if (scoreCombinado >= 3.4) return { key: "alto", label: "Material alto" };
@@ -1063,15 +1115,32 @@
     }
 
     function justificacionAsunto(a) {
-      const gi = scoreGiAsunto(a);
-      const emp = scoreEmpresaAsunto(a);
-      const nivel = nivelMaterialidad(scoreCombinadoAsunto(a));
+      const gi = scoreGiEfectivo(a);
+      const emp = scoreEmpresaEfectivo(a);
+      const nivel = nivelMaterialidad(scoreCombinadoEfectivo(a));
       const mayorEsGI = gi >= emp;
       const mayor = mayorEsGI ? "sus grupos de interés" : "la empresa";
       const menor = mayorEsGI ? "la empresa" : "sus grupos de interés";
       const valorMayor = Math.max(gi, emp).toFixed(1);
       const valorMenor = Math.min(gi, emp).toFixed(1);
-      return `Se clasifica como ${nivel.label.toLowerCase()} principalmente por su importancia para ${mayor} (${valorMayor}/5), por encima de su importancia para ${menor} (${valorMenor}/5).`;
+      let texto = `Se clasifica como ${nivel.label.toLowerCase()} principalmente por su importancia para ${mayor} (${valorMayor}/5), por encima de su importancia para ${menor} (${valorMenor}/5).`;
+      if (a.ajusteManual) texto += ` Incluye un ajuste manual justificado por la empresa: "${a.ajusteManual.justificacion}".`;
+      return texto;
+    }
+
+    // ═══════════════ DOBLE MATERIALIDAD (ESRS-lite) ═══════════════
+    // Ver PROPUESTA.md sección 9D. Aproximación cualitativa exprés, no un análisis formal ESRS.
+    const DOBLE_MAT_COLORS = { doble: "#8b1e3f", impacto: "#2f75b5", financiero: "#c47f1b", no_material: "#93a0ae" };
+
+    function materialidadImpacto(a) { return scoreGiEfectivo(a) >= 3.4; }
+    function materialidadFinanciera(a) { return scoreEmpresaEfectivo(a) >= 3.4; }
+
+    function clasificacionDobleMaterialidad(a) {
+      const imp = materialidadImpacto(a), fin = materialidadFinanciera(a);
+      if (imp && fin) return { key: "doble", label: "Material en doble vía" };
+      if (imp) return { key: "impacto", label: "Material por impacto" };
+      if (fin) return { key: "financiero", label: "Material financiero" };
+      return { key: "no_material", label: "No material" };
     }
 
     const STORAGE_KEY = "materialidad-express-v1";
@@ -1572,6 +1641,65 @@
       updateAsuntosSummary();
     }
 
+    // ═══════════════ SUGERENCIA DE ASUNTOS ADICIONALES CON IA (satélite, paso 4) ═══════════════
+    let sugerirAsuntosLoading = false;
+    async function sugerirAsuntosIA() {
+      if (sugerirAsuntosLoading) return;
+      const btn = byId("sugerir-asuntos-btn");
+      const status = byId("sugerir-asuntos-status");
+      sugerirAsuntosLoading = true;
+      btn.disabled = true;
+      status.innerHTML = `<p class="hint" style="margin:0">⏳ Consultando a PAL sobre asuntos específicos de su sector...</p>`;
+      try {
+        const yaCubiertos = [...ASUNTOS_CATALOGO.map(a => a.nombre), ...state.asuntos.filter(a => a.custom).map(a => a.nombre)];
+        const context = { sector: state.empresa.sector || "", tipoOperacion: state.empresa.tipoOperacion || "", asuntosYaCubiertos: yaCubiertos };
+        const res = await fetch(AI.endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "materialidad-sugerir-asuntos", context })
+        });
+        if (!res.ok) throw new Error("AI endpoint error " + res.status);
+        const data = await res.json();
+        renderSugerenciasAsuntos(Array.isArray(data.sugerencias) ? data.sugerencias : []);
+      } catch (e) {
+        status.innerHTML = `<p class="hint" style="margin:0;color:var(--red)">No fue posible obtener sugerencias en este momento. Intente de nuevo.</p>`;
+      } finally {
+        sugerirAsuntosLoading = false;
+        btn.disabled = false;
+      }
+    }
+
+    function renderSugerenciasAsuntos(sugerencias) {
+      const status = byId("sugerir-asuntos-status");
+      if (!sugerencias.length) {
+        status.innerHTML = `<p class="hint" style="margin:0">PAL no encontró asuntos adicionales relevantes para su sector — su banco actual ya lo cubre bien.</p>`;
+        return;
+      }
+      status.innerHTML = `<div class="sugerencias-ia">
+        <p class="hint" style="margin:0 0 8px">Sugerencias de PAL para su sector — agréguelas si aplican a su empresa:</p>
+        ${sugerencias.map(s => `<div class="sugerencia-item">
+          <div>
+            <strong>${esc(s.nombre)}</strong>
+            <span class="dim-dot dim-${s.dimension}" style="display:inline-block;vertical-align:middle;margin-left:4px"></span>
+            <br><span class="hint" style="margin:0">${esc(s.descripcion || "")}</span>
+          </div>
+          <button type="button" class="ghost" onclick='agregarSugerenciaAsunto(${JSON.stringify(s).replace(/"/g, "&quot;")})'>+ Agregar</button>
+        </div>`).join("")}
+      </div>`;
+    }
+
+    function agregarSugerenciaAsunto(s) {
+      const id = "custom_" + String(s.nombre).toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 40) + "_" + Date.now();
+      state.asuntos.push({
+        id, nombre: s.nombre, dimension: s.dimension || "G",
+        descripcion: s.descripcion || "Asunto ESG sugerido por IA para su sector.",
+        estandares: Array.isArray(s.estandares) ? s.estandares : [],
+        custom: true, gruposVinculados: [], evalGI: defaultEvalGI(), evalEmpresa: defaultEvalEmpresa()
+      });
+      save();
+      renderAsuntos();
+    }
+
     // ═══════════════ PASO 5 — EVALUACIÓN: IMPORTANCIA PARA GRUPOS DE INTERÉS ═══════════════
     function asuntoEvalGiCardHtml(a) {
       const score = scoreGiAsunto(a);
@@ -1691,6 +1819,17 @@
       return { ctx, W: cssWidth, H: cssHeight };
     }
 
+    let matrizGeom = null; // geometría del último dibujo, para convertir píxeles <-> puntaje durante el arrastre
+    let matrizDragState = null; // { asuntoId, startClientX, startClientY, baseDeltaX, baseDeltaY, deltaX, deltaY, moved }
+
+    function clasificacionDobleMaterialidadXY(x, y) {
+      const imp = y >= 3.4, fin = x >= 3.4;
+      if (imp && fin) return { key: "doble", label: "Material en doble vía" };
+      if (imp) return { key: "impacto", label: "Material por impacto" };
+      if (fin) return { key: "financiero", label: "Material financiero" };
+      return { key: "no_material", label: "No material" };
+    }
+
     function drawMatriz() {
       const canvas = byId("matrizCanvas");
       if (!canvas) return;
@@ -1703,6 +1842,7 @@
       const domainMin = 1, domainMax = 5, mid = 3;
       const toX = v => marginLeft + ((v - domainMin) / (domainMax - domainMin)) * plotW;
       const toY = v => marginTop + plotH - ((v - domainMin) / (domainMax - domainMin)) * plotH;
+      matrizGeom = { marginLeft, marginTop, plotW, plotH, domainMin, domainMax };
 
       // Cuadrantes de fondo
       ctx.fillStyle = "#fdf0ef"; // arriba-derecha: alta GI + alta empresa (zona crítica)
@@ -1750,21 +1890,40 @@
 
       // Puntos
       matrizPuntosCache = [];
+      const vista = state.matrizVista || "combinada";
       state.asuntos.forEach(a => {
-        const x = scoreEmpresaAsunto(a);
-        const y = scoreGiAsunto(a);
-        const combinado = scoreCombinadoAsunto(a);
+        let x, y, ajustadoVisualmente;
+        if (matrizDragState && matrizDragState.asuntoId === a.id) {
+          x = clamp15(scoreEmpresaAsunto(a) + matrizDragState.deltaX);
+          y = clamp15(scoreGiAsunto(a) + matrizDragState.deltaY);
+          ajustadoVisualmente = matrizDragState.moved;
+        } else {
+          x = scoreEmpresaEfectivo(a);
+          y = scoreGiEfectivo(a);
+          ajustadoVisualmente = !!a.ajusteManual;
+        }
+        const combinado = y * 0.5 + x * 0.5;
         const cx = toX(x), cy = toY(y);
         const r = 5 + ((combinado - 1) / 4) * 9;
+        const color = vista === "doble" ? DOBLE_MAT_COLORS[clasificacionDobleMaterialidadXY(x, y).key] : (DIM_COLORS[a.dimension] || "#647084");
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fillStyle = DIM_COLORS[a.dimension] || "#647084";
+        ctx.fillStyle = color;
         ctx.globalAlpha = 0.85;
         ctx.fill();
         ctx.globalAlpha = 1;
         ctx.lineWidth = 2;
         ctx.strokeStyle = "#ffffff";
         ctx.stroke();
+        if (ajustadoVisualmente) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = "#33475c";
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
         matrizPuntosCache.push({ asunto: a, cx, cy, r });
       });
     }
@@ -1783,7 +1942,28 @@
       byId("matrizTooltip").style.display = "none";
     }
 
+    function manejarMouseDownMatriz(e) {
+      const canvas = byId("matrizCanvas");
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const punto = matrizPuntoEnPosicion(mx, my);
+      if (!punto) return;
+      e.preventDefault();
+      ocultarTooltipMatriz();
+      matrizDragState = {
+        asuntoId: punto.asunto.id,
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        baseDeltaX: punto.asunto.ajusteManual?.deltaX || 0,
+        baseDeltaY: punto.asunto.ajusteManual?.deltaY || 0,
+        deltaX: punto.asunto.ajusteManual?.deltaX || 0,
+        deltaY: punto.asunto.ajusteManual?.deltaY || 0,
+        moved: false
+      };
+    }
+
     function manejarMouseMoveMatriz(e) {
+      if (matrizDragState) return; // el arrastre en curso lo maneja el listener global de window
       const canvas = byId("matrizCanvas");
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
@@ -1791,42 +1971,201 @@
       const tooltip = byId("matrizTooltip");
       if (!punto) { ocultarTooltipMatriz(); return; }
       const a = punto.asunto;
-      const nivel = nivelMaterialidad(scoreCombinadoAsunto(a));
-      tooltip.innerHTML = `<strong>${esc(a.nombre)}</strong><br>${nivel.label}<br>GI: ${scoreGiAsunto(a).toFixed(1)}/5 · Empresa: ${scoreEmpresaAsunto(a).toFixed(1)}/5`;
+      const nivel = nivelMaterialidad(scoreCombinadoEfectivo(a));
+      tooltip.innerHTML = `<strong>${esc(a.nombre)}</strong>${a.ajusteManual ? " 📌" : ""}<br>${nivel.label}<br>GI: ${scoreGiEfectivo(a).toFixed(1)}/5 · Empresa: ${scoreEmpresaEfectivo(a).toFixed(1)}/5`;
       tooltip.style.left = (e.clientX + 14) + "px";
       tooltip.style.top = (e.clientY + 14) + "px";
       tooltip.style.display = "block";
     }
 
-    function manejarClickMatriz(e) {
-      const canvas = byId("matrizCanvas");
-      const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      const punto = matrizPuntoEnPosicion(mx, my);
-      if (!punto) return;
-      mostrarDetalleAsunto(punto.asunto.id);
+    function manejarMouseMoveGlobalMatriz(e) {
+      if (!matrizDragState || !matrizGeom) return;
+      const dxPx = e.clientX - matrizDragState.startClientX;
+      const dyPx = e.clientY - matrizDragState.startClientY;
+      if (Math.abs(dxPx) > 3 || Math.abs(dyPx) > 3) matrizDragState.moved = true;
+      const pxPerUnitX = matrizGeom.plotW / (matrizGeom.domainMax - matrizGeom.domainMin);
+      const pxPerUnitY = matrizGeom.plotH / (matrizGeom.domainMax - matrizGeom.domainMin);
+      matrizDragState.deltaX = Math.max(-0.5, Math.min(0.5, matrizDragState.baseDeltaX + dxPx / pxPerUnitX));
+      matrizDragState.deltaY = Math.max(-0.5, Math.min(0.5, matrizDragState.baseDeltaY - dyPx / pxPerUnitY));
+      drawMatriz();
     }
 
-    function mostrarDetalleAsunto(asuntoId) {
+    function manejarMouseUpGlobalMatriz() {
+      if (!matrizDragState) return;
+      const drag = matrizDragState;
+      matrizDragState = null;
+      const asunto = state.asuntos.find(a => a.id === drag.asuntoId);
+      if (!asunto) { drawMatriz(); return; }
+      if (!drag.moved) {
+        mostrarDetalleAsunto(asunto.id);
+        drawMatriz();
+        return;
+      }
+      mostrarDetalleAsunto(asunto.id, { deltaX: drag.deltaX, deltaY: drag.deltaY, editando: true });
+      drawMatriz();
+    }
+
+    function mostrarDetalleAsunto(asuntoId, opciones) {
       const a = state.asuntos.find(x => x.id === asuntoId);
       if (!a) return;
-      const gi = scoreGiAsunto(a), emp = scoreEmpresaAsunto(a), comb = scoreCombinadoAsunto(a);
+      const gi = scoreGiEfectivo(a), emp = scoreEmpresaEfectivo(a), comb = scoreCombinadoEfectivo(a);
       const nivel = nivelMaterialidad(comb);
+      const dobleMat = clasificacionDobleMaterialidad(a);
       const detalle = byId("matriz-detalle");
       detalle.style.display = "block";
+
+      const editando = !!(opciones && opciones.editando);
+      const deltaXInicial = editando ? opciones.deltaX : (a.ajusteManual?.deltaX || 0);
+      const deltaYInicial = editando ? opciones.deltaY : (a.ajusteManual?.deltaY || 0);
+      const fmtDelta = v => (v >= 0 ? "+" : "") + v.toFixed(1);
+
       detalle.innerHTML = `
-        <h4>${esc(a.nombre)} <span class="chip-nivel ${nivel.key}">${nivel.label}</span></h4>
+        <h4>${esc(a.nombre)} <span class="chip-nivel ${nivel.key}">${nivel.label}</span> <span class="chip-nivel ${dobleMat.key}">${dobleMat.label}</span></h4>
         <p style="margin:0 0 10px;font-size:12.5px;color:var(--ink);line-height:1.5">${esc(justificacionAsunto(a))}</p>
         <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:12.5px">
           <div><strong>Importancia para grupos de interés:</strong> ${gi.toFixed(1)}/5</div>
           <div><strong>Importancia para la empresa:</strong> ${emp.toFixed(1)}/5</div>
           <div><strong>Puntuación combinada:</strong> ${comb.toFixed(1)}/5</div>
-        </div>`;
+        </div>
+        <div style="margin-top:10px">
+          <button type="button" class="ghost" id="explicarBtn-${a.id}" onclick="explicarScoreIA('${a.id}')">🤖 Explicar con IA</button>
+          <div id="explicacionIA-${a.id}" class="explicacion-ia">${esc(a.explicacionIA || "")}</div>
+        </div>
+        ${a.ajusteManual ? `<div class="ajuste-activo">📌 <strong>Ajuste manual aplicado</strong> — grupos de interés ${fmtDelta(a.ajusteManual.deltaY)}, empresa ${fmtDelta(a.ajusteManual.deltaX)}<em>"${esc(a.ajusteManual.justificacion)}"</em><button type="button" class="ghost" onclick="quitarAjusteManual('${a.id}')">Quitar ajuste</button></div>` : ""}
+        <details class="ajuste-manual-toggle" ${editando ? "open" : ""}>
+          <summary>Ajustar manualmente esta ubicación (±0.5)</summary>
+          <div class="ajuste-form">
+            <label>Ajuste en importancia para grupos de interés
+              <div class="ajuste-slider-row">
+                <input type="range" min="-0.5" max="0.5" step="0.1" value="${deltaYInicial}" id="ajusteDeltaY">
+                <span id="ajusteDeltaYVal">${fmtDelta(deltaYInicial)}</span>
+              </div>
+            </label>
+            <label>Ajuste en importancia para la empresa
+              <div class="ajuste-slider-row">
+                <input type="range" min="-0.5" max="0.5" step="0.1" value="${deltaXInicial}" id="ajusteDeltaX">
+                <span id="ajusteDeltaXVal">${fmtDelta(deltaXInicial)}</span>
+              </div>
+            </label>
+            <label>Justificación (obligatoria para guardar)
+              <textarea id="ajusteJustificacion" placeholder="Explique por qué ajusta esta ubicación...">${esc(a.ajusteManual?.justificacion || "")}</textarea>
+            </label>
+            <div class="ajuste-error" id="ajusteError">Debe indicar una justificación para guardar el ajuste.</div>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="primary" onclick="guardarAjusteManual('${a.id}')">Guardar ajuste</button>
+              <button type="button" class="ghost" onclick="mostrarDetalleAsunto('${a.id}')">Cancelar</button>
+            </div>
+          </div>
+        </details>`;
+
+      byId("ajusteDeltaY").addEventListener("input", e => {
+        byId("ajusteDeltaYVal").textContent = fmtDelta(Number(e.target.value));
+      });
+      byId("ajusteDeltaX").addEventListener("input", e => {
+        byId("ajusteDeltaXVal").textContent = fmtDelta(Number(e.target.value));
+      });
+    }
+
+    function guardarAjusteManual(asuntoId) {
+      const a = state.asuntos.find(x => x.id === asuntoId);
+      if (!a) return;
+      const deltaY = Number(byId("ajusteDeltaY").value);
+      const deltaX = Number(byId("ajusteDeltaX").value);
+      const justificacion = byId("ajusteJustificacion").value.trim();
+      if (!justificacion) {
+        byId("ajusteError").style.display = "block";
+        return;
+      }
+      a.ajusteManual = (deltaX === 0 && deltaY === 0) ? null : { deltaX, deltaY, justificacion };
+      save();
+      renderMatriz();
+      mostrarDetalleAsunto(asuntoId);
+    }
+
+    function quitarAjusteManual(asuntoId) {
+      const a = state.asuntos.find(x => x.id === asuntoId);
+      if (!a) return;
+      a.ajusteManual = null;
+      save();
+      renderMatriz();
+      mostrarDetalleAsunto(asuntoId);
+    }
+
+    // ═══════════════ EXPLICAR PUNTUACIÓN CON IA (satélite, detalle de la matriz) ═══════════════
+    let explicarScoreLoading = false;
+    async function explicarScoreIA(asuntoId) {
+      const a = state.asuntos.find(x => x.id === asuntoId);
+      if (!a || explicarScoreLoading) return;
+      const btn = byId(`explicarBtn-${asuntoId}`);
+      const out = byId(`explicacionIA-${asuntoId}`);
+      if (!btn || !out) return;
+      if (a.explicacionIA) { out.textContent = a.explicacionIA; return; }
+      explicarScoreLoading = true;
+      btn.disabled = true;
+      out.textContent = "⏳ PAL está preparando la explicación...";
+      try {
+        const criteriosGiTop = CRITERIOS_GI
+          .map(c => ({ label: c.label, valor: a.evalGI?.[c.key] ?? 3 }))
+          .sort((x, y) => y.valor - x.valor).slice(0, 2);
+        const criteriosEmpresaTop = CRITERIOS_EMPRESA
+          .map(c => ({ label: c.label, valor: a.evalEmpresa?.[c.key] ?? 3 }))
+          .sort((x, y) => y.valor - x.valor).slice(0, 2);
+        const context = {
+          asunto: a.nombre, dimension: a.dimension,
+          sector: state.empresa.sector || "", tipoOperacion: state.empresa.tipoOperacion || "",
+          scoreGi: Number(scoreGiEfectivo(a).toFixed(1)),
+          scoreEmpresa: Number(scoreEmpresaEfectivo(a).toFixed(1)),
+          nivelMaterialidad: nivelMaterialidad(scoreCombinadoEfectivo(a)).label,
+          criteriosGiTop, criteriosEmpresaTop
+        };
+        const res = await fetch(AI.endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "materialidad-explicar-score", context })
+        });
+        if (!res.ok) throw new Error("AI endpoint error " + res.status);
+        const data = await res.json();
+        a.explicacionIA = (data.explicacion || "").trim();
+        save();
+        out.textContent = a.explicacionIA || "PAL no generó una explicación esta vez. Intente de nuevo.";
+      } catch (e) {
+        out.textContent = "No fue posible generar la explicación en este momento. Intente de nuevo.";
+      } finally {
+        explicarScoreLoading = false;
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function cambiarVistaMatriz(vista) {
+      state.matrizVista = vista;
+      save();
+      document.querySelectorAll(".vista-btn").forEach(b => b.classList.toggle("active", b.dataset.vista === vista));
+      renderMatrizLeyenda();
+      drawMatriz();
+    }
+
+    function renderMatrizLeyenda() {
+      const vista = state.matrizVista || "combinada";
+      const el = byId("matriz-legend");
+      if (vista === "doble") {
+        el.innerHTML = `
+          <span><span class="dim-dot" style="display:inline-block;background:${DOBLE_MAT_COLORS.doble}"></span> Material en doble vía</span>
+          <span><span class="dim-dot" style="display:inline-block;background:${DOBLE_MAT_COLORS.impacto}"></span> Material por impacto</span>
+          <span><span class="dim-dot" style="display:inline-block;background:${DOBLE_MAT_COLORS.financiero}"></span> Material financiero</span>
+          <span><span class="dim-dot" style="display:inline-block;background:${DOBLE_MAT_COLORS.no_material}"></span> No material</span>
+          <span class="hint" style="margin:0">· Aproximación cualitativa exprés — ESRS exige un análisis de doble materialidad más riguroso.</span>`;
+      } else {
+        el.innerHTML = `
+          <span><span class="dim-dot dim-A" style="display:inline-block"></span> Ambiental</span>
+          <span><span class="dim-dot dim-S" style="display:inline-block"></span> Social</span>
+          <span><span class="dim-dot dim-G" style="display:inline-block"></span> Gobernanza</span>
+          <span class="hint" style="margin:0">· El tamaño del punto = nivel de materialidad combinado</span>`;
+      }
     }
 
     function renderMatrizResumen() {
       const counts = { critico: 0, alto: 0, medio: 0, seguimiento: 0 };
-      state.asuntos.forEach(a => counts[nivelMaterialidad(scoreCombinadoAsunto(a)).key]++);
+      state.asuntos.forEach(a => counts[nivelMaterialidad(scoreCombinadoEfectivo(a)).key]++);
       byId("matriz-resumen").innerHTML = `
         <div class="chip-nivel critico">${counts.critico} crítico(s)</div>
         <div class="chip-nivel alto">${counts.alto} alto(s)</div>
@@ -1836,10 +2175,10 @@
 
     function renderMatrizTabla() {
       const filas = state.asuntos.map(a => ({
-        a, gi: scoreGiAsunto(a), emp: scoreEmpresaAsunto(a), comb: scoreCombinadoAsunto(a)
+        a, gi: scoreGiEfectivo(a), emp: scoreEmpresaEfectivo(a), comb: scoreCombinadoEfectivo(a)
       })).sort((x, y) => y.comb - x.comb);
       byId("matriz-tabla").innerHTML = `<thead><tr>
-          <th>Asunto</th><th>Dim.</th><th>Grupos de interés</th><th>Empresa</th><th>Combinado</th><th>Nivel</th>
+          <th>Asunto</th><th>Dim.</th><th>Grupos de interés</th><th>Empresa</th><th>Combinado</th><th>Nivel</th><th>Ajuste</th>
         </tr></thead>
         <tbody>${filas.map(f => {
           const nivel = nivelMaterialidad(f.comb);
@@ -1850,6 +2189,7 @@
             <td>${f.emp.toFixed(1)}</td>
             <td><strong>${f.comb.toFixed(1)}</strong></td>
             <td><span class="chip-nivel ${nivel.key}">${nivel.label}</span></td>
+            <td>${f.a.ajusteManual ? "📌" : ""}</td>
           </tr>`;
         }).join("")}</tbody>`;
     }
@@ -1859,12 +2199,15 @@
       byId("matriz-canvas-wrap").style.display = hayAsuntos ? "block" : "none";
       byId("matriz-empty").style.display = hayAsuntos ? "none" : "block";
       byId("matriz-detalle").style.display = "none";
+      document.querySelectorAll(".vista-btn").forEach(b => b.classList.toggle("active", b.dataset.vista === (state.matrizVista || "combinada")));
       if (!hayAsuntos) {
         byId("matriz-resumen").innerHTML = "";
         byId("matriz-tabla").innerHTML = "";
+        byId("matriz-legend").innerHTML = "";
         return;
       }
       renderMatrizResumen();
+      renderMatrizLeyenda();
       drawMatriz();
       renderMatrizTabla();
     }
@@ -1882,12 +2225,13 @@
       const asuntos = state.asuntos.map(a => ({
         nombre: a.nombre,
         dimension: a.dimension,
-        score_gi: Number(scoreGiAsunto(a).toFixed(1)),
-        score_empresa: Number(scoreEmpresaAsunto(a).toFixed(1)),
-        score_combinado: Number(scoreCombinadoAsunto(a).toFixed(1)),
-        nivel_materialidad: nivelMaterialidad(scoreCombinadoAsunto(a)).label,
-        materialidad_impacto: scoreGiAsunto(a) >= 3.4,
-        materialidad_financiera: scoreEmpresaAsunto(a) >= 3.4,
+        score_gi: Number(scoreGiEfectivo(a).toFixed(1)),
+        score_empresa: Number(scoreEmpresaEfectivo(a).toFixed(1)),
+        score_combinado: Number(scoreCombinadoEfectivo(a).toFixed(1)),
+        nivel_materialidad: nivelMaterialidad(scoreCombinadoEfectivo(a)).label,
+        materialidad_impacto: materialidadImpacto(a),
+        materialidad_financiera: materialidadFinanciera(a),
+        ajuste_manual: a.ajusteManual ? a.ajusteManual.justificacion : null,
         grupos_vinculados: (a.gruposVinculados || [])
           .map(gid => state.grupos.find(g => g.id === gid))
           .filter(Boolean)
@@ -1906,13 +2250,13 @@
     }
 
     function informeSignature() {
-      const asuntosSig = state.asuntos.map(a => `${a.id}:${scoreCombinadoAsunto(a).toFixed(1)}`).join(",");
+      const asuntosSig = state.asuntos.map(a => `${a.id}:${scoreCombinadoEfectivo(a).toFixed(1)}:${a.ajusteManual?.justificacion || ""}`).join(",");
       const gruposSig = state.grupos.map(g => `${g.id}:${scoreGrupo(g).toFixed(1)}`).join(",");
       return `${asuntosSig}|${gruposSig}`;
     }
 
     function asuntosCriticosAltos() {
-      return state.asuntos.filter(a => ["critico", "alto"].includes(nivelMaterialidad(scoreCombinadoAsunto(a)).key));
+      return state.asuntos.filter(a => ["critico", "alto"].includes(nivelMaterialidad(scoreCombinadoEfectivo(a)).key));
     }
 
     function renderInformeEstado(kind) {
@@ -2156,10 +2500,12 @@
       const wsAsuntos = XLSX.utils.json_to_sheet(state.asuntos.map(a => ({
         "Asunto ESG": a.nombre,
         "Dimensión": a.dimension,
-        "Importancia grupos de interés": Number(scoreGiAsunto(a).toFixed(2)),
-        "Importancia empresa": Number(scoreEmpresaAsunto(a).toFixed(2)),
-        "Puntuación combinada": Number(scoreCombinadoAsunto(a).toFixed(2)),
-        "Nivel de materialidad": nivelMaterialidad(scoreCombinadoAsunto(a)).label,
+        "Importancia grupos de interés": Number(scoreGiEfectivo(a).toFixed(2)),
+        "Importancia empresa": Number(scoreEmpresaEfectivo(a).toFixed(2)),
+        "Puntuación combinada": Number(scoreCombinadoEfectivo(a).toFixed(2)),
+        "Nivel de materialidad": nivelMaterialidad(scoreCombinadoEfectivo(a)).label,
+        "Doble materialidad": clasificacionDobleMaterialidad(a).label,
+        "Ajuste manual": a.ajusteManual ? a.ajusteManual.justificacion : "",
         "Grupos vinculados": (a.gruposVinculados || [])
           .map(gid => state.grupos.find(g => g.id === gid))
           .filter(Boolean)
@@ -2239,9 +2585,11 @@
       updateAsuntoEvalEmpresaCard(asunto.id);
     });
 
+    byId("matrizCanvas").addEventListener("mousedown", manejarMouseDownMatriz);
     byId("matrizCanvas").addEventListener("mousemove", manejarMouseMoveMatriz);
-    byId("matrizCanvas").addEventListener("mouseleave", ocultarTooltipMatriz);
-    byId("matrizCanvas").addEventListener("click", manejarClickMatriz);
+    byId("matrizCanvas").addEventListener("mouseleave", () => { if (!matrizDragState) ocultarTooltipMatriz(); });
+    window.addEventListener("mousemove", manejarMouseMoveGlobalMatriz);
+    window.addEventListener("mouseup", manejarMouseUpGlobalMatriz);
     window.addEventListener("resize", () => {
       if (byId("paso-7").classList.contains("active")) drawMatriz();
     });

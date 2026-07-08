@@ -22,3 +22,6 @@ linkedin-agent/drafts/
 linkedin-agent/reports/
 linkedin-agent/logs/
 linkedin-agent/data/
+
+# Cloudflare Workers local tooling
+.wrangler/
