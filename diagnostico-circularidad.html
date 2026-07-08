@@ -850,7 +850,7 @@
           <p><strong>3.</strong> Desbloquee por <strong>USD $9.99</strong> el informe completo: cada oportunidad con su beneficio, primeros pasos y KPI, la matriz de priorización impacto–esfuerzo y el plan de acción por horizontes.</p>
           <p class="fine">Herramienta de orientación elaborada por Projectability; no sustituye una asesoría a profundidad.</p>
           <div class="disclaimer-box">
-            <strong>🔐 Tratamiento de datos:</strong> sus 24 respuestas del diagnóstico se almacenan <strong>únicamente en este navegador</strong> — Projectability no las recibe ni las guarda en servidores propios. El sector de su empresa (campo opcional) se envía de forma transitoria a nuestro servicio de IA únicamente para personalizar la lectura ejecutiva de su informe. Si diligencia su nombre, correo y empresa, esos datos <strong>sí se envían a Projectability</strong> junto con el resumen de su resultado (índice de circularidad y oportunidades detectadas) para poder contactarlo con fines comerciales o de acompañamiento — nunca se comparten con terceros. Al usar esta herramienta usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
+            <strong>🔐 Tratamiento de datos:</strong> mientras responde, sus respuestas quedan <strong>únicamente en este navegador</strong>. El sector de su empresa (campo opcional) se envía de forma transitoria a nuestro servicio de IA únicamente para personalizar la lectura ejecutiva de su informe. <strong>Al completar el diagnóstico</strong>, sus 24 respuestas, el resultado (índice de circularidad, oportunidades y fortalezas detectadas) y los datos que haya diligenciado (nombre, correo, empresa, sector) se envían a Projectability y quedan registrados como respaldo de su informe y para poder contactarlo con fines comerciales o de acompañamiento — nunca se comparten con terceros. Al usar esta herramienta usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
           </div>
         </div>
 
@@ -1658,7 +1658,10 @@
           empresa: state.org.nombre.trim(),
           correo: state.org.correo.trim(),
           sector: state.org.sector.trim(),
-          resumen: `Índice de circularidad: ${pct}% · ${m.label} · ${opps.length} oportunidades detectadas (${opps.filter(o => o.priority === "alta").length} de prioridad alta) · ${strengths.length} fortalezas`
+          resumen: `Índice de circularidad: ${pct}% · ${m.label} · ${opps.length} oportunidades detectadas (${opps.filter(o => o.priority === "alta").length} de prioridad alta) · ${strengths.length} fortalezas`,
+          respuestas: JSON.stringify(state.answers),
+          oportunidades: opps.map(o => `${o.code} (${o.priority}) — ${o.title}`).join(" | "),
+          fortalezas: strengths.map(s => `${s.code} — ${s.title}`).join(" | ")
         });
       }
 

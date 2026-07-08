@@ -1,32 +1,48 @@
 /**
- * Webhook de Google Apps Script — recibe los resultados enviados por
- * assets/lead-capture.js y los agrega como fila nueva a la hoja "Resultados".
+ * Webhook de Google Apps Script — archivo madre de resultados de Projectability.
+ * Recibe lo que envía assets/lead-capture.js y agrega una fila nueva en la pestaña
+ * correspondiente a la herramienta (una pestaña por herramienta, dentro de la misma
+ * hoja de cálculo), con las respuestas completas diligenciadas por el usuario.
  *
  * NO se ejecuta en este repositorio: es el código que se pega en
  * Extensiones → Apps Script de la Google Sheet donde se quiere llevar el registro.
- * Ver instrucciones de despliegue en pal-ai-worker/README-google-sheet.md.
+ * Ver instrucciones de despliegue en la conversación / README del proyecto.
  */
 
-const COLUMNAS = ["Fecha", "Herramienta", "Nombre", "Empresa", "Correo", "Sector", "Resumen", "JSON completo"];
+const COLUMNAS = [
+  "Fecha", "Nombre", "Empresa", "Correo", "Sector",
+  "Resumen", "Respuestas (JSON)", "Oportunidades", "Fortalezas", "Notas",
+  "JSON completo"
+];
+
+function nombreHoja(herramienta) {
+  // Cada herramienta tiene su propia pestaña dentro del mismo archivo (el "archivo madre").
+  const limpio = String(herramienta || "Sin especificar").slice(0, 95);
+  return limpio;
+}
 
 function doPost(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName("Resultados") || ss.insertSheet("Resultados");
+  const data = JSON.parse(e.postData.contents);
+  const sheet = ss.getSheetByName(nombreHoja(data.herramienta)) || ss.insertSheet(nombreHoja(data.herramienta));
 
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(COLUMNAS);
     sheet.getRange(1, 1, 1, COLUMNAS.length).setFontWeight("bold");
+    sheet.setFrozenRows(1);
   }
 
-  const data = JSON.parse(e.postData.contents);
   sheet.appendRow([
     new Date(),
-    data.herramienta || "",
     data.nombre || "",
     data.empresa || "",
     data.correo || "",
     data.sector || "",
     data.resumen || "",
+    data.respuestas || "",
+    data.oportunidades || "",
+    data.fortalezas || "",
+    data.notas || "",
     JSON.stringify(data)
   ]);
 

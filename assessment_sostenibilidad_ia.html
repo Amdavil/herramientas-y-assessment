@@ -873,7 +873,7 @@
       </div>
 
       <div style="background:#f0f5f9;border:1px solid #d5e2ec;border-radius:10px;padding:12px 14px;font-size:11.5px;color:#33475c;line-height:1.55;margin-top:14px">
-        <strong>🔐 Tratamiento de datos:</strong> sus respuestas y notas se almacenan únicamente en este navegador — Projectability no las recibe ni las guarda en servidores. Al completar el assessment, el nombre, la empresa y el correo suministrados en el registro, junto con un resumen general de su resultado, se envían a Projectability para poder ofrecerle acompañamiento o seguimiento comercial — nunca se comparten con terceros. Al usar esta herramienta usted acepta este tratamiento (Ley 1581 de 2012, Colombia). Consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com" style="color:#16817a">projectability.pal@gmail.com</a>
+        <strong>🔐 Tratamiento de datos:</strong> mientras responde, sus respuestas y notas quedan únicamente en este navegador. <strong>Al completar el assessment</strong>, todas sus respuestas por aspecto, el nombre, la empresa y el correo suministrados en el registro, y el resultado general, quedan registrados en Projectability como respaldo y para poder ofrecerle acompañamiento o seguimiento comercial — nunca se comparten con terceros. Al usar esta herramienta usted acepta este tratamiento (Ley 1581 de 2012, Colombia). Consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com" style="color:#16817a">projectability.pal@gmail.com</a>
       </div>
     </aside>
 
@@ -1547,7 +1547,9 @@
           nombre: registro.nombre,
           empresa: registro.empresa,
           correo: registro.correo,
-          resumen: `Puntaje ${fmt(avg)} / 4.0 · ${cat.label} · ${answered}/${QUESTIONS.length} preguntas respondidas`
+          resumen: `Puntaje ${fmt(avg)} / 4.0 · ${cat.label} · ${answered}/${QUESTIONS.length} preguntas respondidas`,
+          respuestas: JSON.stringify(state.scores),
+          notas: JSON.stringify(state.notes || {})
         });
       }
     }
