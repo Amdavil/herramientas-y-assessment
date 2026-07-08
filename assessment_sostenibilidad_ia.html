@@ -873,7 +873,7 @@
       </div>
 
       <div style="background:#f0f5f9;border:1px solid #d5e2ec;border-radius:10px;padding:12px 14px;font-size:11.5px;color:#33475c;line-height:1.55;margin-top:14px">
-        <strong>🔐 Tratamiento de datos:</strong> sus respuestas y notas se almacenan únicamente en este navegador — Projectability no las recibe ni las guarda en servidores. Al usar esta herramienta usted acepta este tratamiento (Ley 1581 de 2012, Colombia). Consultas: <a href="mailto:projectability.pal@gmail.com" style="color:#16817a">projectability.pal@gmail.com</a>
+        <strong>🔐 Tratamiento de datos:</strong> sus respuestas y notas se almacenan únicamente en este navegador — Projectability no las recibe ni las guarda en servidores. Al completar el assessment, el nombre, la empresa y el correo suministrados en el registro, junto con un resumen general de su resultado, se envían a Projectability para poder ofrecerle acompañamiento o seguimiento comercial — nunca se comparten con terceros. Al usar esta herramienta usted acepta este tratamiento (Ley 1581 de 2012, Colombia). Consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com" style="color:#16817a">projectability.pal@gmail.com</a>
       </div>
     </aside>
 
@@ -996,6 +996,7 @@
     </main>
   </div>
 
+  <script src="assets/lead-capture.js"></script>
   <script>
     // Preguntas que no aplican a todo tipo de negocio (p. ej. servicios/consultoría sin
     // operación física relevante). Si se marca "No aplica", no suma ni resta del puntaje.
@@ -1302,8 +1303,17 @@
     };
 
     const STORAGE_KEY = "assessment-sostenibilidad-ia-v1";
-    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"scores":{},"notes":{}}');
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"scores":{},"notes":{},"leadSent":false}');
     let viewOnlyMissing = false;
+
+    // Datos del registro previo (nombre/empresa/correo) que projectability.net pasa por URL
+    // al cargar este assessment dentro del iframe — se usan solo para identificar el resultado.
+    const urlParams = new URLSearchParams(window.location.search);
+    const registro = {
+      nombre: urlParams.get("nombre") || "",
+      empresa: urlParams.get("empresa") || "",
+      correo: urlParams.get("email") || ""
+    };
 
     const byId = id => document.getElementById(id);
     const mean = values => values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
@@ -1528,6 +1538,18 @@
       renderActionPlan();
       renderCharts();
       updateFinishBanner(answered);
+
+      if (answered === QUESTIONS.length && !state.leadSent && window.PALLeadCapture) {
+        state.leadSent = true;
+        save();
+        PALLeadCapture.send({
+          herramienta: "Assessment de Proyectabilidad (ESG+IA)",
+          nombre: registro.nombre,
+          empresa: registro.empresa,
+          correo: registro.correo,
+          resumen: `Puntaje ${fmt(avg)} / 4.0 · ${cat.label} · ${answered}/${QUESTIONS.length} preguntas respondidas`
+        });
+      }
     }
 
     function updateFinishBanner(answered) {

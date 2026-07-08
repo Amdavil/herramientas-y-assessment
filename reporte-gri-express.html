@@ -424,6 +424,7 @@
     <div class="report-page" id="reportContent"></div>
   </div>
 
+  <script src="assets/lead-capture.js"></script>
   <script>
     // ═══════════════ CATÁLOGO DE TEMAS MATERIALES (Estándares temáticos GRI) ═══════════════
     const TOPICS = {
@@ -763,7 +764,7 @@
 
     // ═══════════════ ESTADO ═══════════════
     const STORAGE_KEY = "gri-express-v1";
-    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"answers":{},"stepIndex":-1,"steps":null}');
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"answers":{},"stepIndex":-1,"steps":null,"leadSent":false}');
     let steps = [];        // flujo completo (se reconstruye con temas seleccionados)
     let stepIndex = -1;    // -1 = pantalla de bienvenida
     let lastModule = null;
@@ -773,7 +774,7 @@
     const dockInner = document.getElementById("dockInner");
 
     function save() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers: state.answers, aiTexts: state.aiTexts || null, aiContexts: state.aiContexts || null, aiPhva: state.aiPhva || null, stepIndex, steps: steps.map(s => s.id) }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers: state.answers, aiTexts: state.aiTexts || null, aiContexts: state.aiContexts || null, aiPhva: state.aiPhva || null, leadSent: state.leadSent || false, stepIndex, steps: steps.map(s => s.id) }));
     }
 
     function buildSteps() {
@@ -1130,7 +1131,7 @@
             <strong>Claridad metodológica importante:</strong> este reporte se elabora bajo la opción <strong>"con referencia a los Estándares GRI"</strong> (GRI 1: Fundamentos 2021), adecuada para organizaciones que inician su camino de reporte. No constituye un reporte "de conformidad con" los Estándares GRI (que exige la totalidad de contenidos obligatorios), ni ha sido verificado por un tercero independiente. Es una base sólida y honesta para licitaciones, clientes corporativos y mejora continua — y así lo declara en su texto.
           </div>
           <div class="disclaimer-box" style="background:#f0f5f9;border-color:#d5e2ec;color:#33475c">
-            <strong>🔐 Tratamiento de datos:</strong> la información que usted ingresa (incluido el logo) se almacena <strong>únicamente en este navegador</strong> — Projectability no la recibe ni la guarda en servidores propios. Los textos descriptivos que escriba se envían de forma segura y transitoria a nuestro servicio de redacción con inteligencia artificial con el único fin de generar su reporte; no se almacenan ni se usan para otros propósitos. Al continuar, usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas o solicitudes: <a href="mailto:projectability.pal@gmail.com" style="color:var(--teal)">projectability.pal@gmail.com</a>.
+            <strong>🔐 Tratamiento de datos:</strong> la información que usted ingresa (incluido el logo) se almacena <strong>únicamente en este navegador</strong> — Projectability no la recibe ni la guarda en servidores propios. Los textos descriptivos que escriba se envían de forma segura y transitoria a nuestro servicio de redacción con inteligencia artificial con el único fin de generar su reporte; no se almacenan ni se usan para otros propósitos. Al completar el cuestionario, el nombre del responsable de sostenibilidad, el nombre de la organización, el correo de contacto y un resumen general de su reporte <strong>sí se envían a Projectability</strong> para poder ofrecerle acompañamiento o seguimiento comercial — nunca se comparten con terceros. Al continuar, usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com" style="color:var(--teal)">projectability.pal@gmail.com</a>.
           </div>
           ${hasProgress
             ? `<div class="resume-note">📌 Tiene un reporte en progreso (${Object.keys(state.answers).length} respuestas guardadas)</div>
@@ -1414,6 +1415,19 @@
         <p>Puede revisarlo, imprimirlo o guardarlo como PDF. Si desea corregir algo, use el 🗺 Mapa de avance o el botón "Volver al asistente".</p>`, 800);
       dock.style.display = "block";
       renderFinishDock();
+
+      if (!state.leadSent && window.PALLeadCapture) {
+        state.leadSent = true;
+        save();
+        PALLeadCapture.send({
+          herramienta: "Reporte GRI Express",
+          nombre: state.answers["gob_responsable"] || "",
+          empresa: state.answers["org_nombre"] || "",
+          correo: state.answers["cierre_contacto"] || "",
+          sector: state.answers["org_sector"] || "",
+          resumen: `Cuestionario completo · ${(state.answers["mat_temas"] || []).length} temas materiales seleccionados`
+        });
+      }
     }
 
     function runFullReport() {

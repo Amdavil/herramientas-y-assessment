@@ -850,13 +850,21 @@
           <p><strong>3.</strong> Desbloquee por <strong>USD $9.99</strong> el informe completo: cada oportunidad con su beneficio, primeros pasos y KPI, la matriz de priorización impacto–esfuerzo y el plan de acción por horizontes.</p>
           <p class="fine">Herramienta de orientación elaborada por Projectability; no sustituye una asesoría a profundidad.</p>
           <div class="disclaimer-box">
-            <strong>🔐 Tratamiento de datos:</strong> sus 24 respuestas del diagnóstico se almacenan <strong>únicamente en este navegador</strong> — Projectability no las recibe ni las guarda en servidores propios. Si diligencia el nombre y sector de su empresa (campo opcional), esos datos se envían de forma segura y transitoria a nuestro servicio de redacción con inteligencia artificial únicamente para personalizar la lectura ejecutiva de su informe; no se almacenan ni se usan para otros propósitos. Al usar esta herramienta usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas o solicitudes: <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
+            <strong>🔐 Tratamiento de datos:</strong> sus 24 respuestas del diagnóstico se almacenan <strong>únicamente en este navegador</strong> — Projectability no las recibe ni las guarda en servidores propios. El sector de su empresa (campo opcional) se envía de forma transitoria a nuestro servicio de IA únicamente para personalizar la lectura ejecutiva de su informe. Si diligencia su nombre, correo y empresa, esos datos <strong>sí se envían a Projectability</strong> junto con el resumen de su resultado (índice de circularidad y oportunidades detectadas) para poder contactarlo con fines comerciales o de acompañamiento — nunca se comparten con terceros. Al usar esta herramienta usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
           </div>
         </div>
 
         <div class="question-card" style="margin-bottom:16px">
-          <div class="question-text" style="background:#fff">🏢 Cuéntenos brevemente de su empresa <span style="font-weight:400;color:var(--muted);font-size:12.5px">(opcional — solo se usa para personalizar la lectura ejecutiva con IA)</span></div>
+          <div class="question-text" style="background:#fff">🏢 Cuéntenos brevemente de usted y su empresa <span style="font-weight:400;color:var(--muted);font-size:12.5px">(opcional — personaliza su informe y nos permite contactarlo si lo solicita)</span></div>
           <div style="padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <label style="display:grid;gap:5px;font-size:12px;color:var(--muted)">
+              Su nombre
+              <input type="text" id="orgPersona" placeholder="Ej. María Gómez">
+            </label>
+            <label style="display:grid;gap:5px;font-size:12px;color:var(--muted)">
+              Correo
+              <input type="email" id="orgCorreo" placeholder="nombre@empresa.com">
+            </label>
             <label style="display:grid;gap:5px;font-size:12px;color:var(--muted)">
               Nombre de la empresa
               <input type="text" id="orgNombre" placeholder="Ej. Textiles Andinos SAS">
@@ -890,6 +898,7 @@
     </main>
   </div>
 
+  <script src="assets/lead-capture.js"></script>
   <script>
     // ═══════════════ FLUJOS ═══════════════
     const FLOWS = {
@@ -1283,8 +1292,10 @@
     }
 
     // ═══════════════ ESTADO ═══════════════
-    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"answers":{},"org":{"nombre":"","sector":""},"aiSummary":null}');
-    if (!state.org) state.org = { nombre: "", sector: "" };
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"answers":{},"org":{"persona":"","correo":"","nombre":"","sector":""},"aiSummary":null,"leadSent":false}');
+    if (!state.org) state.org = { persona: "", correo: "", nombre: "", sector: "" };
+    if (state.org.persona === undefined) state.org.persona = "";
+    if (state.org.correo === undefined) state.org.correo = "";
 
     const byId = id => document.getElementById(id);
     const esc = s => String(s ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -1292,8 +1303,12 @@
     function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
     function bindOrgInputs() {
+      byId("orgPersona").value = state.org.persona || "";
+      byId("orgCorreo").value = state.org.correo || "";
       byId("orgNombre").value = state.org.nombre || "";
       byId("orgSector").value = state.org.sector || "";
+      byId("orgPersona").addEventListener("input", e => { state.org.persona = e.target.value; save(); });
+      byId("orgCorreo").addEventListener("input", e => { state.org.correo = e.target.value; save(); });
       byId("orgNombre").addEventListener("input", e => { state.org.nombre = e.target.value; state.aiSummary = null; save(); });
       byId("orgSector").addEventListener("input", e => { state.org.sector = e.target.value; state.aiSummary = null; save(); });
     }
@@ -1634,6 +1649,19 @@
       const unlocked = hasAccess();
       const summarySig = summarySignature(pct, opps, strengths);
 
+      if (answered === QUESTIONS.length && !state.leadSent && window.PALLeadCapture) {
+        state.leadSent = true;
+        save();
+        PALLeadCapture.send({
+          herramienta: "Diagnóstico de Circularidad",
+          nombre: state.org.persona.trim(),
+          empresa: state.org.nombre.trim(),
+          correo: state.org.correo.trim(),
+          sector: state.org.sector.trim(),
+          resumen: `Índice de circularidad: ${pct}% · ${m.label} · ${opps.length} oportunidades detectadas (${opps.filter(o => o.priority === "alta").length} de prioridad alta) · ${strengths.length} fortalezas`
+        });
+      }
+
       let html = `
         <div class="dashboard">
           <div class="metric m-score">
@@ -1845,7 +1873,7 @@
 
     byId("clearAll").addEventListener("click", () => {
       if (!confirm("¿Borrar todas las respuestas de este diagnóstico?")) return;
-      state = { answers: {}, org: { nombre: "", sector: "" }, aiSummary: null };
+      state = { answers: {}, org: { persona: "", correo: "", nombre: "", sector: "" }, aiSummary: null, leadSent: false };
       save();
       renderQuestions();
       updateSidebar();
