@@ -13,7 +13,7 @@
  */
 (function (global) {
   const FORMSPREE_RESULTADOS = "https://formspree.io/f/xzdqznry";
-  const SHEET_WEBHOOK_URL = ""; // pegar aquí la URL /exec del Google Apps Script una vez desplegado
+  const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwsPJcVWWBIXPebWZkJadjFkflREf_EKf2g-rvAYk_ig7NWbpnPtC6erI0u4OUasFOC_Q/exec";
 
   function send(data) {
     const payload = Object.assign(
