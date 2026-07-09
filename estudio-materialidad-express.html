@@ -372,7 +372,14 @@
     .print-only { display: none; }
 
     /* ═══════════════ DOCUMENTO IMPRIMIBLE — diseño de reporte profesional ═══════════════ */
-    .print-doc { max-width: 780px; margin: 0 auto; color: var(--ink); }
+    .print-doc {
+      max-width: 780px; margin: 0 auto; color: var(--ink);
+      forced-color-adjust: none; -ms-high-contrast-adjust: none;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;
+    }
+    .print-doc * { forced-color-adjust: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-doc, .print-doc * { text-decoration: none !important; }
+    .print-doc a { color: inherit !important; }
 
     .print-cover {
       text-align: center; padding: 34px 20px 36px; border-bottom: 4px solid var(--teal); margin-bottom: 30px;
