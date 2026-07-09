@@ -370,22 +370,76 @@
     .gri-upsell-box .precio del { color: var(--muted); font-weight: 400; margin-right: 6px; }
     .gri-access-ok { color: var(--focus); font-size: 13px; font-weight: 600; }
     .print-only { display: none; }
-    .print-doc h1 { font-size: 22px; color: var(--navy); margin: 0 0 4px; }
+
+    /* ═══════════════ DOCUMENTO IMPRIMIBLE — diseño de reporte profesional ═══════════════ */
+    .print-doc { max-width: 780px; margin: 0 auto; color: var(--ink); }
+
+    .print-cover {
+      text-align: center; padding: 64px 20px 54px; border-bottom: 4px solid var(--teal); margin-bottom: 34px;
+    }
+    .print-cover .print-logo { max-height: 74px; max-width: 230px; margin-bottom: 28px; }
+    .print-cover .print-tag {
+      font-size: 12px; letter-spacing: 3.5px; text-transform: uppercase; color: var(--teal);
+      font-weight: 800; margin-bottom: 18px;
+    }
+    .print-cover h1 { font-size: 30px; color: var(--navy); line-height: 1.25; margin: 0 0 10px; letter-spacing: -.01em; }
+    .print-cover .print-subtitle { font-size: 14.5px; color: var(--muted); margin-bottom: 30px; }
+    .print-cover .print-ref {
+      display: inline-block; background: var(--soft); border: 1px solid var(--line);
+      border-radius: 12px; padding: 16px 26px; font-size: 12px; color: var(--ink); line-height: 1.65;
+      max-width: 480px; text-align: left;
+    }
+    .print-cover .print-ref strong { color: var(--navy); }
+    .print-cover .print-nivel-resumen { display: flex; gap: 8px; justify-content: center; margin-top: 26px; flex-wrap: wrap; }
+    .print-cover .print-by { margin-top: 46px; font-size: 11.5px; color: var(--muted); }
+
+    .print-doc h2.print-section {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--navy); font-size: 19px; border-bottom: 3px solid var(--teal);
+      padding-bottom: 9px; margin: 40px 0 16px; page-break-after: avoid; break-after: avoid;
+    }
+    .print-doc h2.print-section .print-section-icon { font-size: 20px; }
+    .print-doc h3 { color: var(--teal); font-size: 14.5px; margin: 20px 0 8px; page-break-after: avoid; break-after: avoid; }
+    .print-doc p { font-size: 13px; line-height: 1.75; color: var(--ink); }
     .print-doc .print-meta { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
-    .print-doc h2 { font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--line); padding-bottom: 6px; margin: 24px 0 10px; }
-    .print-doc p { font-size: 13.5px; line-height: 1.6; }
-    .print-matriz-img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; margin: 10px 0; display: block; }
+
+    .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; margin: 4px 0 8px; }
+    .print-field { break-inside: avoid; }
+    .print-field .print-label {
+      font-size: 10px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 3px;
+    }
+    .print-field .print-value { font-size: 13px; color: var(--ink); line-height: 1.5; }
+
+    .print-doc .matriz-tabla { font-size: 11.5px; margin-top: 12px; }
+    .print-doc .matriz-tabla th { background: var(--soft); }
+    .print-doc .matriz-tabla, .print-doc .matriz-tabla tr { break-inside: avoid; }
+    .print-matriz-img {
+      max-width: 100%; border: 1px solid var(--line); border-radius: 10px; margin: 14px 0;
+      display: block; break-inside: avoid;
+    }
+
+    .print-doc .informe-seccion { break-inside: avoid; margin-bottom: 24px; }
+    .print-doc .phva-card { break-inside: avoid; border: 1px solid var(--line); }
+    .print-doc .disclaimer-box { break-inside: avoid; }
+
+    .print-footer-note {
+      margin-top: 46px; padding-top: 18px; border-top: 1px solid var(--line);
+      font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.7;
+    }
 
     @media print {
+      @page { margin: 16mm 14mm; }
       body { background: #fff; }
       aside, .wizard-nav, .no-print { display: none !important; }
       main { padding: 0; }
       .print-only { display: block; }
       .panel, .phva-card, .asunto-eval-card, .grupo-card { box-shadow: none; }
+      .print-cover { page-break-after: always; break-after: page; }
     }
 
     .informe-seccion { margin-bottom: 22px; }
-    .informe-seccion h3 { margin: 0 0 10px; font-size: 15px; color: var(--navy); border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+    .informe-seccion h3 { margin: 0 0 10px; font-size: 15px; color: var(--navy); border-bottom: 3px solid var(--teal); padding-bottom: 8px; }
     .informe-seccion p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--ink); }
     .informe-seccion ul { margin: 0; padding-left: 20px; }
     .informe-seccion li { font-size: 13px; line-height: 1.6; margin-bottom: 4px; }
@@ -2309,15 +2363,15 @@
 
       cont.innerHTML = `
         <div class="informe-seccion">
-          <h3>Resumen ejecutivo</h3>
+          <h3>📋 Resumen ejecutivo</h3>
           <p>${esc(informe.resumen_ejecutivo || "")}</p>
         </div>
         <div class="informe-seccion">
-          <h3>Lectura de la matriz</h3>
+          <h3>🔍 Lectura de la matriz</h3>
           <p>${esc(informe.lectura_matriz || "")}</p>
         </div>
         ${criticosAltos.length ? `<div class="informe-seccion">
-          <h3>Enfoques de gestión PHVA — asuntos críticos y altos</h3>
+          <h3>⚙️ Enfoques de gestión PHVA — asuntos críticos y altos</h3>
           ${criticosAltos.map(a => {
             const p = (informe.phva || {})[a.nombre];
             if (!p) return "";
@@ -2335,7 +2389,7 @@
           }).join("")}
         </div>` : ""}
         <div class="informe-seccion">
-          <h3>Recomendaciones estratégicas</h3>
+          <h3>🚀 Recomendaciones estratégicas</h3>
           <div class="recomendaciones-grid">
             <div><strong>Corto plazo</strong><ul>${(informe.recomendaciones?.corto_plazo || []).map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>
             <div><strong>Mediano plazo</strong><ul>${(informe.recomendaciones?.mediano_plazo || []).map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>
@@ -2343,7 +2397,7 @@
           </div>
         </div>
         <div class="informe-seccion">
-          <h3>Preguntas para validar con sus grupos de interés</h3>
+          <h3>❓ Preguntas para validar con sus grupos de interés</h3>
           <ul>${(informe.preguntas_validacion || []).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
         </div>
         <div class="disclaimer-box">
@@ -2443,6 +2497,22 @@
         <tbody>${filas.map(({ g, score }) => `<tr><td>${esc(g.nombre)}</td><td>${score.toFixed(1)}</td><td>${esc(prioridadGrupo(score).label)}</td></tr>`).join("")}</tbody></table>`;
     }
 
+    function campoImprimibleHtml(label, valor) {
+      return `<div class="print-field"><div class="print-label">${esc(label)}</div><div class="print-value">${esc(valor || "No especificado")}</div></div>`;
+    }
+
+    function resumenNivelesPrintHtml() {
+      const counts = { critico: 0, alto: 0, medio: 0, seguimiento: 0 };
+      state.asuntos.forEach(a => counts[nivelMaterialidad(scoreCombinadoEfectivo(a)).key]++);
+      return `
+        <div class="print-nivel-resumen">
+          <span class="chip-nivel critico">${counts.critico} crítico(s)</span>
+          <span class="chip-nivel alto">${counts.alto} alto(s)</span>
+          <span class="chip-nivel medio">${counts.medio} medio(s)</span>
+          <span class="chip-nivel seguimiento">${counts.seguimiento} de seguimiento</span>
+        </div>`;
+    }
+
     function renderInformeImprimible() {
       renderMatriz();
       const canvas = byId("matrizCanvas");
@@ -2452,32 +2522,48 @@
         ? byId("informe-contenido").innerHTML
         : `<p>Aún no ha generado el informe con inteligencia artificial (paso 8). Vuelva a ese paso para generarlo antes de imprimir la versión completa.</p>`;
       const fecha = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+      const nombreEmpresa = state.empresa.nombre || "Su empresa";
 
       byId("informe-imprimible").innerHTML = `
         <div class="print-doc">
-          <h1>${esc(state.empresa.nombre || "Empresa")} — Estudio de Materialidad Exprés</h1>
-          <p class="print-meta">Elaborado con apoyo de Projectability / Soluciones PAL S.A.S. · ${fecha}</p>
+          <div class="print-cover">
+            <img class="print-logo" src="assets/projectability-logo.jpg" alt="Projectability">
+            <div class="print-tag">Estudio de Materialidad Exprés</div>
+            <h1>${esc(nombreEmpresa)}</h1>
+            <div class="print-subtitle">${esc(state.empresa.sector || "")}${state.empresa.sector ? " · " : ""}${fecha}</div>
+            <div class="print-ref">
+              Diagnóstico y priorización estratégica inspirado en <strong>GRI Standards, ESRS/CSRD, IFRS S1/S2, SASB y AA1000</strong>.
+              Elaborado con apoyo de inteligencia artificial por <strong>Projectability / Soluciones PAL S.A.S.</strong>
+            </div>
+            ${state.asuntos.length ? resumenNivelesPrintHtml() : ""}
+            <div class="print-by">Generado el ${fecha} · projectability.net</div>
+          </div>
 
-          <h2>Contexto de la organización</h2>
-          <p>
-            <strong>Sector:</strong> ${esc(state.empresa.sector || "No especificado")}<br>
-            <strong>Tamaño:</strong> ${esc(state.empresa.tamano || "No especificado")}<br>
-            <strong>País / ciudad:</strong> ${esc([state.empresa.pais, state.empresa.ciudad].filter(Boolean).join(" / ") || "No especificado")}<br>
-            <strong>Tipo de operación:</strong> ${esc(state.empresa.tipoOperacion || "No especificado")}<br>
-            <strong>Nivel de madurez en sostenibilidad:</strong> ${esc(state.empresa.madurezEsg || "No especificado")}
-          </p>
+          <h2 class="print-section"><span class="print-section-icon">🏢</span>Contexto de la organización</h2>
+          <div class="print-grid">
+            ${campoImprimibleHtml("Sector", state.empresa.sector)}
+            ${campoImprimibleHtml("Tamaño", state.empresa.tamano)}
+            ${campoImprimibleHtml("País / ciudad", [state.empresa.pais, state.empresa.ciudad].filter(Boolean).join(" / "))}
+            ${campoImprimibleHtml("Tipo de operación", state.empresa.tipoOperacion)}
+            ${campoImprimibleHtml("Nivel de madurez en sostenibilidad", state.empresa.madurezEsg)}
+          </div>
 
-          <h2>Metodología aplicada</h2>
+          <h2 class="print-section"><span class="print-section-icon">📐</span>Metodología aplicada</h2>
           <p>${esc(metodologiaTextoFijo())}</p>
 
-          <h2>Grupos de interés priorizados</h2>
+          <h2 class="print-section"><span class="print-section-icon">🤝</span>Grupos de interés priorizados</h2>
           ${tablaGruposImprimibleHtml()}
 
-          <h2>Matriz de materialidad</h2>
+          <h2 class="print-section"><span class="print-section-icon">🎯</span>Matriz de materialidad</h2>
           ${imagenMatriz ? `<img class="print-matriz-img" src="${imagenMatriz}" alt="Matriz de materialidad">` : "<p>No hay asuntos evaluados.</p>"}
           ${tablaAsuntos}
 
           ${informeIAHtml}
+
+          <div class="print-footer-note">
+            Estudio de Materialidad Exprés generado por <strong>Projectability / Soluciones PAL S.A.S.</strong> · projectability.net<br>
+            Documento de diagnóstico y priorización estratégica; no constituye una auditoría, verificación externa ni certificación.
+          </div>
         </div>`;
     }
 
