@@ -75,16 +75,16 @@ Tu tarea — generar TODO en un solo JSON de salida, con estas reglas transversa
 3. Este es un estudio EXPRÉS de priorización estratégica, no una auditoría ni una certificación. No uses lenguaje que sugiera cumplimiento normativo formal o verificación externa. Donde sea relevante, señala explícitamente que el resultado requiere validación con los grupos de interés reales antes de reportarlo externamente.
 4. Si "context" tiene información insuficiente para una sección (ej. pocos asuntos críticos, perfil incompleto), dilo honestamente en esa sección en vez de rellenar con genéricos.
 
-Genera, EN ESTE ORDEN:
-- "contexto_asuntos": objeto {"<nombre exacto del asunto>": "..."}. ES OBLIGATORIO incluir una entrada para CADA UNO de los asuntos de "context.asuntos" cuyo nivel_materialidad sea "Material crítico", "Material alto" o "Material medio" — no omitas ninguno, revisa la lista completa antes de responder. Cada entrada es un párrafo de 2-4 frases explicando por qué ese tipo de asunto suele ser relevante para empresas del sector y tipo de operación indicados — tendencias regulatorias, expectativas de mercado o riesgos típicos del sector — sin inventar hechos, cifras o programas específicos de esta empresa.
-- "resumen_ejecutivo": 6-8 frases sintetizando el proceso, hallazgos principales, grupos prioritarios, asuntos críticos y una línea de recomendación general.
-- "lectura_matriz": un párrafo (5-7 frases) de interpretación estratégica de la matriz en conjunto: qué patrones se observan, qué dimensión ESG domina los críticos, qué implica para la empresa.
-- "phva": objeto {"<nombre exacto del asunto>": {"planificar": "...", "hacer": "...", "verificar": "...", "actuar": "..."}} SOLO para los asuntos con nivel_materialidad "Material crítico" o "Material alto". Cada fase 3-5 frases, concreta y accionable para el sector y tamaño de empresa indicados, sin inventar recursos o cifras que la empresa no declaró.
-- "recomendaciones": objeto {"corto_plazo": [...], "mediano_plazo": [...], "largo_plazo": [...]}, cada lista con 3-4 recomendaciones puntuales derivadas de los asuntos críticos/altos.
-- "preguntas_validacion": lista de 6-10 preguntas concretas que la empresa debería usar para validar estos resultados directamente con sus grupos de interés reales (encuestas, entrevistas o grupos focales).
-- "indicadores_sugeridos": objeto {"<nombre exacto del asunto>": ["indicador 1", "indicador 2"]} para asuntos con nivel_materialidad "Material crítico" o "Material alto", indicadores de gestión típicos del sector (no cifras meta, solo qué medir).
+Genera, EN ESTE ORDEN, y con presupuesto de respuesta limitado — prioriza SIEMPRE completar bien "phva" antes que las demás secciones, es el contenido más importante de este informe:
+- "phva": objeto {"<nombre exacto del asunto>": {"planificar": "...", "hacer": "...", "verificar": "...", "actuar": "..."}} para CADA asunto con nivel_materialidad "Material crítico" o "Material alto" (revisa la lista completa de "context.asuntos", no omitas ninguno de estos). Cada una de las 4 fases debe tener 3-5 frases COMPLETAS, concretas y accionables para el sector y tamaño de empresa indicados — nunca frases cortas o genéricas de una sola línea. Sin inventar recursos o cifras que la empresa no declaró.
+- "contexto_asuntos": objeto {"<nombre exacto del asunto>": "..."} — SOLO para los asuntos con nivel_materialidad "Material crítico" o "Material alto" (los mismos que llevan phva). Cada entrada es un párrafo de 2-3 frases explicando por qué ese tipo de asunto suele ser relevante para empresas del sector y tipo de operación indicados, sin inventar hechos específicos de esta empresa.
+- "resumen_ejecutivo": 5-6 frases sintetizando el proceso, hallazgos principales, grupos prioritarios, asuntos críticos y una línea de recomendación general.
+- "lectura_matriz": un párrafo (4-5 frases) de interpretación estratégica de la matriz en conjunto.
+- "recomendaciones": objeto {"corto_plazo": [...], "mediano_plazo": [...], "largo_plazo": [...]}, cada lista con 2-3 recomendaciones puntuales derivadas de los asuntos críticos/altos.
+- "preguntas_validacion": lista de 5-6 preguntas concretas que la empresa debería usar para validar estos resultados directamente con sus grupos de interés reales.
+- "indicadores_sugeridos": objeto {"<nombre exacto del asunto>": ["indicador 1", "indicador 2"]} para los mismos asuntos crítico/alto, indicadores de gestión típicos del sector (no cifras meta, solo qué medir).
 
-Responde ÚNICAMENTE con JSON válido, sin markdown, con las claves exactas: contexto_asuntos, resumen_ejecutivo, lectura_matriz, phva, recomendaciones, preguntas_validacion, indicadores_sugeridos.`;
+Responde ÚNICAMENTE con JSON válido, sin markdown, con las claves exactas: phva, contexto_asuntos, resumen_ejecutivo, lectura_matriz, recomendaciones, preguntas_validacion, indicadores_sugeridos.`;
 
 const MATERIALIDAD_SUGERIR_ASUNTOS_PROMPT = `Eres PAL, consultor senior en sostenibilidad corporativa de Projectability, experto en GRI, ESRS y SASB por sector.
 
@@ -236,7 +236,7 @@ export default {
     } else if (isMaterialidad) {
       systemPrompt = MATERIALIDAD_SYSTEM_PROMPT;
       userContent = { context: body.context };
-      maxTokens = 9000;
+      maxTokens = 5500; // el TPM de Groq (12000) se comparte con GRI Express, Circularidad e Inventario GEI
     } else if (isMaterialidadSugerir) {
       systemPrompt = MATERIALIDAD_SUGERIR_ASUNTOS_PROMPT;
       userContent = { context: body.context };
