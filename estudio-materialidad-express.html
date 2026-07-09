@@ -375,7 +375,8 @@
     .print-doc { max-width: 780px; margin: 0 auto; color: var(--ink); }
 
     .print-cover {
-      text-align: center; padding: 64px 20px 54px; border-bottom: 4px solid var(--teal); margin-bottom: 34px;
+      text-align: center; padding: 34px 20px 36px; border-bottom: 4px solid var(--teal); margin-bottom: 30px;
+      break-inside: avoid;
     }
     .print-cover .print-logo { max-height: 74px; max-width: 230px; margin-bottom: 28px; }
     .print-cover .print-tag {
@@ -397,6 +398,9 @@
       display: flex; align-items: center; gap: 10px;
       color: var(--navy); font-size: 19px; border-bottom: 3px solid var(--teal);
       padding-bottom: 9px; margin: 40px 0 16px; page-break-after: avoid; break-after: avoid;
+    }
+    .print-cover + h2.print-section {
+      margin-top: 4px;
     }
     .print-doc h2.print-section .print-section-icon { font-size: 20px; }
     .print-doc h3 { color: var(--teal); font-size: 14.5px; margin: 20px 0 8px; page-break-after: avoid; break-after: avoid; }
@@ -435,7 +439,6 @@
       main { padding: 0; }
       .print-only { display: block; }
       .panel, .phva-card, .asunto-eval-card, .grupo-card { box-shadow: none; }
-      .print-cover { page-break-after: always; break-after: page; }
     }
 
     .informe-seccion { margin-bottom: 22px; }
@@ -445,7 +448,9 @@
     .informe-seccion li { font-size: 13px; line-height: 1.6; margin-bottom: 4px; }
 
     .phva-card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
-    .phva-card h4 { margin: 0 0 10px; font-size: 14px; color: var(--navy); }
+    .phva-card h4 { margin: 0; font-size: 14px; color: var(--navy); }
+    .phva-card h5 { margin: 14px 0 8px; font-size: 11.5px; color: var(--teal); text-transform: uppercase; letter-spacing: .4px; }
+    .asunto-informe-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
     .phva-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .phva-grid strong { font-size: 11.5px; color: var(--teal); text-transform: uppercase; letter-spacing: .3px; }
     .phva-grid p { margin: 4px 0 0; font-size: 12.5px; line-height: 1.5; }
@@ -2359,7 +2364,9 @@
       if (!informe) { cont.style.display = "none"; return; }
       cont.style.display = "block";
 
-      const criticosAltos = asuntosCriticosAltos();
+      const asuntosRelevantes = state.asuntos
+        .filter(a => nivelMaterialidad(scoreCombinadoEfectivo(a)).key !== "seguimiento")
+        .sort((a, b) => scoreCombinadoEfectivo(b) - scoreCombinadoEfectivo(a));
 
       cont.innerHTML = `
         <div class="informe-seccion">
@@ -2370,20 +2377,28 @@
           <h3>🔍 Lectura de la matriz</h3>
           <p>${esc(informe.lectura_matriz || "")}</p>
         </div>
-        ${criticosAltos.length ? `<div class="informe-seccion">
-          <h3>⚙️ Enfoques de gestión PHVA — asuntos críticos y altos</h3>
-          ${criticosAltos.map(a => {
+        ${asuntosRelevantes.length ? `<div class="informe-seccion">
+          <h3>🗂️ Asuntos materiales identificados</h3>
+          ${asuntosRelevantes.map(a => {
+            const nivel = nivelMaterialidad(scoreCombinadoEfectivo(a));
+            // Si la IA no generó contexto para este asunto (puede pasar), se usa la justificación
+            // calculada localmente como respaldo — así ningún asunto queda sin explicación.
+            const contexto = (informe.contexto_asuntos || {})[a.nombre] || justificacionAsunto(a);
             const p = (informe.phva || {})[a.nombre];
-            if (!p) return "";
             const indicadores = (informe.indicadores_sugeridos || {})[a.nombre];
             return `<div class="phva-card">
-              <h4>${esc(a.nombre)}</h4>
+              <div class="asunto-informe-head">
+                <h4>${esc(a.nombre)}</h4>
+                <span class="chip-nivel ${nivel.key}">${nivel.label}</span>
+              </div>
+              ${contexto ? `<p>${esc(contexto)}</p>` : ""}
+              ${p ? `<h5>Enfoque de gestión — ciclo PHVA</h5>
               <div class="phva-grid">
                 <div><strong>Planificar</strong><p>${esc(p.planificar || "")}</p></div>
                 <div><strong>Hacer</strong><p>${esc(p.hacer || "")}</p></div>
                 <div><strong>Verificar</strong><p>${esc(p.verificar || "")}</p></div>
                 <div><strong>Actuar</strong><p>${esc(p.actuar || "")}</p></div>
-              </div>
+              </div>` : ""}
               ${indicadores && indicadores.length ? `<div class="indicadores-sugeridos"><strong>Indicadores sugeridos:</strong> ${indicadores.map(esc).join(" · ")}</div>` : ""}
             </div>`;
           }).join("")}
