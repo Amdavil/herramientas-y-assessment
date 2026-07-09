@@ -403,36 +403,41 @@
 
     .print-doc h2.print-section {
       display: flex; align-items: center; gap: 10px;
-      color: var(--navy); font-size: 19px; border-bottom: 3px solid var(--teal);
-      padding-bottom: 9px; margin: 40px 0 16px; page-break-after: avoid; break-after: avoid;
+      color: var(--navy); font-size: 17px; border-bottom: 3px solid var(--teal);
+      padding-bottom: 7px; margin: 26px 0 12px; break-after: avoid-page;
     }
     .print-cover + h2.print-section {
       margin-top: 4px;
     }
-    .print-doc h2.print-section .print-section-icon { font-size: 20px; }
-    .print-doc h3 { color: var(--teal); font-size: 14.5px; margin: 20px 0 8px; page-break-after: avoid; break-after: avoid; }
-    .print-doc p { font-size: 13px; line-height: 1.75; color: var(--ink); }
+    .print-doc h2.print-section .print-section-icon { font-size: 18px; }
+    .print-doc h3 { color: var(--teal); font-size: 13.5px; margin: 16px 0 7px; break-after: avoid-page; }
+    .print-doc p { font-size: 12.5px; line-height: 1.65; color: var(--ink); orphans: 3; widows: 3; }
     .print-doc .print-meta { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
 
-    .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; margin: 4px 0 8px; }
-    .print-field { break-inside: avoid; }
+    .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin: 4px 0 4px; }
+    .print-field { break-inside: avoid-page; }
     .print-field .print-label {
       font-size: 10px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase;
       color: var(--muted); margin-bottom: 3px;
     }
     .print-field .print-value { font-size: 13px; color: var(--ink); line-height: 1.5; }
 
-    .print-doc .matriz-tabla { font-size: 11.5px; margin-top: 12px; }
+    /* Las tablas SÍ pueden partirse entre páginas — evitamos solo cortar una fila a la mitad,
+       y repetimos el encabezado si eso ocurre (patrón estándar de reportes impresos). */
+    .print-doc .matriz-tabla { font-size: 11px; margin-top: 10px; border-collapse: collapse; width: 100%; }
     .print-doc .matriz-tabla th { background: var(--soft); }
-    .print-doc .matriz-tabla, .print-doc .matriz-tabla tr { break-inside: avoid; }
+    .print-doc .matriz-tabla thead { display: table-header-group; }
+    .print-doc .matriz-tabla tr { break-inside: avoid-page; }
     .print-matriz-img {
-      max-width: 100%; border: 1px solid var(--line); border-radius: 10px; margin: 14px 0;
-      display: block; break-inside: avoid;
+      max-width: 100%; border: 1px solid var(--line); border-radius: 10px; margin: 12px 0;
+      display: block; break-inside: avoid-page;
     }
 
-    .print-doc .informe-seccion { break-inside: avoid; margin-bottom: 24px; }
-    .print-doc .phva-card { break-inside: avoid; border: 1px solid var(--line); }
-    .print-doc .disclaimer-box { break-inside: avoid; }
+    /* Las secciones y tarjetas individuales evitan partirse a la mitad, pero una sección con
+       varias tarjetas (ej. varios asuntos materiales) sí puede continuar en la página siguiente. */
+    .print-doc .informe-seccion { margin-bottom: 18px; }
+    .print-doc .phva-card { break-inside: avoid-page; border: 1px solid var(--line); margin-bottom: 12px; }
+    .print-doc .disclaimer-box { break-inside: avoid-page; }
 
     .print-footer-note {
       margin-top: 46px; padding-top: 18px; border-top: 1px solid var(--line);
