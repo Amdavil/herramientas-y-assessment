@@ -1,0 +1,1475 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario GEI Exprés</title>
+<style>
+  :root {
+    --ink: #172033;
+    --muted: #647084;
+    --line: #d9e1ea;
+    --soft: #f5f7fa;
+    --panel: #ffffff;
+    --navy: #1f4e79;
+    --blue: #2f75b5;
+    --teal: #16817a;
+    --green: #5f8d3e;
+    --amber: #c47f1b;
+    --red: #b54a4a;
+    --lav: #6b5ca5;
+    --focus: #0f766e;
+    --gold: #c8a951;
+    --shadow: 0 10px 30px rgba(23, 32, 51, .08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    background: #eef3f7;
+  }
+  .app { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+  header.top {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff; padding: 28px 24px; border-radius: 14px; margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  header.top h1 { margin: 0 0 6px; font-size: 1.5rem; }
+  header.top p { margin: 0; opacity: .9; font-size: .92rem; }
+  .disclaimer {
+    background: #fff8e6; border: 1px solid #e8cf8a; color: #6b5215;
+    border-radius: 10px; padding: 12px 16px; font-size: .85rem; margin-bottom: 20px;
+  }
+  .steps-nav {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px;
+  }
+  .steps-nav button {
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+    padding: 6px 10px; border-radius: 999px; font-size: .74rem; cursor: pointer;
+  }
+  .steps-nav button.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .steps-nav button.done { border-color: var(--teal); color: var(--teal); }
+  .steps-nav button:disabled { opacity: .4; cursor: not-allowed; }
+  .panel {
+    background: var(--panel); border-radius: 14px; padding: 24px; box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .panel h2 { margin-top: 0; color: var(--navy); font-size: 1.15rem; }
+  .panel h3 { color: var(--navy); font-size: .98rem; margin-bottom: 4px; }
+  .hint { color: var(--muted); font-size: .84rem; margin-top: -4px; margin-bottom: 14px; }
+  label { display: block; font-size: .82rem; font-weight: 600; margin: 12px 0 4px; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: .9rem; font-family: inherit; background: #fff;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
+  @media (max-width: 720px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  .row-actions { display: flex; justify-content: space-between; margin-top: 22px; gap: 10px; }
+  button.btn {
+    background: var(--navy); color: #fff; border: none; padding: 10px 18px;
+    border-radius: 8px; font-size: .88rem; cursor: pointer; font-weight: 600;
+  }
+  button.btn.secondary { background: #fff; color: var(--navy); border: 1px solid var(--navy); }
+  button.btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  button.btn:disabled { opacity: .5; cursor: not-allowed; }
+  .checklist { display: flex; flex-direction: column; gap: 8px; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--soft);
+  }
+  .check-item input { margin-top: 3px; }
+  .check-item .meta { color: var(--muted); font-size: .78rem; }
+  .scope-tag {
+    display: inline-block; font-size: .68rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 999px; color: #fff; margin-right: 6px;
+  }
+  .scope-1 { background: var(--red); }
+  .scope-2 { background: var(--blue); }
+  .scope-3 { background: var(--lav); }
+  .fuente-card {
+    border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 14px;
+    background: var(--soft);
+  }
+  .fuente-card .fila { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  @media (max-width: 720px) { .fuente-card .fila { grid-template-columns: 1fr; } }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+  .badge-alta { background: #e3f0e0; color: var(--green); }
+  .badge-media { background: #fbeed3; color: var(--amber); }
+  .badge-baja { background: #f6dede; color: var(--red); }
+  .badge-supuesto { background: #fbeed3; color: var(--amber); }
+  .warn-box {
+    background: #fff8e6; border: 1px solid #e8cf8a; color: #6b5215;
+    border-radius: 8px; padding: 8px 12px; font-size: .8rem; margin-top: 8px;
+  }
+  .block-box {
+    background: #f6dede; border: 1px solid #e0a9a9; color: #7a2f2f;
+    border-radius: 8px; padding: 8px 12px; font-size: .8rem; margin-top: 8px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: .76rem; text-transform: uppercase; }
+  .totales-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; }
+  @media (max-width: 720px) { .totales-grid { grid-template-columns: 1fr 1fr; } }
+  .total-tile {
+    background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 12px; text-align: center;
+  }
+  .total-tile .num { font-size: 1.3rem; font-weight: 800; color: var(--navy); }
+  .total-tile .lbl { font-size: .72rem; color: var(--muted); text-transform: uppercase; }
+  canvas { max-width: 100%; }
+  .chart-box { margin: 18px 0; }
+  .chart-box h4 { margin-bottom: 6px; color: var(--navy); font-size: .9rem; }
+  .nivel-evitar { border-left: 4px solid var(--teal); }
+  .nivel-reducir { border-left: 4px solid var(--blue); }
+  .nivel-sustituir { border-left: 4px solid var(--lav); }
+  .nivel-compensar { border-left: 4px solid var(--amber); }
+  .accion-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--soft); }
+  .accion-card .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag-pill { font-size: .68rem; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; color: var(--muted); }
+  @media print {
+    .steps-nav, .row-actions, .no-print { display: none !important; }
+    body { background: #fff; }
+    .panel { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Inventario GEI Exprés</h1>
+    <p>Herramienta guiada para construir tu inventario de emisiones de gases de efecto invernadero (GHG Protocol / ISO 14064-1)</p>
+  </header>
+
+  <div id="disclaimerBox" class="disclaimer">
+    <strong>Aviso metodológico:</strong> este inventario es un cálculo asistido y estructurado con base en la información entregada por tu organización y los factores de emisión que selecciones o cargues. No constituye un inventario verificado, certificado ni auditado, salvo revisión independiente posterior bajo ISO 14064-3 u otro esquema reconocido.
+  </div>
+
+  <nav class="steps-nav" id="stepsNav"></nav>
+
+  <div id="stepContainer"></div>
+</div>
+
+<script>
+(function(){
+
+/* ============================== ESTADO ============================== */
+const STORAGE_KEY = "inventarioGEI_v1";
+
+const STEP_LABELS = [
+  "Bienvenida","Organización","Límites","Alcances","Fuentes",
+  "Datos de actividad","Factores de emisión","Resultados","Dashboard","Plan de gestión","Informe"
+];
+
+let state = cargarEstado() || {
+  step: 0,
+  organizacion: {
+    nombre:"", tipo:"", sector:"", pais:"Colombia", ciudad:"", nEmpleados:"", nSedes:"",
+    anioBase:"", periodo:"", actividad:"", productos:"", madurez:"inicial",
+    inventarioPrevio:false, metasClimaticas:false, certificaciones:false, esquemaReporte:"",
+    moneda:"COP", responsable:""
+  },
+  limites: {
+    enfoque:"operacional", sedesIncluidas:"", sedesExcluidas:"", justificacion:""
+  },
+  alcancesSeleccionados: {1:true, 2:true, 3:false},
+  fuentesActivas: {},     // id -> true/false
+  fuentesCustom: [],      // fuentes sugeridas por IA y aceptadas por el usuario, mismo shape que FUENTES_CATALOGO
+  datosActividad: {},     // fuenteId -> {valor, unidad, calidad, origen, comentario}
+  factoresAsignados: {},  // fuenteId -> factorId (o factor personalizado inline)
+  factoresPersonalizados: {}, // id -> ficha completa
+  plan: { acciones: [] }
+};
+state.fuentesCustom = state.fuentesCustom || [];
+
+function guardarEstado(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function cargarEstado(){
+  try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }
+  catch(e){ return null; }
+}
+
+/* ============================== IA (pal-ai-worker) ============================== */
+const AI = { endpoint: "https://pal-ai.projectability-pal.workers.dev/" };
+async function llamarIA(mode, context){
+  const res = await fetch(AI.endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, context })
+  });
+  if (!res.ok) throw new Error("AI endpoint error " + res.status);
+  return res.json();
+}
+
+/* ============================== PAGO Y ACCESO ============================== */
+const PAY = {
+  price: "29.99",
+  currency: "USD",
+  priceLabel: "USD $29.99",
+  paypalClientId: "AaKYXvti3_r4I4g5K69UvGzJI0vdFxaVIx69NAH6UQT_w8RxpgS3qGn3_X6ysq8PibbTeBCNQTTb7ppX"
+};
+// Hashes SHA-256 de códigos de acceso válidos (los códigos en texto plano NO están aquí)
+const ACCESS_HASHES = new Set([
+  "4fa6f314e68db1523f32c1b34e7efc12669d023bb08c86eaf9ecfa39fe016100" // código maestro (equipo/socios/demos)
+]);
+const ACCESS_KEY = "gei-access-v1";
+
+function hasAccess(){ return localStorage.getItem(ACCESS_KEY) === "granted"; }
+function grantAccess(){ localStorage.setItem(ACCESS_KEY, "granted"); }
+
+async function sha256(text){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function tryAccessCode(raw, feedbackEl, onSuccess){
+  const code = raw.trim().toUpperCase();
+  if (!code) return;
+  const h = await sha256(code);
+  if (ACCESS_HASHES.has(h)) {
+    grantAccess();
+    feedbackEl.style.color = "var(--green)";
+    feedbackEl.textContent = "✓ Código válido. Desbloqueando…";
+    setTimeout(onSuccess, 600);
+  } else {
+    feedbackEl.style.color = "var(--red)";
+    feedbackEl.textContent = "✗ Código no válido. Verifica e intenta de nuevo.";
+  }
+}
+
+let paypalLoading = false;
+function loadPayPal(onApprove){
+  if (window.paypal) return mountPayPal(onApprove);
+  if (paypalLoading) return;
+  paypalLoading = true;
+  const s = document.createElement("script");
+  s.src = `https://www.paypal.com/sdk/js?client-id=${PAY.paypalClientId}&currency=${PAY.currency}`;
+  s.onload = ()=>{ paypalLoading = false; mountPayPal(onApprove); };
+  s.onerror = ()=>{
+    paypalLoading = false;
+    const holder = document.getElementById("paypalButtons");
+    if (holder) holder.innerHTML = '<p class="hint">No fue posible cargar PayPal. Usa un código de acceso o escríbenos.</p>';
+  };
+  document.head.appendChild(s);
+}
+function mountPayPal(onApprove){
+  const holder = document.getElementById("paypalButtons");
+  if (!holder || !window.paypal) return;
+  holder.innerHTML = "";
+  paypal.Buttons({
+    style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
+    createOrder: (data, actions) => actions.order.create({
+      purchase_units: [{
+        description: "Inventario GEI Exprés — Informe completo con IA",
+        amount: { value: PAY.price, currency_code: PAY.currency }
+      }]
+    }),
+    onApprove: (data, actions) => actions.order.capture().then(()=>{
+      grantAccess();
+      onApprove();
+    }),
+    onError: ()=>{
+      const fb = document.getElementById("codeFeedback");
+      if (fb) { fb.style.color = "var(--red)"; fb.textContent = "Hubo un problema con el pago. Intenta de nuevo o usa un código de acceso."; }
+    }
+  }).render("#paypalButtons");
+}
+
+// Inserta un bloque de pago/código de acceso dentro de `container`. `onUnlock` se llama al desbloquear.
+function renderGate(container, mensaje, onUnlock){
+  const div = document.createElement("div");
+  div.className = "panel no-print";
+  div.innerHTML = `
+    <h3>Desbloquea esta sección</h3>
+    <p class="hint">${esc(mensaje)}</p>
+    <p style="font-weight:700; color:var(--navy); font-size:1.1rem;">${PAY.priceLabel} — pago único</p>
+    <div id="paypalButtons" style="max-width:320px;"></div>
+    <div style="margin-top:16px; border-top:1px dashed var(--line); padding-top:14px;">
+      <label>¿Tienes un código de acceso?</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="codeInput" placeholder="Código de acceso" style="flex:1;">
+        <button class="btn secondary" id="codeBtn" type="button">Validar</button>
+      </div>
+      <p id="codeFeedback" class="hint" style="margin-top:6px;"></p>
+    </div>
+  `;
+  container.appendChild(div);
+  loadPayPal(onUnlock);
+  document.getElementById("codeBtn").onclick = ()=>{
+    tryAccessCode(document.getElementById("codeInput").value, document.getElementById("codeFeedback"), onUnlock);
+  };
+}
+
+/* ============================== CATÁLOGOS ============================== */
+
+// Catálogo de fuentes por alcance. unidadSugerida referencia la unidad "nativa" del factor.
+const FUENTES_CATALOGO = [
+  // Alcance 1 — combustión estacionaria
+  {id:"a1_diesel_estac", alcance:1, categoria:"Combustión estacionaria", nombre:"Diésel (calderas, hornos, plantas eléctricas fijas)", unidad:"L", factorSugerido:"diesel"},
+  {id:"a1_glp_estac", alcance:1, categoria:"Combustión estacionaria", nombre:"GLP en calderas/hornos", unidad:"kg", factorSugerido:"glp"},
+  {id:"a1_gasnat_estac", alcance:1, categoria:"Combustión estacionaria", nombre:"Gas natural en calderas/hornos", unidad:"m3", factorSugerido:"gas_natural"},
+  {id:"a1_carbon_estac", alcance:1, categoria:"Combustión estacionaria", nombre:"Carbón mineral", unidad:"kg", factorSugerido:"carbon"},
+  {id:"a1_biomasa_estac", alcance:1, categoria:"Combustión estacionaria", nombre:"Biomasa (leña, cascarilla, etc.)", unidad:"kg", factorSugerido:"biomasa"},
+  // Alcance 1 — combustión móvil
+  {id:"a1_gasolina_movil", alcance:1, categoria:"Combustión móvil", nombre:"Gasolina — vehículos propios", unidad:"L", factorSugerido:"gasolina"},
+  {id:"a1_diesel_movil", alcance:1, categoria:"Combustión móvil", nombre:"Diésel — vehículos propios / montacargas", unidad:"L", factorSugerido:"diesel"},
+  {id:"a1_glp_movil", alcance:1, categoria:"Combustión móvil", nombre:"GLP vehicular", unidad:"L", factorSugerido:"glp_vehicular"},
+  // Alcance 1 — fugitivas
+  {id:"a1_ref_r410a", alcance:1, categoria:"Fugas de refrigerantes", nombre:"Recarga de refrigerante R-410A", unidad:"kg", factorSugerido:"r410a"},
+  {id:"a1_ref_r134a", alcance:1, categoria:"Fugas de refrigerantes", nombre:"Recarga de refrigerante R-134a", unidad:"kg", factorSugerido:"r134a"},
+  {id:"a1_ref_r22", alcance:1, categoria:"Fugas de refrigerantes", nombre:"Recarga de refrigerante R-22", unidad:"kg", factorSugerido:"r22"},
+  // Alcance 2
+  {id:"a2_electricidad", alcance:2, categoria:"Electricidad comprada", nombre:"Electricidad de red (location-based)", unidad:"kWh", factorSugerido:"electricidad_red"},
+  // Alcance 3 simplificado
+  {id:"a3_viajes_aereo", alcance:3, categoria:"Viajes de negocios", nombre:"Vuelos — distancia total recorrida", unidad:"km", factorSugerido:"vuelo_medio"},
+  {id:"a3_desplaz_auto", alcance:3, categoria:"Desplazamiento de empleados", nombre:"Desplazamiento en vehículo particular", unidad:"km", factorSugerido:"auto_particular"},
+  {id:"a3_desplaz_transp", alcance:3, categoria:"Desplazamiento de empleados", nombre:"Desplazamiento en transporte público", unidad:"km", factorSugerido:"transporte_publico"},
+  {id:"a3_residuos_relleno", alcance:3, categoria:"Residuos generados", nombre:"Residuos a relleno sanitario", unidad:"kg", factorSugerido:"residuo_relleno"}
+];
+
+// Banco de factores de emisión. TODOS marcados como valores de referencia — deben confirmarse
+// contra la fuente oficial vigente en el país de operación antes de usarse en un reporte formal.
+const BANCO_FACTORES = {
+  diesel: {id:"diesel", nombre:"Diésel (combustión)", fuenteFactor:"IPCC 2006 Guidelines / GHG Protocol — valor de referencia", anio:2006, pais:"Genérico", unidad:"L", gas:"CO2e", pcg:"IPCC AR5", version:"IPCC 2006 v1", referencia:"https://www.ipcc-nggip.iges.or.jp", fechaConsulta:"", confiabilidad:"referencia", valor:2.68},
+  gasolina: {id:"gasolina", nombre:"Gasolina motor (combustión)", fuenteFactor:"IPCC 2006 Guidelines / GHG Protocol — valor de referencia", anio:2006, pais:"Genérico", unidad:"L", gas:"CO2e", pcg:"IPCC AR5", version:"IPCC 2006 v1", referencia:"https://www.ipcc-nggip.iges.or.jp", fechaConsulta:"", confiabilidad:"referencia", valor:2.31},
+  glp: {id:"glp", nombre:"GLP (combustión estacionaria)", fuenteFactor:"IPCC 2006 Guidelines — valor de referencia", anio:2006, pais:"Genérico", unidad:"kg", gas:"CO2e", pcg:"IPCC AR5", version:"IPCC 2006 v1", referencia:"https://www.ipcc-nggip.iges.or.jp", fechaConsulta:"", confiabilidad:"referencia", valor:2.98},
+  glp_vehicular: {id:"glp_vehicular", nombre:"GLP vehicular", fuenteFactor:"IPCC 2006 Guidelines — valor de referencia", anio:2006, pais:"Genérico", unidad:"L", gas:"CO2e", pcg:"IPCC AR5", version:"IPCC 2006 v1", referencia:"https://www.ipcc-nggip.iges.or.jp", fechaConsulta:"", confiabilidad:"referencia", valor:1.51},
+  gas_natural: {id:"gas_natural", nombre:"Gas natural (combustión estacionaria)", fuenteFactor:"IPCC 2006 Guidelines — valor de referencia", anio:2006, pais:"Genérico", unidad:"m3", gas:"CO2e", pcg:"IPCC AR5", version:"IPCC 2006 v1", referencia:"https://www.ipcc-nggip.iges.or.jp", fechaConsulta:"", confiabilidad:"referencia", valor:2.02},
+  carbon: {id:"carbon", nombre:"Carbón mineral (bituminoso)", fuenteFactor:"IPCC 2006 Guidelines — valor de referencia", anio:2006, pais:"Genérico", unidad:"kg", gas:"CO2e", pcg:"IPCC AR5", version:"IPCC 2006 v1", referencia:"https://www.ipcc-nggip.iges.or.jp", fechaConsulta:"", confiabilidad:"referencia", valor:2.42},
+  biomasa: {id:"biomasa", nombre:"Biomasa sólida (leña, cascarilla)", fuenteFactor:"IPCC 2006 Guidelines — valor de referencia (CO2 biogénico reportado aparte en inventarios formales)", anio:2006, pais:"Genérico", unidad:"kg", gas:"CO2e", pcg:"IPCC AR5", version:"IPCC 2006 v1", referencia:"https://www.ipcc-nggip.iges.or.jp", fechaConsulta:"", confiabilidad:"referencia", valor:0.4},
+  r410a: {id:"r410a", nombre:"Refrigerante R-410A (fuga)", fuenteFactor:"IPCC AR5 GWP100 — valor de referencia", anio:2014, pais:"Genérico", unidad:"kg", gas:"HFC", pcg:"IPCC AR5 (2088)", version:"AR5", referencia:"https://www.ipcc.ch/report/ar5/", fechaConsulta:"", confiabilidad:"referencia", valor:2088},
+  r134a: {id:"r134a", nombre:"Refrigerante R-134a (fuga)", fuenteFactor:"IPCC AR5 GWP100 — valor de referencia", anio:2014, pais:"Genérico", unidad:"kg", gas:"HFC", pcg:"IPCC AR5 (1430)", version:"AR5", referencia:"https://www.ipcc.ch/report/ar5/", fechaConsulta:"", confiabilidad:"referencia", valor:1430},
+  r22: {id:"r22", nombre:"Refrigerante R-22 (fuga)", fuenteFactor:"IPCC AR5 GWP100 — valor de referencia", anio:2014, pais:"Genérico", unidad:"kg", gas:"HCFC", pcg:"IPCC AR5 (1810)", version:"AR5", referencia:"https://www.ipcc.ch/report/ar5/", fechaConsulta:"", confiabilidad:"referencia", valor:1810},
+  electricidad_red: {id:"electricidad_red", nombre:"Electricidad de red — location-based", fuenteFactor:"Factor de red genérico de referencia — CONFIRMAR factor vigente del operador nacional (ej. UPME/XM en Colombia) antes de reportar", anio:2023, pais:"Colombia (referencia)", unidad:"kWh", gas:"CO2e", pcg:"IPCC AR5", version:"—", referencia:"", fechaConsulta:"", confiabilidad:"referencia", valor:0.14},
+  vuelo_medio: {id:"vuelo_medio", nombre:"Vuelo — distancia media (estimación gruesa)", fuenteFactor:"Estimación de referencia (ICAO/DEFRA, promedio clase económica) — Alcance 3 simplificado", anio:2023, pais:"Genérico", unidad:"km", gas:"CO2e", pcg:"IPCC AR5", version:"—", referencia:"", fechaConsulta:"", confiabilidad:"supuesto", valor:0.15},
+  auto_particular: {id:"auto_particular", nombre:"Vehículo particular (promedio)", fuenteFactor:"Estimación de referencia — Alcance 3 simplificado", anio:2023, pais:"Genérico", unidad:"km", gas:"CO2e", pcg:"IPCC AR5", version:"—", referencia:"", fechaConsulta:"", confiabilidad:"supuesto", valor:0.17},
+  transporte_publico: {id:"transporte_publico", nombre:"Transporte público (promedio)", fuenteFactor:"Estimación de referencia — Alcance 3 simplificado", anio:2023, pais:"Genérico", unidad:"km", gas:"CO2e", pcg:"IPCC AR5", version:"—", referencia:"", fechaConsulta:"", confiabilidad:"supuesto", valor:0.08},
+  residuo_relleno: {id:"residuo_relleno", nombre:"Residuo mixto a relleno sanitario", fuenteFactor:"Estimación de referencia — Alcance 3 simplificado, varía fuertemente por composición del residuo", anio:2023, pais:"Genérico", unidad:"kg", gas:"CO2e", pcg:"IPCC AR5", version:"—", referencia:"", fechaConsulta:"", confiabilidad:"supuesto", valor:0.5}
+};
+
+// Conversión de unidades compatibles (para permitir que el usuario capture en la unidad que tenga a mano)
+const CONVERSIONES = {
+  L: { gal: 3.78541 },     // 1 gal = 3.78541 L
+  kg: { ton: 1000 },       // 1 ton = 1000 kg
+  km: { mi: 1.60934 },     // 1 mi = 1.60934 km
+  kWh: {}
+};
+function unidadesCompatibles(u1, u2){
+  if (u1 === u2) return true;
+  for (const base in CONVERSIONES) {
+    const alts = Object.keys(CONVERSIONES[base]);
+    if ((u1===base||alts.includes(u1)) && (u2===base||alts.includes(u2))) return true;
+  }
+  return false;
+}
+function convertirAUnidadBase(valor, unidadOrigen, unidadDestino){
+  if (unidadOrigen === unidadDestino) return valor;
+  for (const base in CONVERSIONES) {
+    if (unidadDestino === base && CONVERSIONES[base][unidadOrigen]) {
+      return valor * CONVERSIONES[base][unidadOrigen];
+    }
+    if (unidadOrigen === base && CONVERSIONES[base][unidadDestino]) {
+      return valor / CONVERSIONES[base][unidadDestino];
+    }
+  }
+  return valor;
+}
+
+const NIVELES_GESTION = [
+  {id:"evitar", nombre:"Evitar", desc:"Eliminar o rediseñar la actividad que genera la emisión."},
+  {id:"reducir", nombre:"Reducir", desc:"Disminuir el consumo o la intensidad de emisión de la actividad."},
+  {id:"sustituir", nombre:"Sustituir", desc:"Reemplazar la fuente por una de menor huella (energía renovable, electrificación, materiales alternativos)."},
+  {id:"compensar", nombre:"Compensar", desc:"Compensar únicamente las emisiones residuales que no pudieron evitarse, reducirse ni sustituirse."}
+];
+
+/* ============================== HELPERS ============================== */
+function todasLasFuentes(){ return [...FUENTES_CATALOGO, ...(state.fuentesCustom||[])]; }
+function fuentePorId(id){ return todasLasFuentes().find(f=>f.id===id); }
+function factorDe(fuenteId){
+  const asignado = state.factoresAsignados[fuenteId];
+  if (!asignado) return null;
+  if (state.factoresPersonalizados[asignado]) return state.factoresPersonalizados[asignado];
+  return BANCO_FACTORES[asignado] || null;
+}
+function fuentesActivasLista(){
+  return todasLasFuentes().filter(f => state.fuentesActivas[f.id]);
+}
+function esc(s){ return (s||"").toString().replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ============================== MOTOR DE CÁLCULO ============================== */
+function calcularResultados(){
+  const resultados = []; // {fuenteId, nombre, alcance, categoria, kgCO2e, calidad, esSupuesto, faltaDato, faltaFactor, incompatible}
+  fuentesActivasLista().forEach(f=>{
+    const dato = state.datosActividad[f.id];
+    const factor = factorDe(f.id);
+    const item = { fuenteId:f.id, nombre:f.nombre, alcance:f.alcance, categoria:f.categoria,
+      kgCO2e:0, calidad: dato?dato.calidad:null, esSupuesto:false, faltaDato:!dato || !dato.valor,
+      faltaFactor:!factor, incompatible:false };
+    if (dato && dato.valor && factor) {
+      if (!unidadesCompatibles(dato.unidad, factor.unidad)) {
+        item.incompatible = true;
+      } else {
+        const valorEnUnidadFactor = convertirAUnidadBase(parseFloat(dato.valor), dato.unidad, factor.unidad);
+        item.kgCO2e = valorEnUnidadFactor * factor.valor;
+        item.esSupuesto = factor.confiabilidad === "supuesto";
+      }
+    }
+    resultados.push(item);
+  });
+  return resultados;
+}
+
+function totalesPorAlcance(resultados){
+  const t = {1:0, 2:0, 3:0};
+  resultados.forEach(r=>{ t[r.alcance] += r.kgCO2e; });
+  return t;
+}
+
+function calificarCalidad(resultados){
+  if (resultados.length === 0) return {score:0, etiqueta:"Sin datos"};
+  const conSoporte = resultados.filter(r=>{
+    const d = state.datosActividad[r.fuenteId];
+    return d && d.origen && d.origen !== "estimacion";
+  }).length;
+  const conFactorOficial = resultados.filter(r=>{
+    const f = factorDe(r.fuenteId);
+    return f && f.confiabilidad !== "supuesto";
+  }).length;
+  const documentadas = resultados.filter(r=>{
+    const d = state.datosActividad[r.fuenteId];
+    return d && d.comentario && d.comentario.trim().length > 0;
+  }).length;
+  const sinBloqueos = resultados.filter(r=> !r.faltaDato && !r.faltaFactor && !r.incompatible).length;
+
+  const pctSoporte = conSoporte / resultados.length;
+  const pctFactorOficial = conFactorOficial / resultados.length;
+  const pctDocumentado = documentadas / resultados.length;
+  const pctCompleto = sinBloqueos / resultados.length;
+
+  const score = ((pctSoporte + pctFactorOficial + pctDocumentado + pctCompleto) / 4) * 5;
+  let etiqueta = "Baja";
+  if (score >= 4) etiqueta = "Alta";
+  else if (score >= 2.5) etiqueta = "Media";
+  return {score: Math.round(score*10)/10, etiqueta, pctSoporte, pctFactorOficial, pctDocumentado, pctCompleto};
+}
+
+/* ============================== RENDER: NAV ============================== */
+function renderNav(){
+  const nav = document.getElementById("stepsNav");
+  nav.innerHTML = "";
+  STEP_LABELS.forEach((label, i)=>{
+    const b = document.createElement("button");
+    b.textContent = (i+1)+". "+label;
+    if (i === state.step) b.classList.add("active");
+    else if (i < state.step) b.classList.add("done");
+    b.onclick = ()=>{ state.step = i; guardarEstado(); render(); };
+    nav.appendChild(b);
+  });
+}
+
+/* ============================== RENDER: PASOS ============================== */
+function render(){
+  renderNav();
+  const c = document.getElementById("stepContainer");
+  c.innerHTML = "";
+  const steps = [
+    renderBienvenida, renderOrganizacion, renderLimites, renderAlcances, renderFuentes,
+    renderDatosActividad, renderFactores, renderResultados, renderDashboard, renderPlanGestion,
+    renderInforme
+  ];
+  steps[state.step](c);
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function panel(container, html){
+  const div = document.createElement("div");
+  div.className = "panel";
+  div.innerHTML = html;
+  container.appendChild(div);
+  return div;
+}
+
+function botonesNav(container, {atras, adelante, textoAdelante, disabledAdelante, onAdelante}){
+  const row = document.createElement("div");
+  row.className = "row-actions no-print";
+  const left = document.createElement("div");
+  if (atras !== false) {
+    const b = document.createElement("button");
+    b.className = "btn ghost";
+    b.textContent = "← Atrás";
+    b.onclick = ()=>{ state.step--; guardarEstado(); render(); };
+    left.appendChild(b);
+  }
+  const right = document.createElement("div");
+  if (adelante !== false) {
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.textContent = textoAdelante || "Continuar →";
+    b.disabled = !!disabledAdelante;
+    b.onclick = ()=>{
+      if (onAdelante) onAdelante();
+      state.step++; guardarEstado(); render();
+    };
+    right.appendChild(b);
+  }
+  row.appendChild(left); row.appendChild(right);
+  container.appendChild(row);
+}
+
+/* --- Paso 0: Bienvenida --- */
+function renderBienvenida(c){
+  panel(c, `
+    <h2>Bienvenido a tu Inventario GEI Exprés</h2>
+    <p>Esta herramienta te guía paso a paso para construir el inventario de emisiones de gases de efecto invernadero de tu organización, bajo el enfoque del GHG Protocol y la ISO 14064-1.</p>
+    <p><strong>Tiempo estimado:</strong> 30–50 minutos para Alcance 1 y 2. El Alcance 3 en esta versión cubre solo 3 categorías simplificadas (viajes, desplazamiento de empleados, residuos), pensadas como una primera aproximación.</p>
+    <p><strong>Lo que esta herramienta NO es:</strong> no es un inventario verificado, certificado ni auditado. Es un cálculo asistido y trazable a partir de la información y los factores de emisión que tú aportas o seleccionas.</p>
+    <h3>Cómo funciona el cálculo</h3>
+    <p class="hint">Emisiones (kgCO₂e) = Dato de actividad × Factor de emisión. Cada resultado queda vinculado a su factor de origen, para que puedas auditarlo en cualquier momento.</p>
+  `);
+  botonesNav(c, {atras:false, textoAdelante:"Empezar →"});
+}
+
+/* --- Paso 1: Organización --- */
+function renderOrganizacion(c){
+  const o = state.organizacion;
+  const p = panel(c, `
+    <h2>1. Registro de la organización</h2>
+    <p class="hint">Esta información define el contexto de todo el inventario.</p>
+    <div class="grid2">
+      <div><label>Nombre de la organización *</label><input id="f_nombre" type="text" value="${esc(o.nombre)}"></div>
+      <div><label>Tipo de organización *</label>
+        <select id="f_tipo">
+          ${["","Empresa privada","Entidad pública","Fundación","Institución educativa","Gremio","Pyme","Gran empresa","Proyecto","Otra"]
+            .map(t=>`<option value="${t}" ${o.tipo===t?"selected":""}>${t||"— Selecciona —"}</option>`).join("")}
+        </select>
+      </div>
+      <div><label>Sector económico *</label><input id="f_sector" type="text" value="${esc(o.sector)}" placeholder="Ej. manufactura textil, servicios logísticos..."></div>
+      <div><label>País *</label><input id="f_pais" type="text" value="${esc(o.pais)}"></div>
+      <div><label>Ciudad</label><input id="f_ciudad" type="text" value="${esc(o.ciudad)}"></div>
+      <div><label>Número de empleados</label><input id="f_empleados" type="number" min="0" value="${esc(o.nEmpleados)}"></div>
+      <div><label>Número de sedes</label><input id="f_sedes" type="number" min="0" value="${esc(o.nSedes)}"></div>
+      <div><label>Año base del inventario *</label><input id="f_anio" type="number" min="2000" max="2100" value="${esc(o.anioBase)}"></div>
+      <div><label>Periodo del inventario</label><input id="f_periodo" type="text" value="${esc(o.periodo)}" placeholder="Ej. Enero–Diciembre 2025"></div>
+      <div><label>Persona responsable</label><input id="f_responsable" type="text" value="${esc(o.responsable)}"></div>
+    </div>
+    <label>Actividad principal</label>
+    <textarea id="f_actividad">${esc(o.actividad)}</textarea>
+    <label>Principales productos o servicios</label>
+    <textarea id="f_productos">${esc(o.productos)}</textarea>
+    <div class="grid2">
+      <div><label>Nivel de madurez climática</label>
+        <select id="f_madurez">
+          ${["inicial","intermedio","avanzado"].map(m=>`<option value="${m}" ${o.madurez===m?"selected":""}>${m[0].toUpperCase()+m.slice(1)}</option>`).join("")}
+        </select>
+      </div>
+      <div><label>Esquema de reporte (si aplica)</label><input id="f_esquema" type="text" value="${esc(o.esquemaReporte)}" placeholder="GRI, ESRS, CDP, Pacto Global..."></div>
+    </div>
+    <div class="checklist" style="margin-top:12px;">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="f_prev" ${o.inventarioPrevio?"checked":""}> Ha realizado inventarios GEI anteriormente</label>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="f_metas" ${o.metasClimaticas?"checked":""}> Cuenta con metas climáticas</label>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="f_cert" ${o.certificaciones?"checked":""}> Cuenta con certificaciones ambientales</label>
+    </div>
+  `);
+  botonesNav(c, {onAdelante: ()=>{
+    o.nombre = document.getElementById("f_nombre").value;
+    o.tipo = document.getElementById("f_tipo").value;
+    o.sector = document.getElementById("f_sector").value;
+    o.pais = document.getElementById("f_pais").value;
+    o.ciudad = document.getElementById("f_ciudad").value;
+    o.nEmpleados = document.getElementById("f_empleados").value;
+    o.nSedes = document.getElementById("f_sedes").value;
+    o.anioBase = document.getElementById("f_anio").value;
+    o.periodo = document.getElementById("f_periodo").value;
+    o.responsable = document.getElementById("f_responsable").value;
+    o.actividad = document.getElementById("f_actividad").value;
+    o.productos = document.getElementById("f_productos").value;
+    o.madurez = document.getElementById("f_madurez").value;
+    o.esquemaReporte = document.getElementById("f_esquema").value;
+    o.inventarioPrevio = document.getElementById("f_prev").checked;
+    o.metasClimaticas = document.getElementById("f_metas").checked;
+    o.certificaciones = document.getElementById("f_cert").checked;
+  }});
+}
+
+/* --- Paso 2: Límites organizacionales --- */
+function renderLimites(c){
+  const l = state.limites;
+  panel(c, `
+    <h2>2. Límites organizacionales</h2>
+    <p class="hint">Define bajo qué enfoque tu organización consolida sus emisiones.</p>
+    <label>Enfoque de consolidación</label>
+    <select id="f_enfoque">
+      <option value="operacional" ${l.enfoque==="operacional"?"selected":""}>Control operacional</option>
+      <option value="financiero" ${l.enfoque==="financiero"?"selected":""}>Control financiero</option>
+      <option value="accionaria" ${l.enfoque==="accionaria"?"selected":""}>Participación accionaria</option>
+    </select>
+    <div class="grid2">
+      <div><label>Sedes / operaciones incluidas</label><textarea id="f_incluidas">${esc(l.sedesIncluidas)}</textarea></div>
+      <div><label>Sedes / operaciones excluidas</label><textarea id="f_excluidas">${esc(l.sedesExcluidas)}</textarea></div>
+    </div>
+    <label>Justificación de exclusiones</label>
+    <textarea id="f_justif">${esc(l.justificacion)}</textarea>
+    <div class="warn-box" id="descLimite" style="margin-top:16px;"></div>
+  `);
+  actualizarDescripcionLimite();
+  ["f_enfoque","f_incluidas","f_excluidas","f_justif"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", actualizarDescripcionLimite);
+  });
+  botonesNav(c, {onAdelante: ()=>{
+    l.enfoque = document.getElementById("f_enfoque").value;
+    l.sedesIncluidas = document.getElementById("f_incluidas").value;
+    l.sedesExcluidas = document.getElementById("f_excluidas").value;
+    l.justificacion = document.getElementById("f_justif").value;
+  }});
+}
+function actualizarDescripcionLimite(){
+  const enfoque = document.getElementById("f_enfoque").value;
+  const incluidas = document.getElementById("f_incluidas").value || "(sin especificar)";
+  const excluidas = document.getElementById("f_excluidas").value || "ninguna";
+  const nombreEnfoque = {operacional:"control operacional", financiero:"control financiero", accionaria:"participación accionaria"}[enfoque];
+  document.getElementById("descLimite").innerHTML =
+    `<strong>Descripción automática:</strong> El inventario se elabora bajo el enfoque de ${nombreEnfoque}. Se incluyen: ${esc(incluidas)}. Se excluyen: ${esc(excluidas)}.`;
+}
+
+/* --- Paso 3: Alcances --- */
+function renderAlcances(c){
+  const a = state.alcancesSeleccionados;
+  panel(c, `
+    <h2>3. Selección de alcances a calcular</h2>
+    <p class="hint">Alcance 1 y 2 son la base recomendada de cualquier inventario. Alcance 3, en esta versión, cubre solo 3 categorías simplificadas.</p>
+    <div class="checklist">
+      <label class="check-item"><input type="checkbox" id="a1" checked disabled>
+        <div><span class="scope-tag scope-1">Alcance 1</span> Emisiones directas (combustión propia, refrigerantes). Obligatorio.</div>
+      </label>
+      <label class="check-item"><input type="checkbox" id="a2" checked disabled>
+        <div><span class="scope-tag scope-2">Alcance 2</span> Emisiones indirectas por energía comprada (electricidad). Obligatorio.</div>
+      </label>
+      <label class="check-item"><input type="checkbox" id="a3" ${a[3]?"checked":""}>
+        <div><span class="scope-tag scope-3">Alcance 3</span> Otras emisiones indirectas — versión simplificada (viajes, desplazamiento de empleados, residuos). Opcional.</div>
+      </label>
+    </div>
+  `);
+  botonesNav(c, {onAdelante: ()=>{
+    state.alcancesSeleccionados = {1:true, 2:true, 3: document.getElementById("a3").checked};
+  }});
+}
+
+/* --- Paso 4: Fuentes de emisión --- */
+function renderFuentes(c){
+  const alcancesActivos = [1,2, state.alcancesSeleccionados[3] ? 3 : null].filter(Boolean);
+  const porCategoria = {};
+  FUENTES_CATALOGO.filter(f=>alcancesActivos.includes(f.alcance)).forEach(f=>{
+    porCategoria[f.categoria] = porCategoria[f.categoria] || [];
+    porCategoria[f.categoria].push(f);
+  });
+  let html = `<h2>4. Identificación de fuentes de emisión</h2>
+    <p class="hint">Activa las fuentes que apliquen a tu organización. Puedes desactivar cualquiera más adelante.</p>`;
+  Object.keys(porCategoria).forEach(cat=>{
+    html += `<h3>${esc(cat)}</h3><div class="checklist" style="margin-bottom:16px;">`;
+    porCategoria[cat].forEach(f=>{
+      const checked = state.fuentesActivas[f.id] ? "checked" : "";
+      html += `<label class="check-item">
+        <input type="checkbox" data-fid="${f.id}" ${checked}>
+        <div><span class="scope-tag scope-${f.alcance}">Alcance ${f.alcance}</span>${esc(f.nombre)}
+          <div class="meta">Unidad de referencia: ${f.unidad}</div>
+        </div>
+      </label>`;
+    });
+    html += `</div>`;
+  });
+  if (state.fuentesCustom.length) {
+    html += `<h3>Fuentes sugeridas por IA / personalizadas</h3><div class="checklist" style="margin-bottom:16px;">`;
+    state.fuentesCustom.forEach(f=>{
+      const checked = state.fuentesActivas[f.id] ? "checked" : "";
+      html += `<label class="check-item">
+        <input type="checkbox" data-fid="${f.id}" ${checked}>
+        <div><span class="scope-tag scope-${f.alcance}">Alcance ${f.alcance}</span>${esc(f.nombre)}
+          <div class="meta">${esc(f.categoria)} · Unidad de referencia: ${f.unidad}${f.justificacion?" — "+esc(f.justificacion):""}</div>
+        </div>
+      </label>`;
+    });
+    html += `</div>`;
+  }
+  panel(c, html);
+  const algunaActiva = ()=> fuentesActivasLista().length > 0;
+
+  const warn = document.createElement("div");
+  warn.className = "warn-box no-print";
+  warn.textContent = "Activa al menos una fuente de emisión para continuar.";
+  warn.style.display = algunaActiva() ? "none" : "block";
+  c.appendChild(warn);
+
+  const iaPanel = panel(c, `
+    <h3>Sugerencia de fuentes con IA</h3>
+    <p class="hint">PAL puede sugerir fuentes de emisión típicas de tu sector que no hayas considerado. Nunca sugiere factores de emisión, solo fuentes a evaluar.</p>
+    <button class="btn secondary no-print" id="btnSugerirFuentes" type="button">Sugerir fuentes según mi sector</button>
+    <div id="sugerenciasFuentes" style="margin-top:12px;"></div>
+  `);
+  c.insertBefore(iaPanel, warn);
+  document.getElementById("btnSugerirFuentes").onclick = async ()=>{
+    const btn = document.getElementById("btnSugerirFuentes");
+    const cont = document.getElementById("sugerenciasFuentes");
+    if (!hasAccess()) {
+      cont.innerHTML = "";
+      renderGate(cont, "Las sugerencias de fuentes con IA son parte del contenido completo del Inventario GEI Exprés.", ()=>render());
+      return;
+    }
+    btn.disabled = true;
+    cont.innerHTML = `<p class="hint">Consultando a PAL sobre fuentes típicas de tu sector…</p>`;
+    try {
+      const yaActivas = fuentesActivasLista().map(f=>f.nombre);
+      const data = await llamarIA("gei-sugerir-fuentes", {
+        sector: state.organizacion.sector || "",
+        tipoOperacion: state.organizacion.actividad || "",
+        fuentesYaActivas: yaActivas
+      });
+      const sugerencias = Array.isArray(data.sugerencias) ? data.sugerencias : [];
+      if (!sugerencias.length) {
+        cont.innerHTML = `<p class="hint">PAL no encontró fuentes adicionales relevantes — tu selección actual ya cubre bien tu sector.</p>`;
+      } else {
+        cont.innerHTML = sugerencias.map((s,i)=>`
+          <div class="check-item" style="align-items:center;">
+            <div><span class="scope-tag scope-${s.alcance||1}">Alcance ${s.alcance||1}</span>${esc(s.nombre)}
+              <div class="meta">${esc(s.categoria||"")} — ${esc(s.justificacion||"")}</div>
+            </div>
+            <button class="btn secondary no-print" style="margin-left:auto;" data-add="${i}" type="button">+ Agregar</button>
+          </div>
+        `).join("");
+        sugerencias.forEach((s,i)=>{
+          cont.querySelector(`[data-add="${i}"]`).onclick = (ev)=>{
+            const id = "ia_"+Date.now()+"_"+i;
+            state.fuentesCustom.push({id, alcance: s.alcance||1, categoria: s.categoria||"IA", nombre: s.nombre, unidad:"", justificacion: s.justificacion||""});
+            state.fuentesActivas[id] = true;
+            guardarEstado();
+            render();
+          };
+        });
+      }
+    } catch(e) {
+      cont.innerHTML = `<p class="hint" style="color:var(--red)">No fue posible obtener sugerencias en este momento. Intenta de nuevo.</p>`;
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  botonesNav(c, {disabledAdelante: !algunaActiva()});
+  const btnAdelante = c.querySelector(".row-actions .btn:not(.ghost)");
+
+  document.querySelectorAll("[data-fid]").forEach(chk=>{
+    chk.checked = !!state.fuentesActivas[chk.dataset.fid];
+    chk.onchange = ()=>{
+      state.fuentesActivas[chk.dataset.fid] = chk.checked;
+      guardarEstado();
+      const activa = algunaActiva();
+      warn.style.display = activa ? "none" : "block";
+      if (btnAdelante) btnAdelante.disabled = !activa;
+    };
+  });
+}
+
+/* --- Paso 5: Datos de actividad --- */
+function renderDatosActividad(c){
+  const fuentes = fuentesActivasLista();
+  let html = `<h2>5. Captura de datos de actividad</h2>
+    <p class="hint">Ingresa el dato de actividad de cada fuente activa, en la unidad que tengas disponible.</p>`;
+  panel(c, html);
+  const cont = document.createElement("div");
+  fuentes.forEach(f=>{
+    const d = state.datosActividad[f.id] || {valor:"", unidad:f.unidad, calidad:"media", origen:"factura", comentario:""};
+    const card = document.createElement("div");
+    card.className = "fuente-card";
+    card.innerHTML = `
+      <h3><span class="scope-tag scope-${f.alcance}">Alcance ${f.alcance}</span>${esc(f.nombre)}</h3>
+      <div class="fila">
+        <div><label>Valor</label><input type="number" step="any" min="0" class="dv" data-fid="${f.id}" value="${esc(d.valor)}"></div>
+        <div><label>Unidad</label><input type="text" class="du" data-fid="${f.id}" value="${esc(d.unidad)}"></div>
+        <div><label>Calidad del dato</label>
+          <select class="dc" data-fid="${f.id}">
+            ${["alta","media","baja"].map(q=>`<option value="${q}" ${d.calidad===q?"selected":""}>${q[0].toUpperCase()+q.slice(1)}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div class="fila" style="margin-top:10px;">
+        <div><label>Origen del dato</label>
+          <select class="do" data-fid="${f.id}">
+            ${[["factura","Factura"],["medidor","Medidor"],["estimacion","Estimación"],["erp","Sistema ERP"],["proveedor","Declaración del proveedor"],["otro","Otro"]]
+              .map(([v,t])=>`<option value="${v}" ${d.origen===v?"selected":""}>${t}</option>`).join("")}
+          </select>
+        </div>
+        <div style="grid-column: span 2;"><label>Comentario / supuesto (opcional)</label><input type="text" class="dcom" data-fid="${f.id}" value="${esc(d.comentario)}"></div>
+      </div>
+    `;
+    cont.appendChild(card);
+  });
+  document.getElementById("stepContainer").appendChild(cont);
+
+  function leerFormulario(){
+    fuentes.forEach(f=>{
+      const valor = cont.querySelector(`.dv[data-fid="${f.id}"]`).value;
+      const unidad = cont.querySelector(`.du[data-fid="${f.id}"]`).value;
+      const calidad = cont.querySelector(`.dc[data-fid="${f.id}"]`).value;
+      const origen = cont.querySelector(`.do[data-fid="${f.id}"]`).value;
+      const comentario = cont.querySelector(`.dcom[data-fid="${f.id}"]`).value;
+      state.datosActividad[f.id] = {valor, unidad, calidad, origen, comentario};
+    });
+  }
+  botonesNav(c, {onAdelante: leerFormulario});
+}
+
+/* --- Paso 6: Factores de emisión --- */
+function renderFactores(c){
+  const fuentes = fuentesActivasLista();
+  panel(c, `<h2>6. Selección de factores de emisión</h2>
+    <p class="hint">Selecciona un factor del banco embebido o carga uno propio con su ficha completa. Ningún factor es generado automáticamente sin que tú lo confirmes.</p>`);
+  const cont = document.createElement("div");
+  fuentes.forEach(f=>{
+    const asignado = state.factoresAsignados[f.id] || f.factorSugerido || "";
+    const factor = (state.factoresPersonalizados[asignado]) || BANCO_FACTORES[asignado];
+    const card = document.createElement("div");
+    card.className = "fuente-card";
+    const opciones = Object.values(BANCO_FACTORES).map(bf=>
+      `<option value="${bf.id}" ${asignado===bf.id?"selected":""}>${esc(bf.nombre)} — ${bf.valor} kgCO2e/${bf.unidad}</option>`
+    ).join("");
+    const opcionesPersonalizadas = Object.values(state.factoresPersonalizados).map(pf=>
+      `<option value="${pf.id}" ${asignado===pf.id?"selected":""}>[Propio] ${esc(pf.nombre)} — ${pf.valor} kgCO2e/${pf.unidad}</option>`
+    ).join("");
+    card.innerHTML = `
+      <h3><span class="scope-tag scope-${f.alcance}">Alcance ${f.alcance}</span>${esc(f.nombre)}</h3>
+      <label>Factor de emisión</label>
+      <select class="ff" data-fid="${f.id}">
+        <option value="">— Selecciona un factor —</option>
+        ${opciones}
+        ${opcionesPersonalizadas}
+        <option value="__custom__">+ Cargar factor propio…</option>
+      </select>
+      <div class="ficha" data-fid="${f.id}"></div>
+      <div class="custom-form" data-fid="${f.id}" style="display:none; margin-top:10px; border-top:1px dashed var(--line); padding-top:10px;">
+        <div class="grid3">
+          <div><label>Nombre del factor</label><input type="text" class="cf-nombre"></div>
+          <div><label>Fuente del factor</label><input type="text" class="cf-fuente"></div>
+          <div><label>Año</label><input type="number" class="cf-anio"></div>
+          <div><label>País/región</label><input type="text" class="cf-pais"></div>
+          <div><label>Unidad</label><input type="text" class="cf-unidad" placeholder="L, kg, kWh, m3, km..."></div>
+          <div><label>Gas</label><input type="text" class="cf-gas" value="CO2e"></div>
+          <div><label>Valor (kgCO2e por unidad)</label><input type="number" step="any" class="cf-valor"></div>
+          <div><label>PCG utilizado</label><input type="text" class="cf-pcg"></div>
+          <div><label>Confiabilidad</label>
+            <select class="cf-confiab">
+              <option value="oficial">Oficial / documentado</option>
+              <option value="referencia">Referencia genérica</option>
+              <option value="supuesto">Supuesto / estimación</option>
+            </select>
+          </div>
+        </div>
+        <label>Referencia / link</label><input type="text" class="cf-ref">
+        <button class="btn secondary" type="button" style="margin-top:10px;" data-guardar="${f.id}">Guardar factor propio</button>
+      </div>
+    `;
+    cont.appendChild(card);
+  });
+  document.getElementById("stepContainer").appendChild(cont);
+
+  function mostrarFicha(fid){
+    const sel = cont.querySelector(`.ff[data-fid="${fid}"]`);
+    const fichaDiv = cont.querySelector(`.ficha[data-fid="${fid}"]`);
+    const customDiv = cont.querySelector(`.custom-form[data-fid="${fid}"]`);
+    const val = sel.value;
+    if (val === "__custom__") {
+      fichaDiv.innerHTML = "";
+      customDiv.style.display = "block";
+      return;
+    }
+    customDiv.style.display = "none";
+    const factor = state.factoresPersonalizados[val] || BANCO_FACTORES[val];
+    if (!factor) { fichaDiv.innerHTML = ""; return; }
+    const badgeClass = factor.confiabilidad === "supuesto" ? "badge-supuesto" : (factor.confiabilidad==="oficial"?"badge-alta":"badge-media");
+    fichaDiv.innerHTML = `
+      <div class="warn-box" style="margin-top:10px;">
+        <strong>${esc(factor.nombre)}</strong> — ${factor.valor} kgCO2e/${esc(factor.unidad)}
+        <span class="badge ${badgeClass}" style="margin-left:6px;">${factor.confiabilidad}</span><br>
+        Fuente: ${esc(factor.fuenteFactor)} · Año: ${esc(factor.anio)} · País: ${esc(factor.pais)} · Gas: ${esc(factor.gas)} · PCG: ${esc(factor.pcg)}
+        ${factor.confiabilidad === "supuesto" ? "<br><strong>Este es un valor de referencia/estimación — confírmalo con una fuente oficial antes de reportar formalmente.</strong>" : ""}
+      </div>`;
+  }
+  fuentes.forEach(f=>{
+    const sel = cont.querySelector(`.ff[data-fid="${f.id}"]`);
+    sel.onchange = ()=> mostrarFicha(f.id);
+    mostrarFicha(f.id);
+    const btn = cont.querySelector(`[data-guardar="${f.id}"]`);
+    btn.onclick = ()=>{
+      const card = btn.closest(".fuente-card");
+      const id = "custom_"+f.id+"_"+Date.now();
+      const nuevo = {
+        id,
+        nombre: card.querySelector(".cf-nombre").value || "Factor propio",
+        fuenteFactor: card.querySelector(".cf-fuente").value,
+        anio: card.querySelector(".cf-anio").value,
+        pais: card.querySelector(".cf-pais").value,
+        unidad: card.querySelector(".cf-unidad").value || f.unidad,
+        gas: card.querySelector(".cf-gas").value || "CO2e",
+        pcg: card.querySelector(".cf-pcg").value,
+        version: "propio",
+        referencia: card.querySelector(".cf-ref").value,
+        fechaConsulta: new Date().toISOString().slice(0,10),
+        confiabilidad: card.querySelector(".cf-confiab").value,
+        valor: parseFloat(card.querySelector(".cf-valor").value) || 0
+      };
+      state.factoresPersonalizados[id] = nuevo;
+      sel.innerHTML += `<option value="${id}" selected>[Propio] ${esc(nuevo.nombre)} — ${nuevo.valor} kgCO2e/${nuevo.unidad}</option>`;
+      sel.value = id;
+      guardarEstado();
+      mostrarFicha(f.id);
+    };
+  });
+
+  botonesNav(c, {onAdelante: ()=>{
+    fuentes.forEach(f=>{
+      const sel = cont.querySelector(`.ff[data-fid="${f.id}"]`);
+      if (sel.value && sel.value !== "__custom__") state.factoresAsignados[f.id] = sel.value;
+    });
+  }});
+}
+
+/* --- Paso 7: Resultados --- */
+function renderResultados(c){
+  const resultados = calcularResultados();
+  const totales = totalesPorAlcance(resultados);
+  const totalOrg = totales[1]+totales[2]+totales[3];
+  const calidad = calificarCalidad(resultados);
+  const badgeClass = calidad.etiqueta==="Alta"?"badge-alta":calidad.etiqueta==="Media"?"badge-media":"badge-baja";
+
+  let html = `<h2>7. Resultados y validación de calidad</h2>`;
+  const bloqueantes = resultados.filter(r=>r.faltaDato || r.faltaFactor || r.incompatible);
+  if (bloqueantes.length) {
+    html += `<div class="block-box">Faltan datos o factores en ${bloqueantes.length} fuente(s): ${bloqueantes.map(b=>esc(b.nombre)).join(", ")}. El cálculo de esas fuentes se muestra en 0 hasta que se completen.</div>`;
+  }
+  const supuestos = resultados.filter(r=>r.esSupuesto);
+  if (supuestos.length) {
+    html += `<div class="warn-box">${supuestos.length} fuente(s) usan un factor marcado como supuesto/referencia: ${supuestos.map(s=>esc(s.nombre)).join(", ")}.</div>`;
+  }
+
+  html += `<div class="totales-grid">
+    <div class="total-tile"><div class="num">${(totales[1]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 1</div></div>
+    <div class="total-tile"><div class="num">${(totales[2]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 2</div></div>
+    <div class="total-tile"><div class="num">${(totales[3]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 3</div></div>
+    <div class="total-tile"><div class="num">${(totalOrg/1000).toFixed(2)}</div><div class="lbl">tCO₂e Total</div></div>
+  </div>
+  <p><span class="badge ${badgeClass}">Calidad del inventario: ${calidad.etiqueta} (${calidad.score}/5)</span></p>
+  <table><thead><tr><th>Fuente</th><th>Alcance</th><th>kgCO₂e</th><th>% del total</th><th>Calidad dato</th></tr></thead><tbody>`;
+  resultados.sort((a,b)=>b.kgCO2e-a.kgCO2e).forEach(r=>{
+    const pct = totalOrg>0 ? (r.kgCO2e/totalOrg*100).toFixed(1) : "0.0";
+    html += `<tr><td>${esc(r.nombre)}</td><td>Alcance ${r.alcance}</td><td>${r.kgCO2e.toFixed(1)}</td><td>${pct}%</td><td>${r.calidad||"—"}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+
+  if (state.organizacion.nEmpleados) {
+    html += `<p class="hint" style="margin-top:14px;">Intensidad: ${(totalOrg/1000 / parseFloat(state.organizacion.nEmpleados)).toFixed(3)} tCO₂e por empleado.</p>`;
+  }
+
+  panel(c, html);
+  window._ultimosResultados = resultados;
+  botonesNav(c, {});
+}
+
+/* --- Paso 8: Dashboard --- */
+function renderDashboard(c){
+  const resultados = calcularResultados();
+  const totales = totalesPorAlcance(resultados);
+  const totalOrg = totales[1]+totales[2]+totales[3];
+  const p = panel(c, `<h2>8. Dashboard de emisiones</h2>
+    <div class="chart-box"><h4>Emisiones totales por alcance (tCO₂e)</h4><canvas id="chartAlcance" width="700" height="220"></canvas>
+      <p class="hint" id="interpAlcance">${state.interpretacionIA?.alcance ? esc(state.interpretacionIA.alcance) : ""}</p>
+    </div>
+    <div class="chart-box"><h4>Distribución porcentual por alcance</h4><canvas id="chartDonut" width="700" height="260"></canvas></div>
+    <div class="chart-box"><h4>Top fuentes emisoras</h4><canvas id="chartTop" width="700" height="260"></canvas>
+      <p class="hint" id="interpTop">${state.interpretacionIA?.topFuentes ? esc(state.interpretacionIA.topFuentes) : ""}</p>
+    </div>
+    <button class="btn secondary no-print" id="btnInterpretarIA" type="button">Interpretar gráficos con IA</button>
+    <div id="dashboardGate" style="margin-top:12px;"></div>
+  `);
+  botonesNav(c, {});
+  setTimeout(()=>{
+    dibujarBarras("chartAlcance", [
+      {label:"Alcance 1", valor:totales[1]/1000, color:"#b54a4a"},
+      {label:"Alcance 2", valor:totales[2]/1000, color:"#2f75b5"},
+      {label:"Alcance 3", valor:totales[3]/1000, color:"#6b5ca5"}
+    ]);
+    dibujarDonut("chartDonut", [
+      {label:"Alcance 1", valor:totales[1], color:"#b54a4a"},
+      {label:"Alcance 2", valor:totales[2], color:"#2f75b5"},
+      {label:"Alcance 3", valor:totales[3], color:"#6b5ca5"}
+    ]);
+    const top = [...resultados].sort((a,b)=>b.kgCO2e-a.kgCO2e).slice(0,8)
+      .map(r=>({label:r.nombre.length>26?r.nombre.slice(0,24)+"…":r.nombre, valor:r.kgCO2e/1000, color:"#1f4e79"}));
+    dibujarBarras("chartTop", top, true);
+  }, 0);
+
+  document.getElementById("btnInterpretarIA").onclick = async ()=>{
+    const btn = document.getElementById("btnInterpretarIA");
+    if (!hasAccess()) {
+      renderGate(document.getElementById("dashboardGate"), "La interpretación de gráficos con IA es parte del contenido completo del Inventario GEI Exprés.", ()=>render());
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "Consultando a PAL…";
+    const calidad = calificarCalidad(resultados);
+    const topFuentes = [...resultados].filter(r=>r.kgCO2e>0).sort((a,b)=>b.kgCO2e-a.kgCO2e).slice(0,5)
+      .map(r=>({nombre:r.nombre, alcance:r.alcance, tCO2e: Math.round(r.kgCO2e)/1000, porcentaje: totalOrg>0?Math.round(r.kgCO2e/totalOrg*1000)/10:0}));
+    try {
+      const data = await llamarIA("gei-explicar-resultado", {
+        sector: state.organizacion.sector || "",
+        tipoOperacion: state.organizacion.actividad || "",
+        totalesPorAlcance: {alcance1: Math.round(totales[1])/1000, alcance2: Math.round(totales[2])/1000, alcance3: Math.round(totales[3])/1000},
+        topFuentes,
+        calidad: calidad.etiqueta
+      });
+      state.interpretacionIA = { alcance: data.interpretacion_alcance || "", topFuentes: data.interpretacion_top_fuentes || "" };
+      guardarEstado();
+      document.getElementById("interpAlcance").textContent = state.interpretacionIA.alcance;
+      document.getElementById("interpTop").textContent = state.interpretacionIA.topFuentes;
+      btn.textContent = "Actualizar interpretación con IA";
+    } catch(e) {
+      btn.textContent = "No fue posible interpretar — reintentar";
+    } finally {
+      btn.disabled = false;
+    }
+  };
+}
+
+function dibujarBarras(canvasId, datos, horizontal){
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const max = Math.max(1, ...datos.map(d=>d.valor));
+  const pad = 40;
+  if (horizontal) {
+    const barH = (H - pad*2) / datos.length - 8;
+    datos.forEach((d,i)=>{
+      const y = pad + i*(barH+8);
+      const w = (d.valor/max) * (W - 220);
+      ctx.fillStyle = d.color;
+      ctx.fillRect(180, y, w, barH);
+      ctx.fillStyle = "#172033";
+      ctx.font = "11px Inter, Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(d.label, 172, y+barH*0.65);
+      ctx.textAlign = "left";
+      ctx.fillText(d.valor.toFixed(2)+" t", w+186, y+barH*0.65);
+    });
+  } else {
+    const barW = (W - pad*2) / datos.length - 30;
+    datos.forEach((d,i)=>{
+      const x = pad + i*(barW+30);
+      const h = (d.valor/max) * (H - 60);
+      ctx.fillStyle = d.color;
+      ctx.fillRect(x, H-40-h, barW, h);
+      ctx.fillStyle = "#172033";
+      ctx.font = "12px Inter, Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(d.label, x+barW/2, H-20);
+      ctx.fillText(d.valor.toFixed(2)+" t", x+barW/2, H-46-h);
+    });
+  }
+}
+
+function dibujarDonut(canvasId, datos){
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const total = datos.reduce((s,d)=>s+d.valor,0);
+  const cx = 130, cy = H/2, rOuter = 90, rInner = 50;
+  let start = -Math.PI/2;
+  if (total <= 0) {
+    ctx.fillStyle = "#647084"; ctx.font = "13px Inter, Arial"; ctx.textAlign="center";
+    ctx.fillText("Sin datos suficientes para graficar", W/2, H/2);
+    return;
+  }
+  datos.forEach(d=>{
+    const angle = (d.valor/total) * Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx, cy, rOuter, start, start+angle);
+    ctx.closePath();
+    ctx.fillStyle = d.color;
+    ctx.fill();
+    start += angle;
+  });
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath(); ctx.arc(cx,cy,rInner,0,Math.PI*2); ctx.fill();
+  ctx.globalCompositeOperation = "source-over";
+  // leyenda
+  let ly = 40;
+  datos.forEach(d=>{
+    const pct = total>0 ? (d.valor/total*100).toFixed(1) : "0";
+    ctx.fillStyle = d.color;
+    ctx.fillRect(280, ly, 12, 12);
+    ctx.fillStyle = "#172033";
+    ctx.font = "12px Inter, Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(`${d.label} — ${pct}%`, 300, ly+11);
+    ly += 24;
+  });
+}
+
+/* --- Paso 9: Plan de gestión --- */
+function renderPlanGestion(c){
+  panel(c, `<h2>9. Plan de gestión de emisiones</h2>
+    <p class="hint">Jerarquía: medir → evitar → reducir → sustituir → compensar. La compensación no reemplaza la reducción y solo debe aplicarse a emisiones residuales.</p>`);
+  if (!hasAccess()) {
+    renderGate(c, "El plan de gestión de emisiones (acciones priorizadas, sugerencias de IA y seguimiento) es parte del contenido completo del Inventario GEI Exprés.", ()=>render());
+    botonesNav(c, {textoAdelante:"Ver informe final →"});
+    return;
+  }
+  const resultados = calcularResultados().filter(r=>r.kgCO2e>0).sort((a,b)=>b.kgCO2e-a.kgCO2e);
+  const totalOrg = resultados.reduce((s,r)=>s+r.kgCO2e,0);
+  const criticas = resultados.slice(0,5);
+
+  if (!state.plan.acciones.length && criticas.length) {
+    state.plan.acciones = criticas.map(f=>({
+      fuenteId: f.fuenteId, nombre: f.nombre, alcance: f.alcance,
+      nivel: "reducir",
+      descripcion: "",
+      costo: "medio", plazo: "corto", responsable: "", indicador: "", prioridad: "media"
+    }));
+  }
+
+  let html = "";
+  if (!criticas.length) {
+    html += `<div class="warn-box">Aún no hay resultados calculados. Completa los pasos anteriores para generar el plan.</div>`;
+  } else {
+    html += `<p><strong>Fuentes priorizadas</strong> (mayor participación en el total):</p>
+    <button class="btn secondary no-print" id="btnPlanIA" type="button">Sugerir plan con IA</button>
+    <div id="planIAStatus" class="hint" style="margin-top:8px;"></div>`;
+  }
+  panel(c, html);
+
+  if (criticas.length) {
+    document.getElementById("btnPlanIA").onclick = async ()=>{
+      const btn = document.getElementById("btnPlanIA");
+      const status = document.getElementById("planIAStatus");
+      btn.disabled = true;
+      status.textContent = "Consultando a PAL sobre acciones de gestión…";
+      try {
+        const fuentesCriticas = criticas.map(f=>({nombre: f.nombre, alcance: f.alcance, categoria: f.categoria, porcentaje: Math.round(f.kgCO2e/totalOrg*1000)/10}));
+        const data = await llamarIA("gei-plan-gestion", {
+          sector: state.organizacion.sector || "",
+          tipoOperacion: state.organizacion.actividad || "",
+          tamano: state.organizacion.nEmpleados || "",
+          fuentesCriticas
+        });
+        const acciones = Array.isArray(data.acciones) ? data.acciones : [];
+        acciones.forEach(sug=>{
+          const a = state.plan.acciones.find(x=>x.nombre === sug.fuenteNombre);
+          if (a) {
+            a.nivel = sug.nivel || a.nivel;
+            a.descripcion = sug.descripcion || a.descripcion;
+            a.dificultad = sug.dificultad || "";
+            a.beneficios = sug.beneficiosAdicionales || "";
+          }
+        });
+        guardarEstado();
+        status.textContent = "Plan actualizado con sugerencias de IA.";
+        render();
+      } catch(e) {
+        status.textContent = "No fue posible generar el plan en este momento. Intenta de nuevo.";
+        btn.disabled = false;
+      }
+    };
+  }
+
+  const cont = document.createElement("div");
+  state.plan.acciones.forEach((a, idx)=>{
+    const pct = totalOrg>0 ? ((resultados.find(r=>r.fuenteId===a.fuenteId)?.kgCO2e||0)/totalOrg*100).toFixed(1) : "0";
+    const card = document.createElement("div");
+    card.className = "accion-card nivel-"+a.nivel;
+    card.innerHTML = `
+      <h3><span class="scope-tag scope-${a.alcance}">Alcance ${a.alcance}</span>${esc(a.nombre)} <span class="tag-pill">${pct}% del total</span></h3>
+      <div class="fila" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div><label>Nivel de acción</label>
+          <select class="p-nivel" data-idx="${idx}">
+            ${NIVELES_GESTION.map(n=>`<option value="${n.id}" ${a.nivel===n.id?"selected":""}>${n.nombre}</option>`).join("")}
+          </select>
+        </div>
+        <div><label>Costo estimado</label>
+          <select class="p-costo" data-idx="${idx}">
+            ${["bajo","medio","alto"].map(v=>`<option value="${v}" ${a.costo===v?"selected":""}>${v[0].toUpperCase()+v.slice(1)}</option>`).join("")}
+          </select>
+        </div>
+        <div><label>Plazo</label>
+          <select class="p-plazo" data-idx="${idx}">
+            ${["corto","mediano","largo"].map(v=>`<option value="${v}" ${a.plazo===v?"selected":""}>${v[0].toUpperCase()+v.slice(1)}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <label>Descripción de la acción</label>
+      <textarea class="p-desc" data-idx="${idx}" placeholder="Ej. Sustituir el generador diésel por conexión a red renovable certificada...">${esc(a.descripcion)}</textarea>
+      <div class="fila" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><label>Responsable sugerido</label><input type="text" class="p-resp" data-idx="${idx}" value="${esc(a.responsable)}"></div>
+        <div><label>Indicador de seguimiento</label><input type="text" class="p-ind" data-idx="${idx}" value="${esc(a.indicador)}"></div>
+      </div>
+      ${(a.dificultad || a.beneficios) ? `<div class="tags" style="margin-top:8px;">
+        ${a.dificultad?`<span class="tag-pill">Dificultad (IA): ${esc(a.dificultad)}</span>`:""}
+        ${a.beneficios?`<span class="tag-pill">Beneficio adicional: ${esc(a.beneficios)}</span>`:""}
+      </div>` : ""}
+    `;
+    cont.appendChild(card);
+  });
+  document.getElementById("stepContainer").appendChild(cont);
+
+  cont.querySelectorAll("select,textarea,input").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const idx = el.dataset.idx;
+      const a = state.plan.acciones[idx];
+      if (el.classList.contains("p-nivel")) a.nivel = el.value;
+      if (el.classList.contains("p-costo")) a.costo = el.value;
+      if (el.classList.contains("p-plazo")) a.plazo = el.value;
+      if (el.classList.contains("p-desc")) a.descripcion = el.value;
+      if (el.classList.contains("p-resp")) a.responsable = el.value;
+      if (el.classList.contains("p-ind")) a.indicador = el.value;
+      guardarEstado();
+    });
+  });
+
+  botonesNav(c, {textoAdelante:"Ver informe final →"});
+}
+
+/* --- Paso 10: Informe final --- */
+function renderInforme(c){
+  const o = state.organizacion;
+  const l = state.limites;
+  const resultados = calcularResultados();
+  const totales = totalesPorAlcance(resultados);
+  const totalOrg = totales[1]+totales[2]+totales[3];
+  const calidad = calificarCalidad(resultados);
+  const activas = fuentesActivasLista();
+  const conResultado = resultados.filter(r=>r.kgCO2e>0).sort((a,b)=>b.kgCO2e-a.kgCO2e);
+  const alcanceMax = totales[1]>=totales[2] && totales[1]>=totales[3] ? "Alcance 1" : (totales[2]>=totales[3] ? "Alcance 2" : "Alcance 3");
+  const fechaGeneracion = new Date().toLocaleDateString("es-CO", {year:"numeric", month:"long", day:"numeric"});
+
+  const factoresUsados = {};
+  activas.forEach(f=>{ const fac = factorDe(f.id); if (fac) factoresUsados[fac.id] = fac; });
+
+  const porPlazo = {corto:[], mediano:[], largo:[]};
+  state.plan.acciones.forEach(a=>{ if (porPlazo[a.plazo]) porPlazo[a.plazo].push(a); });
+
+  if (!hasAccess()) {
+    panel(c, `
+      <div style="text-align:center; padding: 20px 0;">
+        <h2>Inventario de Emisiones de Gases de Efecto Invernadero</h2>
+        <p style="font-size:1.1rem; font-weight:700; color:var(--navy);">${esc(o.nombre)||"(Organización sin nombre)"}</p>
+        <p class="hint">Periodo: ${esc(o.periodo)||"—"} · Año base: ${esc(o.anioBase)||"—"}</p>
+      </div>
+      <div class="totales-grid">
+        <div class="total-tile"><div class="num">${(totales[1]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 1</div></div>
+        <div class="total-tile"><div class="num">${(totales[2]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 2</div></div>
+        <div class="total-tile"><div class="num">${(totales[3]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 3</div></div>
+        <div class="total-tile"><div class="num">${(totalOrg/1000).toFixed(2)}</div><div class="lbl">tCO₂e Total</div></div>
+      </div>
+      <p class="hint">Calidad del inventario: ${calidad.etiqueta} (${calidad.score}/5)</p>
+    `);
+    renderGate(c, "El informe completo (resumen ejecutivo redactado con IA, metodología, análisis, plan de gestión, recomendaciones y anexos) y las exportaciones a PDF/Excel se desbloquean con el acceso completo.", ()=>render());
+    botonesNav(c, {adelante:false});
+    return;
+  }
+
+  let html = `
+    <div style="text-align:center; padding: 30px 0;">
+      <h2 style="font-size:1.6rem;">Inventario de Emisiones de Gases de Efecto Invernadero</h2>
+      <p style="font-size:1.1rem; font-weight:700; color:var(--navy);">${esc(o.nombre)||"(Organización sin nombre)"}</p>
+      <p class="hint">Periodo: ${esc(o.periodo)||"—"} · Año base: ${esc(o.anioBase)||"—"}</p>
+      <p class="hint">Fecha de generación: ${fechaGeneracion}</p>
+      <p class="hint">Elaborado con apoyo de Inventario GEI Exprés — Projectability / Soluciones PAL S.A.S.</p>
+    </div>
+    <div class="disclaimer">${document.getElementById("disclaimerBox").innerHTML}</div>
+
+    <h2>Resumen ejecutivo</h2>
+    <button class="btn secondary no-print" id="btnInformeIA" type="button" style="margin-bottom:10px;">${state.informeIA ? "Regenerar redacción con IA" : "Redactar resumen y lectura estratégica con IA"}</button>
+    <div id="informeIAStatus" class="hint no-print"></div>
+    <div id="resumenEjecutivoTexto">
+    <p>${state.informeIA?.resumen_ejecutivo ? esc(state.informeIA.resumen_ejecutivo) : `La organización ${esc(o.nombre)||"evaluada"} registró un total de <strong>${(totalOrg/1000).toFixed(2)} tCO₂e</strong> en el periodo ${esc(o.periodo)||"reportado"}, distribuidas en Alcance 1 (${(totales[1]/1000).toFixed(2)} tCO₂e), Alcance 2 (${(totales[2]/1000).toFixed(2)} tCO₂e)${state.alcancesSeleccionados[3]?` y Alcance 3 simplificado (${(totales[3]/1000).toFixed(2)} tCO₂e)`:""}. El ${alcanceMax} concentra la mayor participación. La calidad general del inventario se calificó como <strong>${calidad.etiqueta}</strong> (${calidad.score}/5), según cobertura de soporte documental, uso de factores oficiales y documentación de supuestos.`}</p>
+    ${conResultado.length ? `<p><strong>Principal fuente emisora:</strong> ${esc(conResultado[0].nombre)}, con ${(conResultado[0].kgCO2e/1000).toFixed(2)} tCO₂e (${(conResultado[0].kgCO2e/totalOrg*100).toFixed(1)}% del total).</p>` : ""}
+    </div>
+    ${state.informeIA?.lectura_estrategica ? `<h3>Lectura estratégica</h3><p>${esc(state.informeIA.lectura_estrategica)}</p>` : ""}
+
+    <h2>Información general de la organización</h2>
+    <table><tbody>
+      <tr><th>Tipo</th><td>${esc(o.tipo)||"—"}</td></tr>
+      <tr><th>Sector</th><td>${esc(o.sector)||"—"}</td></tr>
+      <tr><th>País / Ciudad</th><td>${esc(o.pais)} / ${esc(o.ciudad)||"—"}</td></tr>
+      <tr><th>Empleados / Sedes</th><td>${esc(o.nEmpleados)||"—"} / ${esc(o.nSedes)||"—"}</td></tr>
+      <tr><th>Actividad principal</th><td>${esc(o.actividad)||"—"}</td></tr>
+    </tbody></table>
+
+    <h2>Metodología</h2>
+    <p>Elaborado con referencia a GHG Protocol Corporate Standard, GHG Protocol Scope 2 Guidance, ISO 14064-1 y, cuando aplica, directrices IPCC. Enfoque de consolidación: <strong>${esc(l.enfoque)}</strong>. Sedes incluidas: ${esc(l.sedesIncluidas)||"(sin especificar)"}. Sedes excluidas: ${esc(l.sedesExcluidas)||"ninguna"}. ${l.justificacion?("Justificación de exclusiones: "+esc(l.justificacion)):""}</p>
+    <p>Alcances calculados: Alcance 1 y 2${state.alcancesSeleccionados[3]?", y Alcance 3 (versión simplificada: viajes de negocios, desplazamiento de empleados, residuos)":""}.</p>
+
+    <h2>Resultados del inventario</h2>
+    <div class="totales-grid">
+      <div class="total-tile"><div class="num">${(totales[1]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 1</div></div>
+      <div class="total-tile"><div class="num">${(totales[2]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 2</div></div>
+      <div class="total-tile"><div class="num">${(totales[3]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 3</div></div>
+      <div class="total-tile"><div class="num">${(totalOrg/1000).toFixed(2)}</div><div class="lbl">tCO₂e Total</div></div>
+    </div>
+    <table><thead><tr><th>Fuente</th><th>Alcance</th><th>tCO₂e</th><th>% del total</th></tr></thead><tbody>
+    ${conResultado.map(r=>`<tr><td>${esc(r.nombre)}</td><td>Alcance ${r.alcance}</td><td>${(r.kgCO2e/1000).toFixed(3)}</td><td>${(r.kgCO2e/totalOrg*100).toFixed(1)}%</td></tr>`).join("")}
+    </tbody></table>
+    ${o.nEmpleados ? `<p class="hint">Intensidad: ${(totalOrg/1000/parseFloat(o.nEmpleados)).toFixed(3)} tCO₂e por empleado.</p>` : ""}
+
+    <h2>Calidad de datos e incertidumbre</h2>
+    <p><span class="badge ${calidad.etiqueta==="Alta"?"badge-alta":calidad.etiqueta==="Media"?"badge-media":"badge-baja"}">Calidad general: ${calidad.etiqueta} (${calidad.score}/5)</span></p>
+    <p class="hint">Cobertura con soporte documental: ${Math.round((calidad.pctSoporte||0)*100)}% · Emisiones con factor oficial (no supuesto): ${Math.round((calidad.pctFactorOficial||0)*100)}% · Fuentes con supuestos documentados: ${Math.round((calidad.pctDocumentado||0)*100)}%.</p>
+    <p><strong>Limitaciones:</strong> este inventario cubre únicamente las fuentes activadas por el usuario y no incluye verificación independiente. Los factores marcados como "referencia" o "supuesto" deben confirmarse contra la fuente oficial vigente antes de un reporte formal. El Alcance 3, cuando se incluye, cubre solo 3 categorías simplificadas de las 15 definidas por el GHG Protocol Scope 3 Standard.</p>
+
+    <h2>Plan de gestión de emisiones</h2>
+    <p class="hint">Jerarquía: medir → evitar → reducir → sustituir → compensar. La compensación no reemplaza la reducción.</p>
+    ${state.plan.acciones.map(a=>`
+      <div class="accion-card nivel-${a.nivel}">
+        <strong>${esc(a.nombre)}</strong> — ${NIVELES_GESTION.find(n=>n.id===a.nivel)?.nombre||a.nivel}
+        <div class="tags">
+          <span class="tag-pill">Costo: ${a.costo}</span>
+          <span class="tag-pill">Plazo: ${a.plazo}</span>
+          ${a.responsable?`<span class="tag-pill">Responsable: ${esc(a.responsable)}</span>`:""}
+        </div>
+        ${a.descripcion?`<p style="margin:8px 0 0;">${esc(a.descripcion)}</p>`:""}
+      </div>
+    `).join("") || "<p class=\"hint\">Aún no se han definido acciones en el paso anterior.</p>"}
+
+    <h2>Recomendaciones por plazo</h2>
+    <div class="grid3">
+      <div><h3>Corto plazo</h3><ul>${(state.informeIA?.recomendaciones_finales?.corto_plazo || porPlazo.corto.map(a=>a.nombre)).map(t=>`<li>${esc(t)}</li>`).join("")||"<li class='hint'>—</li>"}</ul></div>
+      <div><h3>Mediano plazo</h3><ul>${(state.informeIA?.recomendaciones_finales?.mediano_plazo || porPlazo.mediano.map(a=>a.nombre)).map(t=>`<li>${esc(t)}</li>`).join("")||"<li class='hint'>—</li>"}</ul></div>
+      <div><h3>Largo plazo</h3><ul>${(state.informeIA?.recomendaciones_finales?.largo_plazo || porPlazo.largo.map(a=>a.nombre)).map(t=>`<li>${esc(t)}</li>`).join("")||"<li class='hint'>—</li>"}</ul></div>
+    </div>
+
+    <h2>Anexos — factores de emisión utilizados</h2>
+    <table><thead><tr><th>Factor</th><th>Valor</th><th>Fuente</th><th>Confiabilidad</th></tr></thead><tbody>
+    ${Object.values(factoresUsados).map(f=>`<tr><td>${esc(f.nombre)}</td><td>${f.valor} kgCO2e/${esc(f.unidad)}</td><td>${esc(f.fuenteFactor)}</td><td>${esc(f.confiabilidad)}</td></tr>`).join("")}
+    </tbody></table>
+  `;
+  panel(c, html);
+
+  document.getElementById("btnInformeIA").onclick = async ()=>{
+    const btn = document.getElementById("btnInformeIA");
+    const status = document.getElementById("informeIAStatus");
+    btn.disabled = true;
+    status.textContent = "Consultando a PAL para redactar el informe…";
+    try {
+      const topFuentesIA = conResultado.slice(0,8).map(r=>({nombre:r.nombre, alcance:r.alcance, porcentaje: Math.round(r.kgCO2e/totalOrg*1000)/10}));
+      const data = await llamarIA("gei-informe", {
+        organizacion: {nombre:o.nombre, tipo:o.tipo, sector:o.sector, pais:o.pais, periodo:o.periodo, anioBase:o.anioBase, nEmpleados:o.nEmpleados},
+        totales: {alcance1: Math.round(totales[1])/1000, alcance2: Math.round(totales[2])/1000, alcance3: Math.round(totales[3])/1000, total: Math.round(totalOrg)/1000},
+        topFuentes: topFuentesIA,
+        calidad: {etiqueta: calidad.etiqueta, score: calidad.score},
+        planAcciones: state.plan.acciones.map(a=>({nombre:a.nombre, nivel:a.nivel, plazo:a.plazo}))
+      });
+      state.informeIA = {
+        resumen_ejecutivo: data.resumen_ejecutivo || "",
+        lectura_estrategica: data.lectura_estrategica || "",
+        recomendaciones_finales: data.recomendaciones_finales || null
+      };
+      guardarEstado();
+      render();
+    } catch(e) {
+      status.textContent = "No fue posible redactar el informe con IA en este momento. Intenta de nuevo.";
+      btn.disabled = false;
+    }
+  };
+
+  botonesNav(c, {adelante:false});
+  const finalRow = document.createElement("div");
+  finalRow.className = "row-actions no-print";
+  finalRow.innerHTML = `<div id="exportStatus" class="hint"></div><div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="btn secondary" id="btnImprimir">Imprimir / Exportar PDF</button>
+    <button class="btn secondary" id="btnExcel">Exportar Excel</button>
+    <button class="btn" id="btnJSON">Descargar respaldo (JSON)</button>
+  </div>`;
+  document.getElementById("stepContainer").appendChild(finalRow);
+  document.getElementById("btnImprimir").onclick = ()=>window.print();
+  document.getElementById("btnExcel").onclick = ()=>exportarExcel(o, resultados, totales, totalOrg, calidad, factoresUsados);
+  document.getElementById("btnJSON").onclick = ()=>{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "inventario-gei-"+(state.organizacion.nombre||"organizacion").replace(/\s+/g,"_")+".json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+}
+
+/* ============================== EXPORTACIÓN EXCEL (SheetJS, carga diferida) ============================== */
+let xlsxLoading = false;
+function loadXLSX(callback){
+  if (window.XLSX) return callback();
+  if (xlsxLoading) return;
+  xlsxLoading = true;
+  const s = document.createElement("script");
+  s.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+  s.onload = ()=>{ xlsxLoading = false; callback(); };
+  s.onerror = ()=>{
+    xlsxLoading = false;
+    const st = document.getElementById("exportStatus");
+    if (st) st.textContent = "No fue posible cargar el módulo de exportación a Excel. Verifica tu conexión e intenta de nuevo.";
+  };
+  document.head.appendChild(s);
+}
+
+function exportarExcel(o, resultados, totales, totalOrg, calidad, factoresUsados){
+  const status = document.getElementById("exportStatus");
+  status.textContent = "Preparando archivo Excel…";
+  loadXLSX(()=>{
+    const wb = XLSX.utils.book_new();
+
+    const wsOrg = XLSX.utils.json_to_sheet([{
+      Nombre: o.nombre, Tipo: o.tipo, Sector: o.sector, País: o.pais, Ciudad: o.ciudad,
+      Empleados: o.nEmpleados, Sedes: o.nSedes, "Año base": o.anioBase, Periodo: o.periodo,
+      "Calidad del inventario": calidad.etiqueta, "Score de calidad (1-5)": calidad.score,
+      "Total tCO2e": Math.round(totalOrg)/1000, "Alcance 1 tCO2e": Math.round(totales[1])/1000,
+      "Alcance 2 tCO2e": Math.round(totales[2])/1000, "Alcance 3 tCO2e": Math.round(totales[3])/1000
+    }]);
+    XLSX.utils.book_append_sheet(wb, wsOrg, "Organización");
+
+    const wsResultados = XLSX.utils.json_to_sheet(resultados.map(r=>{
+      const dato = state.datosActividad[r.fuenteId] || {};
+      const factor = factorDe(r.fuenteId);
+      return {
+        Fuente: r.nombre, Alcance: r.alcance, Categoría: r.categoria,
+        "Valor actividad": dato.valor || "", "Unidad actividad": dato.unidad || "",
+        "Calidad dato": dato.calidad || "", "Origen dato": dato.origen || "",
+        "Factor usado": factor ? factor.nombre : "", "Valor factor (kgCO2e/unidad)": factor ? factor.valor : "",
+        "Confiabilidad factor": factor ? factor.confiabilidad : "",
+        "kgCO2e": Number(r.kgCO2e.toFixed(2)), "tCO2e": Number((r.kgCO2e/1000).toFixed(4)),
+        "% del total": totalOrg>0 ? Number((r.kgCO2e/totalOrg*100).toFixed(1)) : 0
+      };
+    }));
+    XLSX.utils.book_append_sheet(wb, wsResultados, "Base de cálculo");
+
+    const wsFactores = XLSX.utils.json_to_sheet(Object.values(factoresUsados).map(f=>({
+      Nombre: f.nombre, "Fuente del factor": f.fuenteFactor, Año: f.anio, País: f.pais,
+      Unidad: f.unidad, Gas: f.gas, PCG: f.pcg, "Valor (kgCO2e/unidad)": f.valor,
+      Confiabilidad: f.confiabilidad, Referencia: f.referencia || ""
+    })));
+    XLSX.utils.book_append_sheet(wb, wsFactores, "Factores de emisión");
+
+    const wsPlan = XLSX.utils.json_to_sheet(state.plan.acciones.map(a=>({
+      Fuente: a.nombre, Alcance: a.alcance, Nivel: a.nivel, Costo: a.costo, Plazo: a.plazo,
+      Descripción: a.descripcion, Responsable: a.responsable, Indicador: a.indicador,
+      "Dificultad (IA)": a.dificultad || "", "Beneficio adicional (IA)": a.beneficios || ""
+    })));
+    XLSX.utils.book_append_sheet(wb, wsPlan, "Plan de gestión");
+
+    const nombreArchivo = `Inventario-GEI-${(o.nombre || "organizacion").replace(/[^a-z0-9]+/gi, "_")}.xlsx`;
+    XLSX.writeFile(wb, nombreArchivo);
+    status.textContent = "";
+  });
+}
+
+/* ============================== INIT ============================== */
+render();
+
+})();
+</script>
+</body>
+</html>

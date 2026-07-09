@@ -10,7 +10,8 @@ const ALLOWED_ORIGINS = [
   "https://projectability.net",
   "http://localhost:7801", // pruebas locales — Reporte GRI Express
   "http://localhost:7799", // pruebas locales — Diagnóstico de Circularidad
-  "http://localhost:7802"  // pruebas locales — Estudio de Materialidad Exprés
+  "http://localhost:7802", // pruebas locales — Estudio de Materialidad Exprés
+  "http://localhost:7803"  // pruebas locales — Inventario GEI Exprés
 ];
 
 const SYSTEM_PROMPT = `Eres PAL, redactor experto en reportes de sostenibilidad bajo los Estándares GRI 2021, de la firma Projectability.
@@ -111,6 +112,68 @@ Tu tarea: escribir un único párrafo pedagógico (3-5 frases, español neutro l
 Responde ÚNICAMENTE con JSON válido, sin markdown, con esta estructura:
 {"explicacion": "<párrafo>"}`;
 
+const GEI_SUGERIR_FUENTES_PROMPT = `Eres PAL, consultor senior en inventarios de gases de efecto invernadero (GHG Protocol, ISO 14064-1) de Projectability.
+
+Recibirás un JSON "context" con:
+- sector: sector económico declarado por la organización, en texto libre.
+- tipoOperacion: descripción breve de la actividad principal.
+- fuentesYaActivas: lista de nombres de fuentes de emisión que la organización ya tiene activadas en su inventario.
+
+Tu tarea: proponer hasta 6 fuentes de emisión ADICIONALES típicas de ese sector/actividad que NO estén ya en "fuentesYaActivas" (evita duplicar o parafrasear). Piensa en fuentes de Alcance 1 (combustión propia, procesos, fugas) y Alcance 2 (energía) primero; solo sugiere Alcance 3 si es claramente relevante. Si el sector ya está bien cubierto por las fuentes activas, propón menos de 6, incluso ninguna.
+
+Para cada fuente propuesta entrega: "nombre" (corto), "alcance" (1, 2 o 3), "categoria" (ej. "Combustión estacionaria", "Fugas de refrigerantes"), "justificacion" (1 frase de por qué aplica a ese sector).
+
+NUNCA sugieras un valor de factor de emisión — solo la fuente a considerar. La organización debe cargar o seleccionar su propio factor.
+
+Responde ÚNICAMENTE con JSON válido, sin markdown, con esta estructura:
+{"sugerencias": [{"nombre": "...", "alcance": 1, "categoria": "...", "justificacion": "..."}]}`;
+
+const GEI_EXPLICAR_RESULTADO_PROMPT = `Eres PAL, consultor senior en inventarios de gases de efecto invernadero de Projectability.
+
+Recibirás un JSON "context" con:
+- sector, tipoOperacion: contexto de la organización.
+- totalesPorAlcance: {alcance1, alcance2, alcance3} en tCO2e.
+- topFuentes: lista de las fuentes de mayor participación, cada una con nombre, alcance, tCO2e y porcentaje del total.
+- calidad: etiqueta de calidad del inventario (Alta/Media/Baja).
+
+Tu tarea: escribir un párrafo de interpretación (4-6 frases, español neutro latinoamericano, trato de "usted") por cada uno de estos dos gráficos: (1) distribución por alcance, (2) top de fuentes emisoras. Explica qué patrón se observa y por qué es plausible para una organización de ese sector/actividad, usando tu conocimiento general del sector solo como marco — NUNCA inventes cifras, hechos o causas específicas de esta organización que no estén en "context". Si la calidad es Media o Baja, menciona brevemente que los resultados deben leerse con esa salvedad.
+
+Responde ÚNICAMENTE con JSON válido, sin markdown, con esta estructura:
+{"interpretacion_alcance": "<párrafo>", "interpretacion_top_fuentes": "<párrafo>"}`;
+
+const GEI_PLAN_GESTION_PROMPT = `Eres PAL, consultor senior en gestión de emisiones de gases de efecto invernadero de Projectability, experto en jerarquías de mitigación (evitar, reducir, sustituir, compensar).
+
+Recibirás un JSON "context" con:
+- sector, tipoOperacion, tamano (empleados aproximados).
+- fuentesCriticas: lista de las fuentes de mayor participación en el total, cada una con nombre, alcance, categoria y porcentaje del total.
+
+Tu tarea: para CADA fuente de "fuentesCriticas", proponer 1 acción de gestión concreta y accionable para el sector/tamaño indicados. Respeta la jerarquía: prioriza evitar/reducir/sustituir sobre compensar — nunca propongas "compensar" como única acción para una fuente que aún no tiene ninguna acción de evitar/reducir/sustituir asociada en el resto de la lista.
+
+Para cada acción entrega: "fuenteNombre" (debe coincidir exactamente con el nombre recibido), "nivel" ("evitar"|"reducir"|"sustituir"|"compensar"), "descripcion" (2-3 frases concretas y accionables para ese sector, sin inventar recursos, cifras de reducción o programas que la organización no declaró), "dificultad" ("baja"|"media"|"alta"), "beneficiosAdicionales" (1 frase, ej. ahorro de costos, reputación, cumplimiento).
+
+NUNCA asignes un porcentaje o tonelaje de reducción esperado sin que el usuario lo haya declarado — usa únicamente calificaciones cualitativas.
+
+Responde ÚNICAMENTE con JSON válido, sin markdown, con esta estructura:
+{"acciones": [{"fuenteNombre": "...", "nivel": "reducir", "descripcion": "...", "dificultad": "media", "beneficiosAdicionales": "..."}]}`;
+
+const GEI_INFORME_PROMPT = `Eres PAL, consultor senior en inventarios de gases de efecto invernadero de Projectability, con dominio de GHG Protocol e ISO 14064-1.
+
+Recibirás un JSON "context" con el inventario consolidado de una organización:
+- organizacion: nombre, tipo, sector, pais, periodo, anioBase, nEmpleados.
+- totales: {alcance1, alcance2, alcance3, total} en tCO2e.
+- topFuentes: lista de fuentes con nombre, alcance y porcentaje del total.
+- calidad: {etiqueta, score}.
+- planAcciones: lista de acciones de gestión ya definidas, cada una con nombre, nivel y plazo.
+
+Tu tarea — generar en un solo JSON de salida:
+1. "resumen_ejecutivo": 5-7 frases, español neutro latinoamericano, trato de "usted", sintetizando el resultado total, la fuente/alcance más representativo, la calidad del dato y una línea de recomendación general.
+2. "lectura_estrategica": un párrafo (4-6 frases) interpretando qué implican estos resultados para la gestión climática de la organización, con base en su sector — sin inventar hechos específicos no declarados.
+3. "recomendaciones_finales": objeto {"corto_plazo": [...], "mediano_plazo": [...], "largo_plazo": [...]}, cada lista con 2-3 recomendaciones puntuales derivadas de "planAcciones" y "topFuentes".
+
+Reglas fijas, sin excepción: nunca afirmes que este inventario está verificado, certificado o auditado externamente; nunca declares carbono neutralidad; siempre distingue entre dato real, estimado y supuesto cuando la calidad lo amerite; si "calidad.etiqueta" es Media o Baja, dilo explícitamente en el resumen ejecutivo como salvedad, no lo omitas.
+
+Responde ÚNICAMENTE con JSON válido, sin markdown, con las claves exactas: resumen_ejecutivo, lectura_estrategica, recomendaciones_finales.`;
+
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
@@ -139,11 +202,18 @@ export default {
     try { body = await request.json(); }
     catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: corsHeaders(origin) }); }
 
-    const CONTEXT_ONLY_MODES = new Set(["circular-summary", "materialidad-informe", "materialidad-sugerir-asuntos", "materialidad-explicar-score"]);
+    const CONTEXT_ONLY_MODES = new Set([
+      "circular-summary", "materialidad-informe", "materialidad-sugerir-asuntos", "materialidad-explicar-score",
+      "gei-sugerir-fuentes", "gei-explicar-resultado", "gei-plan-gestion", "gei-informe"
+    ]);
     const isCircularSummary = body.mode === "circular-summary";
     const isMaterialidad = body.mode === "materialidad-informe";
     const isMaterialidadSugerir = body.mode === "materialidad-sugerir-asuntos";
     const isMaterialidadExplicar = body.mode === "materialidad-explicar-score";
+    const isGeiSugerir = body.mode === "gei-sugerir-fuentes";
+    const isGeiExplicar = body.mode === "gei-explicar-resultado";
+    const isGeiPlan = body.mode === "gei-plan-gestion";
+    const isGeiInforme = body.mode === "gei-informe";
     const usesContextOnly = CONTEXT_ONLY_MODES.has(body.mode);
 
     if (!usesContextOnly && (!body.fields || typeof body.fields !== "object" || Object.keys(body.fields).length === 0)) {
@@ -152,8 +222,8 @@ export default {
     if (usesContextOnly && (!body.context || typeof body.context !== "object")) {
       return new Response(JSON.stringify({ error: "No context" }), { status: 400, headers: corsHeaders(origin) });
     }
-    // Límite defensivo de tamaño (el informe de materialidad envía más contexto que los otros modos)
-    if (JSON.stringify(body).length > (isMaterialidad ? 40000 : 20000)) {
+    // Límite defensivo de tamaño (el informe de materialidad/GEI envía más contexto que los otros modos)
+    if (JSON.stringify(body).length > ((isMaterialidad || isGeiInforme) ? 40000 : 20000)) {
       return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: corsHeaders(origin) });
     }
 
@@ -175,6 +245,22 @@ export default {
       systemPrompt = MATERIALIDAD_EXPLICAR_SCORE_PROMPT;
       userContent = { context: body.context };
       maxTokens = 500;
+    } else if (isGeiSugerir) {
+      systemPrompt = GEI_SUGERIR_FUENTES_PROMPT;
+      userContent = { context: body.context };
+      maxTokens = 900;
+    } else if (isGeiExplicar) {
+      systemPrompt = GEI_EXPLICAR_RESULTADO_PROMPT;
+      userContent = { context: body.context };
+      maxTokens = 1200;
+    } else if (isGeiPlan) {
+      systemPrompt = GEI_PLAN_GESTION_PROMPT;
+      userContent = { context: body.context };
+      maxTokens = 2000;
+    } else if (isGeiInforme) {
+      systemPrompt = GEI_INFORME_PROMPT;
+      userContent = { context: body.context };
+      maxTokens = 3000;
     }
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {

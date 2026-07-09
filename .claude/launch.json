@@ -1,0 +1,42 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "email-preview",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7788", "--directory", "funding-agent/output"],
+      "port": 7788
+    }
+    ,
+    {
+      "name": "eco-game",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7799"],
+      "port": 7799
+    },
+    {
+      "name": "assessment",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7801", "--directory", "C:\\Users\\User\\AppData\\Local\\Temp\\polla-repo"],
+      "port": 7801
+    },
+    {
+      "name": "projectability-site",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7800", "--directory", "projectability-site"],
+      "port": 7800
+    },
+    {
+      "name": "materialidad-express",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7802"],
+      "port": 7802
+    },
+    {
+      "name": "inventario-gei",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7803"],
+      "port": 7803
+    }
+  ]
+}
