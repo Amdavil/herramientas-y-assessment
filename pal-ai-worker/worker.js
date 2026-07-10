@@ -160,7 +160,10 @@ Recibirás un JSON "context" con:
 
 ${QUALITY_RULES}
 
-Tu tarea: escribir un párrafo de interpretación (4-6 frases, español neutro latinoamericano, trato de "usted") por cada uno de estos dos gráficos: (1) distribución por alcance — cita los tCO2e y/o porcentajes reales de "totalesPorAlcance", no hables solo de "el alcance predominante" sin la cifra; (2) top de fuentes emisoras — nombra literalmente al menos 2 fuentes de "topFuentes" con su porcentaje. Explica qué patrón se observa y por qué es plausible para una organización de ese sector/actividad, usando tu conocimiento general del sector solo como marco — NUNCA inventes cifras, hechos o causas específicas de esta organización que no estén en "context". Si la calidad es Media o Baja, menciona brevemente que los resultados deben leerse con esa salvedad.
+Tu tarea: escribir un párrafo de interpretación (4-6 frases, español neutro latinoamericano, trato de "usted") por cada uno de estos dos gráficos:
+(1) "interpretacion_alcance" — DEBE contener, escritos como número con su unidad (ej. "420,5 tCO2e" o "69,5%"), al menos los valores de "alcance1" y el que sea mayor entre "alcance2"/"alcance3". Prohibido sustituir la cifra por calificativos como "significativo", "considerable" o "una proporción menor" — el número va SIEMPRE junto al calificativo, nunca en su lugar.
+(2) "interpretacion_top_fuentes" — DEBE contener, escritos como número, el "tCO2e" o "porcentaje" de al menos 2 fuentes de "topFuentes", nombradas literalmente por su "nombre" exacto.
+En ambos casos explica qué patrón se observa y por qué es plausible para una organización de ese sector/actividad, usando tu conocimiento general del sector solo como marco — NUNCA inventes cifras, hechos o causas específicas de esta organización que no estén en "context" (las cifras que SÍ debes citar son únicamente las que ya vienen en "context", nunca las inventes tú). Si la calidad es Media o Baja, menciona brevemente que los resultados deben leerse con esa salvedad.
 
 Responde ÚNICAMENTE con JSON válido, sin markdown, con esta estructura:
 {"interpretacion_alcance": "<párrafo>", "interpretacion_top_fuentes": "<párrafo>"}`;
@@ -194,7 +197,7 @@ Recibirás un JSON "context" con el inventario consolidado de una organización:
 ${QUALITY_RULES}
 
 Tu tarea — generar en un solo JSON de salida:
-1. "resumen_ejecutivo": 5-7 frases, español neutro latinoamericano, trato de "usted", citando el total en tCO2e y nombrando literalmente la fuente/alcance más representativo de "topFuentes" (no hables en abstracto de "la fuente principal"), la calidad del dato y una línea de recomendación general.
+1. "resumen_ejecutivo": 5-7 frases, español neutro latinoamericano, trato de "usted". DEBE incluir, escrito como número con su unidad (ej. "total.total tCO2e"), el total de emisiones, y el nombre + cifra (tCO2e o %) de la fuente más representativa de "topFuentes" — prohibido sustituir cualquiera de estas dos cifras por un calificativo sin el número ("significativo", "elevado", etc. solo pueden acompañar al número, nunca reemplazarlo). Incluye también la calidad del dato y una línea de recomendación general.
 2. "lectura_estrategica": un párrafo (4-6 frases) interpretando qué implican estos resultados para la gestión climática de la organización, con base en su sector — sin inventar hechos específicos no declarados.
 3. "recomendaciones_finales": objeto {"corto_plazo": [...], "mediano_plazo": [...], "largo_plazo": [...]}, cada lista con 2-3 recomendaciones puntuales que referencien explícitamente acciones o fuentes concretas de "planAcciones" y "topFuentes" (por nombre), no genéricas de gestión climática.
 
