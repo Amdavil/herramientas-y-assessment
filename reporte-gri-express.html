@@ -350,6 +350,7 @@
       body { background: #fff; }
       .report-page { padding: 0; max-width: none; }
       .r-cover { padding-top: 200px; }
+      .unlock-banner, .locked-zone { display: none !important; }
     }
     @media (max-width: 640px) {
       .report-page { padding: 30px 20px; }
@@ -1581,9 +1582,23 @@
         ? `<ul>${politicas.map(p => `<li>${esc(p)}</li>`).join("")}</ul>`
         : `<p>La organización se encuentra en proceso de formalización de sus políticas de sostenibilidad, lo cual ha identificado como compromiso de mejora.</p>`;
 
-      // Capítulos por tema
+      // Capítulos por tema — en vista previa NUNCA se genera el contenido real (nada que
+      // filtrar por Ctrl+P, copiar o inspeccionar elemento); solo un adelanto sin texto.
       const PHVA_LABELS = { planificar: ["📋", "Planificar"], hacer: ["⚙️", "Hacer"], verificar: ["🔍", "Verificar"], actuar: ["🔄", "Actuar"] };
-      const topicChapters = selected.map(tid => {
+      const topicChaptersPreview = `
+        <div class="unlock-banner">
+          <h3>🔓 Su reporte completo está listo</h3>
+          <p>Los capítulos de sus ${selected.length} temas materiales, los indicadores, el índice de contenidos GRI y la descarga en PDF se desbloquean con el acceso completo (${PAY.priceLabel}, pago único).</p>
+          <button onclick="backToChat(); openPaywall();">Desbloquear reporte completo — ${PAY.priceLabel}</button>
+        </div>
+        <div class="locked-zone"><div class="locked-content">
+        ${selected.map(tid => {
+          const t = TOPICS[tid];
+          return `<div class="r-topic-header"><h2 class="r-section" style="flex:1">${t.icon} ${t.name}</h2><span class="r-gri-code">${t.gri}</span></div>
+          <p>Contenido disponible tras desbloquear el reporte.</p>`;
+        }).join("")}
+        </div></div>`;
+      const topicChapters = preview ? "" : selected.map(tid => {
         const t = TOPICS[tid];
         const enfoque = AE(t.questions[0].id);
         const phva = state.aiPhva && state.aiPhva[tid];
@@ -1692,14 +1707,7 @@
         <h3>Temas materiales del periodo (GRI 3-2)</h3>
         <ul>${selected.map(tid => `<li><strong>${TOPICS[tid].icon} ${TOPICS[tid].name}</strong> (${TOPICS[tid].gri})</li>`).join("")}</ul>
 
-        ${preview ? `
-        <div class="unlock-banner">
-          <h3>🔓 Su reporte completo está listo</h3>
-          <p>Los capítulos de sus ${selected.length} temas materiales, los indicadores, el índice de contenidos GRI y la descarga en PDF se desbloquean con el acceso completo (${PAY.priceLabel}, pago único).</p>
-          <button onclick="backToChat(); openPaywall();">Desbloquear reporte completo — ${PAY.priceLabel}</button>
-        </div>
-        <div class="locked-zone"><div class="locked-content">` : ""}
-
+        ${preview ? topicChaptersPreview : `
         ${topicChapters}
 
         <h2 class="r-section">Logros y compromisos</h2>
@@ -1717,8 +1725,7 @@
 
         <div class="r-notice">
           <strong>Alcance y limitaciones:</strong> este reporte fue elaborado bajo la opción "con referencia a los Estándares GRI" (GRI 1: Fundamentos 2021) mediante la herramienta Reporte GRI Express de Projectability. La información fue suministrada y es responsabilidad de ${esc(nombre)}. El reporte no ha sido objeto de verificación externa independiente. Los datos estimados se identifican como tales en el texto. ${state.aiTexts ? "La redacción de los textos descriptivos fue asistida por inteligencia artificial a partir de la información suministrada por la organización, siguiendo los principios de calidad de los Estándares GRI (precisión, equilibrio, claridad, comparabilidad, exhaustividad, contexto de sostenibilidad, puntualidad y verificabilidad); las cifras e indicadores no fueron modificados y el contenido fue revisado por la organización. " : ""}Este documento constituye un primer ejercicio de transparencia y rendición de cuentas, y una base para la mejora continua del proceso de reporte de la organización.
-        </div>
-        ${preview ? "</div></div>" : ""}`;
+        </div>`}`;
 
       // Toolbar según modo
       document.getElementById("printBtn").style.display = preview ? "none" : "inline-block";

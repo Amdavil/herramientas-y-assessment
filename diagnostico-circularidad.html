@@ -1757,8 +1757,8 @@
         </div>
 
         <div class="exec-summary-box">
-          <div class="exec-level">${esc(m.label)} · Índice ${pct}% ${state.aiSummary && state.aiSummary.sig === summarySig ? '<span style="font-weight:600;color:var(--focus);text-transform:none;letter-spacing:0;font-size:11.5px">· ✨ lectura ejecutiva generada por IA</span>' : ""}</div>
-          <div class="exec-text" id="execText">${state.aiSummary && state.aiSummary.sig === summarySig ? esc(state.aiSummary.text) : esc(m.text)}
+          <div class="exec-level">${esc(m.label)} · Índice ${pct}% ${unlocked && state.aiSummary && state.aiSummary.sig === summarySig ? '<span style="font-weight:600;color:var(--focus);text-transform:none;letter-spacing:0;font-size:11.5px">· ✨ lectura ejecutiva generada por IA</span>' : ""}</div>
+          <div class="exec-text" id="execText">${unlocked && state.aiSummary && state.aiSummary.sig === summarySig ? esc(state.aiSummary.text) : esc(m.text)}
           ${answered < QUESTIONS.length ? ` <strong>Nota:</strong> respondió ${answered} de ${QUESTIONS.length} preguntas; complete el diagnóstico para detectar todas las oportunidades.` : ""}</div>
         </div>
 
@@ -1834,7 +1834,7 @@
         if (PAY.paypalClientId) loadPayPal();
       }
 
-      if (AI.endpoint && (!state.aiSummary || state.aiSummary.sig !== summarySig) && !aiSummaryLoading) {
+      if (unlocked && AI.endpoint && (!state.aiSummary || state.aiSummary.sig !== summarySig) && !aiSummaryLoading) {
         aiGenerateSummary(pct, m, opps, strengths, summarySig);
       }
     }
@@ -1932,7 +1932,11 @@
 
     document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchView(t.dataset.view)));
     byId("finishBtn").addEventListener("click", () => switchView("resultados"));
-    byId("printReport").addEventListener("click", () => { switchView("resultados"); setTimeout(() => window.print(), 300); });
+    byId("printReport").addEventListener("click", () => {
+      switchView("resultados");
+      if (!hasAccess()) { setTimeout(scrollToPaywall, 300); return; }
+      setTimeout(() => window.print(), 300);
+    });
 
     byId("fillDemo").addEventListener("click", () => {
       QUESTIONS.forEach(q => { state.answers[q.code] = 1 + Math.floor(Math.random() * 4); });
