@@ -1,0 +1,801 @@
+/* =========================================================================
+   DELIFLOR BLOOM LAB — Pantallas 9 a 15, galería, panel y vista compartida
+   ========================================================================= */
+(function (root) {
+  'use strict';
+
+  var App = root.App, G = root.Genome, M = root.MeshGen, T = root.Thumbs, QR = root.QR;
+  var h = App.h, CFG = App.CFG;
+
+  App.shots = {};
+
+  function snapshot() {
+    try {
+      var cv = App.stageEl;
+      return cv && cv.toDataURL ? cv.toDataURL('image/png') : null;
+    } catch (e) { return null; }
+  }
+
+  function stripPanel(s) {
+    var panel = s.body.parentNode;
+    if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+    if (s.stage) { s.stage.style.flex = '1'; s.stage.style.borderRight = '0'; }
+  }
+  function onNext(s, fn) {
+    var b = s.nav.querySelector('.btn.primary');
+    if (b) b.onclick = fn;
+    return b;
+  }
+
+  /* =================================================================
+     09 · Laboratorio de hibridación
+     ================================================================= */
+  var MSG = {
+    es: ['Combinando forma y estructura', 'Definiendo la arquitectura de los pétalos',
+         'Desarrollando la expresión de color', 'Cultivando tu nueva variedad',
+         'Tu crisantemo está floreciendo'],
+    en: ['Combining form and structure', 'Defining the petal architecture',
+         'Developing the colour expression', 'Growing your new variety',
+         'Your chrysanthemum is blooming']
+  };
+
+  App.screens.lab = function (app) {
+    var cv = h('canvas');
+    var msg = h('div', { class: 'labmsg' });
+    var bar = h('i');
+    var wrap = h('div', { class: 'full center', id: 'lab' }, [
+      cv,
+      h('div', { class: 'labtext' }, [
+        msg,
+        h('div', { class: 'labbar' }, bar),
+        h('div', {
+          class: 'labnote',
+          text: App.lang === 'en'
+            ? 'A digital creation inspired by plant breeding. Not a prediction of genetic viability.'
+            : 'Creación digital inspirada en procesos de hibridación. No es una garantía de viabilidad genética.'
+        })
+      ])
+    ]);
+    app.appendChild(wrap);
+    App.track('lab');
+
+    var list = MSG[App.lang] || MSG.es;
+    var t0 = performance.now(), dur = CFG.labMs, raf = 0;
+    var particles = [];
+    for (var i = 0; i < 90; i++) {
+      particles.push({ a: Math.random() * Math.PI * 2, r: Math.random(), sp: 0.2 + Math.random() * 0.8, s: 1 + Math.random() * 2.5 });
+    }
+    var tmp = document.createElement('canvas');
+    tmp.width = tmp.height = 420; tmp.style.width = tmp.style.height = '420px';
+    T.flower(tmp, App.g, { scale: 0.46 });
+
+    (function frame(ts) {
+      raf = requestAnimationFrame(frame);
+      if (!cv.isConnected) { cancelAnimationFrame(raf); return; }
+      var p = Math.min(1, (ts - t0) / dur);
+      bar.style.width = (p * 100) + '%';
+      var mi = Math.min(list.length - 1, Math.floor(p * list.length));
+      if (msg.textContent !== list[mi]) msg.textContent = list[mi];
+
+      var r = cv.getBoundingClientRect();
+      var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      var W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
+      if (cv.width !== W) { cv.width = W; cv.height = H; }
+      var ctx = cv.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      var cx = W / 2, cy = H * 0.42, R = Math.min(W, H) * 0.3;
+
+      /* líneas genéticas */
+      ctx.strokeStyle = 'rgba(124,33,77,.16)'; ctx.lineWidth = dpr;
+      for (var k = 0; k < 14; k++) {
+        var a0 = (k / 14) * Math.PI * 2 + p * 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a0) * R * 2.1, cy + Math.sin(a0) * R * 2.1);
+        ctx.quadraticCurveTo(cx, cy, cx + Math.cos(a0 + 2.1) * R * 2.1, cy + Math.sin(a0 + 2.1) * R * 2.1);
+        ctx.stroke();
+      }
+      /* partículas convergiendo */
+      ctx.fillStyle = 'rgba(156,48,113,.45)';
+      for (k = 0; k < particles.length; k++) {
+        var q = particles[k];
+        var rr = (1 - p) * R * 3.2 * q.r + R * 0.25;
+        var aa = q.a + p * q.sp * 3;
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(aa) * rr, cy + Math.sin(aa) * rr * 0.8, q.s * dpr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      /* la flor crece y se revela */
+      var grow = p * p * (3 - 2 * p);
+      var size = R * 2.2 * grow;
+      if (size > 4) {
+        ctx.globalAlpha = Math.min(1, p * 1.6);
+        ctx.drawImage(tmp, cx - size / 2, cy - size / 2, size, size);
+        ctx.globalAlpha = 1;
+      }
+      if (p >= 1) { cancelAnimationFrame(raf); App.go('reveal'); }
+    })(t0);
+  };
+
+  /* =================================================================
+     10 · Revelación
+     ================================================================= */
+  App.screens.reveal = function (app) {
+    var s = App.shell(app, { title: '', kind: 'stem' });
+    stripPanel(s);
+    App.track('reveal');
+
+    s.stage.appendChild(h('div', { class: 'reveal-msg' }, [
+      h('div', {
+        class: 'rt', text: App.lang === 'en'
+          ? "You've created a flower that didn't exist yet"
+          : 'Has creado una flor que todavía no existía'
+      })
+    ]));
+
+    var views = h('div', { class: 'viewbtns' });
+    [['front', App.lang === 'en' ? 'Front' : 'Frontal'],
+     ['side', App.lang === 'en' ? 'Side' : 'Lateral'],
+     ['top', App.lang === 'en' ? 'Top' : 'Superior'],
+     ['reset', App.lang === 'en' ? 'Reset' : 'Reiniciar']].forEach(function (v) {
+      views.appendChild(h('button', {
+        class: 'icon-btn', text: v[1],
+        onclick: function () {
+          if (!App.renderer || !App.renderer.ok) return;
+          if (v[0] === 'reset') App.renderer.reset(); else App.renderer.setView(v[0]);
+        }
+      }));
+    });
+    s.stage.appendChild(views);
+
+    App.defer(function () {
+      if (App.renderer && App.renderer.ok) App.renderer.bloomIn();
+    });
+
+    onNext(s, function () {
+      App.shots.flower = snapshot();
+      App.next();
+    });
+  };
+
+  /* =================================================================
+     11 · Ramo
+     ================================================================= */
+  App.screens.bouquet = function (app) {
+    var s = App.shell(app, {
+      title: App.lang === 'en' ? 'Build the bouquet' : 'Crea el ramo',
+      hint: App.lang === 'en' ? 'Made entirely from the variety you invented.'
+                              : 'Hecho por completo con la variedad que inventaste.',
+      kind: 'bouquet'
+    });
+    var tab = App._bqTab || 'style';
+    var TABS = [['style', App.lang === 'en' ? 'Style' : 'Estilo'],
+                ['abundance', App.lang === 'en' ? 'Stems' : 'Tallos'],
+                ['extras', App.lang === 'en' ? 'Extras' : 'Complementos'],
+                ['wrap', App.lang === 'en' ? 'Wrapping' : 'Envoltura'],
+                ['bg', App.lang === 'en' ? 'Setting' : 'Fondo']];
+    var tabs = h('div', { class: 'opts c5' });
+    TABS.forEach(function (t2) {
+      tabs.appendChild(h('button', {
+        class: 'opt', style: 'min-height:auto', 'aria-pressed': String(tab === t2[0]),
+        onclick: function () { App._bqTab = t2[0]; App.render(); }
+      }, h('span', { class: 'lbl', text: t2[1] })));
+    });
+    s.body.appendChild(tabs);
+
+    var lists = {
+      style: G.BQ_STYLES, abundance: G.BQ_ABUNDANCE, extras: G.BQ_EXTRAS,
+      wrap: G.BQ_WRAP, bg: G.BQ_BG
+    };
+    s.body.appendChild(App.optionGrid(App.ids(lists[tab]), App.g.bouquet[tab], function (id) {
+      App.g.bouquet[tab] = id;
+      App.track('bq:' + tab + ':' + id);
+      App.render();
+      App.refresh('bouquet', true);
+    }, tab === 'abundance' ? 4 : 5));
+
+    onNext(s, function () {
+      App.shots.bouquet = snapshot();
+      App.next();
+    });
+  };
+
+  /* =================================================================
+     12 · Nombre
+     ================================================================= */
+  var ROWS = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM'];
+
+  App.screens.name = function (app) {
+    var s = App.shell(app, {
+      title: App.lang === 'en' ? 'Name your variety' : 'Nombra tu variedad',
+      hint: App.lang === 'en' ? 'How is your new creation called?' : '¿Cómo se llama tu nueva creación?',
+      kind: 'flower'
+    });
+
+    var val = h('div', { class: 'val' + (App.g.name ? '' : ' empty') });
+    var count = h('span', { class: 'count' });
+    var err = h('div', { class: 'err' });
+
+    function paint() {
+      val.textContent = App.g.name || (App.lang === 'en' ? 'Your variety' : 'Tu variedad');
+      val.className = 'val' + (App.g.name ? '' : ' empty');
+      count.textContent = App.g.name.length + '/24';
+      var chk = G.checkName(App.g.name);
+      var okBtn = s.nav.querySelector('.btn.primary');
+      if (App.g.name && !chk.ok) {
+        err.textContent = chk.reason === 'blocked'
+          ? (App.lang === 'en' ? 'That name is not allowed. Try another one.' : 'Ese nombre no está permitido. Prueba otro.')
+          : (App.lang === 'en' ? 'Name too long.' : 'El nombre es demasiado largo.');
+        if (okBtn) okBtn.setAttribute('disabled', 'disabled');
+      } else {
+        err.textContent = '';
+        if (okBtn) okBtn.removeAttribute('disabled');
+      }
+    }
+    function type(c) {
+      if (App.g.name.length >= 24) return;
+      App.g.name += c; paint();
+    }
+
+    s.body.appendChild(h('div', { class: 'namebox' }, [val, count]));
+    s.body.appendChild(err);
+
+    var kb = h('div', { class: 'kb' });
+    ROWS.forEach(function (row) {
+      var r = h('div', { class: 'kbrow' });
+      row.split('').forEach(function (c) {
+        r.appendChild(h('button', { class: 'key', text: c, onclick: function () { type(c); } }));
+      });
+      kb.appendChild(r);
+    });
+    kb.appendChild(h('div', { class: 'kbrow' }, [
+      h('button', {
+        class: 'key wide', text: '⌫', onclick: function () {
+          App.g.name = App.g.name.slice(0, -1); paint();
+        }
+      }),
+      h('button', { class: 'key', style: 'flex:4', text: '␣', onclick: function () { type(' '); } }),
+      h('button', {
+        class: 'key wide act', text: App.lang === 'en' ? 'Clear' : 'Borrar',
+        onclick: function () { App.g.name = ''; paint(); }
+      })
+    ]));
+    s.body.appendChild(kb);
+
+    var sug = h('div', { class: 'suggest' });
+    function refillSuggestions() {
+      App.clear(sug);
+      App.g.seed = Math.floor(Math.random() * 65535) + 1;
+      G.suggestNames(App.g, 3).forEach(function (n) {
+        sug.appendChild(h('button', {
+          class: 'btn', text: n, onclick: function () { App.g.name = n; paint(); }
+        }));
+      });
+      sug.appendChild(h('button', {
+        class: 'btn ghost', text: '⟳', title: App.lang === 'en' ? 'More names' : 'Más nombres',
+        onclick: refillSuggestions
+      }));
+    }
+    refillSuggestions();
+    s.body.appendChild(sug);
+
+    onNext(s, function () {
+      if (!App.g.name) {
+        var auto = G.suggestNames(App.g, 1)[0];
+        App.g.name = auto || 'Bloom Lab';
+      }
+      if (!G.checkName(App.g.name).ok) { App.track('name:blocked'); return; }
+      App.track('name:ok');
+      App.next();
+    });
+    paint();
+  };
+
+  /* =================================================================
+     13 · Pasaporte
+     ================================================================= */
+  function specRow(k, v) {
+    return h('div', { class: 'spec' }, [h('span', { class: 'k', text: k }), h('span', { class: 'v', text: v })]);
+  }
+
+  App.buildPassport = function (compact) {
+    var g = App.g, sc = G.scores(g);
+    var en = App.lang === 'en';
+    var card = h('div', { class: 'pcard' }, [
+      h('div', { class: 'phead' }, [
+        h('div', { class: 'pname', text: g.name || '—' }),
+        h('div', { class: 'pid', text: 'Bloom Lab · ' + CFG.eventName })
+      ])
+    ]);
+    var imgs = h('div', { class: 'pbody' });
+    ['flower', 'bouquet'].forEach(function (k) {
+      var box = h('div', { class: 'pimg' });
+      if (App.shots[k]) box.appendChild(h('img', { src: App.shots[k], alt: k }));
+      else {
+        var cv = h('canvas');
+        box.appendChild(cv);
+        App.defer(function () { T.fallbackScene(cv, g, k); });
+      }
+      imgs.appendChild(box);
+    });
+    card.appendChild(imgs);
+
+    card.appendChild(h('div', { class: 'specs' }, [
+      specRow(en ? 'Family' : 'Familia', App.lb(g.family)),
+      specRow(en ? 'Main shape' : 'Forma principal', App.lb(g.shape)),
+      specRow(en ? 'Petal' : 'Pétalo', App.lb(g.petalShape)),
+      specRow(en ? 'Arrangement' : 'Disposición', App.lb(g.arrangement)),
+      specRow(en ? 'Diameter' : 'Diámetro', App.lb(g.diameter) + ' · ' + G.DIAMETER_CM[g.diameter] + ' cm'),
+      specRow(en ? 'Density' : 'Densidad', Math.round(g.density * 100) + '% · ' + g.layers + ' ' + (en ? 'layers' : 'capas')),
+      specRow(en ? 'Growth' : 'Crecimiento', App.lb(g.growth) + (g.flowersPerStem > 1 ? ' · ' + g.flowersPerStem : '')),
+      specRow(en ? 'Pattern' : 'Patrón', App.lb(g.pattern)),
+      specRow(en ? 'Creative mode' : 'Modo creativo', App.lb(g.mode)),
+      specRow(en ? 'Personality' : 'Personalidad',
+        g.personality.length ? g.personality.map(App.lb).join(' · ') : '—')
+    ]));
+
+    var pal = h('div', { class: 'palette-row' });
+    ['primary', 'secondary', 'center', 'tip', 'reverse'].forEach(function (k) {
+      pal.appendChild(h('span', { style: 'background:' + G.hex(g.colors[k]), title: App.t('slot_' + k) }));
+    });
+    card.appendChild(pal);
+
+    if (!compact) {
+      card.appendChild(h('div', { class: 'meters' }, [
+        meter(en ? 'Novelty' : 'Novedad', sc.novelty, '',
+          en ? 'How different it is from conventional combinations.' : 'Qué tan distinta es frente a combinaciones convencionales.'),
+        meter(en ? 'Visual harmony' : 'Armonía visual', sc.harmony, 'alt',
+          en ? 'Balance of colour, form and proportion.' : 'Equilibrio de color, forma y proporción.'),
+        meter(en ? 'Hybridisation challenge' : 'Desafío de hibridación', sc.challenge, 'alt2',
+          en ? 'How complex a similar flower could be, conceptually.' : 'Qué tan compleja sería una flor similar, conceptualmente.')
+      ]));
+      card.appendChild(h('div', {
+        class: 'disclaimer',
+        text: en
+          ? 'Playful indicators, not a scientific assessment. Bloom Lab is a digital creation inspired by plant breeding; it does not predict genetic viability.'
+          : 'Indicadores lúdicos, no una evaluación científica. Bloom Lab es una creación digital inspirada en el mejoramiento vegetal; no predice viabilidad genética.'
+      }));
+    }
+    return card;
+  };
+
+  function meter(name, v, cls, note) {
+    var bar = h('i', { class: cls, style: 'width:0' });
+    App.defer(function () { setTimeout(function () { bar.style.width = v + '%'; }, 60); });
+    return h('div', { class: 'meter' }, [
+      h('div', { class: 'mhead' }, [h('span', { class: 'mname', text: name }), h('span', { class: 'mval', text: v })]),
+      h('div', { class: 'mbar' }, bar),
+      h('div', { class: 'mnote', text: note })
+    ]);
+  }
+
+  App.screens.passport = function (app) {
+    var s = App.shell(app, { stage: false, title: '' });
+    var panel = s.body.parentNode;
+    panel.parentNode.removeChild(panel);
+    App.track('passport');
+
+    var body = App.$('.body');
+    var grid = h('div', { class: 'passport' });
+    grid.appendChild(App.buildPassport(false));
+
+    var side = h('div', { class: 'pcard' }, [
+      h('div', { class: 'phead' }, [
+        h('div', { class: 'pname', text: App.lang === 'en' ? 'Your bouquet' : 'Tu ramo' }),
+        h('div', { class: 'pid', text: new Date().toLocaleDateString() })
+      ])
+    ]);
+    var big = h('div', { class: 'pimg', style: 'flex:1;min-height:0' });
+    if (App.shots.bouquet) big.appendChild(h('img', { src: App.shots.bouquet, alt: '' }));
+    else { var cv = h('canvas'); big.appendChild(cv); App.defer(function () { T.fallbackScene(cv, App.g, 'bouquet'); }); }
+    side.appendChild(h('div', { class: 'pbody', style: 'flex:1' }, big));
+    side.appendChild(h('div', { class: 'specs' }, [
+      specRow(App.lang === 'en' ? 'Bouquet style' : 'Estilo del ramo', App.lb(App.g.bouquet.style)),
+      specRow(App.lang === 'en' ? 'Stems' : 'Tallos', App.lb(App.g.bouquet.abundance)),
+      specRow(App.lang === 'en' ? 'Extras' : 'Complementos', App.lb(App.g.bouquet.extras)),
+      specRow(App.lang === 'en' ? 'Wrapping' : 'Envoltura', App.lb(App.g.bouquet.wrap))
+    ]));
+    grid.appendChild(side);
+    body.appendChild(grid);
+  };
+
+  /* =================================================================
+     14 · Compartir
+     ================================================================= */
+  App.shareURL = function () {
+    var base = CFG.shareBase || (location.origin + location.pathname);
+    return base + '#g=' + G.encode(App.g);
+  };
+
+  App.screens.share = function (app) {
+    var s = App.shell(app, { stage: false, title: '' });
+    var panel = s.body.parentNode;
+    panel.parentNode.removeChild(panel);
+    App.track('share');
+
+    var url = App.shareURL();
+    var body = App.$('.body');
+    var qcv = h('canvas');
+    var box = h('div', {}, [
+      h('div', { class: 'qrbox' }, qcv),
+      h('div', { class: 'qrlink', text: url })
+    ]);
+
+    App.defer(function () {
+      var ok = QR.toCanvas(qcv, url, { size: 340, dark: '#241A1F', light: '#FFFFFF' });
+      if (!ok) {
+        box.replaceChild(h('div', {
+          class: 'qrbox', style: 'padding:2rem;max-width:340px',
+          text: App.lang === 'en' ? 'Link too long for a QR code. Use the address below.'
+                                  : 'El enlace es muy largo para un código QR. Usa la dirección de abajo.'
+        }), box.firstChild);
+      }
+    });
+
+    var en = App.lang === 'en';
+    var right = h('div', {}, [
+      h('h2', {
+        style: 'font-family:var(--f-display);font-weight:400;font-size:calc(var(--s)*3.4);margin:0 0 calc(var(--s)*.6)',
+        text: en ? 'Take your flower with you' : 'Llévate tu flor'
+      }),
+      h('p', {
+        style: 'font-size:calc(var(--s)*1.2);color:var(--ink-dim);max-width:44ch;line-height:1.5',
+        text: en ? 'Scan the code with your phone. The whole variety travels inside the link — no account, no data stored.'
+                 : 'Escanea el código con tu teléfono. La variedad completa viaja dentro del enlace: sin cuenta y sin guardar datos.'
+      }),
+      h('div', { class: 'row', style: 'display:flex;gap:calc(var(--s)*.8);margin:calc(var(--s)*1.4) 0;flex-wrap:wrap' }, [
+        h('button', { class: 'btn', text: en ? 'Download story' : 'Descargar historia', onclick: function () { download('story'); } }),
+        h('button', { class: 'btn', text: en ? 'Download square' : 'Descargar cuadrada', onclick: function () { download('square'); } })
+      ]),
+      CFG.galleryOn ? h('button', {
+        class: 'consent', 'aria-pressed': String(!!App.consent),
+        onclick: function (e) {
+          App.consent = !App.consent;
+          e.currentTarget.setAttribute('aria-pressed', String(App.consent));
+          if (App.consent) saveToGallery(); else removeFromGallery();
+        }
+      }, [
+        h('span', { class: 'box', text: '✓' }),
+        h('span', { class: 'ctext' }, [
+          h('b', { text: en ? 'Show it in the event gallery' : 'Mostrarla en la galería del evento' }),
+          document.createTextNode(en
+            ? 'Only the flower and its name are stored on this computer, and only while the event lasts. Optional — you can continue without it.'
+            : 'Sólo se guardan la flor y su nombre, en este computador y mientras dure el evento. Es opcional: puedes continuar sin activarlo.')
+        ])
+      ]) : null
+    ]);
+
+    body.appendChild(h('div', { class: 'share' }, [box, right]));
+  };
+
+  function saveToGallery() {
+    try {
+      var k = 'bloomlab.gallery';
+      var arr = JSON.parse(localStorage.getItem(k) || '[]');
+      arr = arr.filter(function (x) { return x.code !== G.encode(App.g); });
+      arr.unshift({ code: G.encode(App.g), name: App.g.name, ts: Date.now(), hidden: false });
+      localStorage.setItem(k, JSON.stringify(arr.slice(0, 400)));
+      App.track('gallery:consent');
+      App.toast(App.lang === 'en' ? 'Added to the gallery' : 'Añadida a la galería');
+    } catch (e) {}
+  }
+  function removeFromGallery() {
+    try {
+      var k = 'bloomlab.gallery', code = G.encode(App.g);
+      var arr = JSON.parse(localStorage.getItem(k) || '[]').filter(function (x) { return x.code !== code; });
+      localStorage.setItem(k, JSON.stringify(arr));
+    } catch (e) {}
+  }
+
+  /* Composición descargable */
+  function download(fmt) {
+    var W = 1080, H = fmt === 'story' ? 1920 : 1080;
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var ctx = cv.getContext('2d');
+    var g = App.g, sc = G.scores(g);
+
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#F5F1EE'); grad.addColorStop(1, '#E4DAD4');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#7C214D'; ctx.fillRect(0, 0, W, 12);
+
+    var imgH = fmt === 'story' ? 1080 : 640;
+    function finish(img) {
+      if (img) {
+        var r = Math.max(W / img.width, imgH / img.height);
+        var iw = img.width * r, ih = img.height * r;
+        ctx.save();
+        ctx.beginPath(); ctx.rect(0, 120, W, imgH); ctx.clip();
+        ctx.drawImage(img, (W - iw) / 2, 120 + (imgH - ih) / 2, iw, ih);
+        ctx.restore();
+      }
+      ctx.fillStyle = '#7C214D';
+      ctx.font = '600 34px "Segoe UI", sans-serif';
+      ctx.fillText('DELIFLOR BLOOM LAB', 60, 82);
+
+      var y = 120 + imgH + 90;
+      ctx.fillStyle = '#241A1F';
+      ctx.font = '400 78px Georgia, serif';
+      ctx.fillText(g.name || '—', 60, y);
+      y += 56;
+      ctx.fillStyle = '#6D5A62';
+      ctx.font = '400 32px "Segoe UI", sans-serif';
+      ctx.fillText(App.lb(g.family) + ' · ' + App.lb(g.shape) + ' · ' + App.lb(g.diameter), 60, y);
+
+      y += 70;
+      ['primary', 'secondary', 'center', 'tip', 'reverse'].forEach(function (k, i) {
+        ctx.fillStyle = G.hex(g.colors[k]);
+        ctx.fillRect(60 + i * 92, y, 80, 80);
+        ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.strokeRect(60 + i * 92, y, 80, 80);
+      });
+
+      if (fmt === 'story') {
+        y += 150;
+        var labels = [
+          [App.lang === 'en' ? 'Novelty' : 'Novedad', sc.novelty],
+          [App.lang === 'en' ? 'Harmony' : 'Armonía', sc.harmony],
+          [App.lang === 'en' ? 'Challenge' : 'Desafío', sc.challenge]
+        ];
+        labels.forEach(function (l, i) {
+          var bx = 60, by = y + i * 74;
+          ctx.fillStyle = '#241A1F'; ctx.font = '600 30px "Segoe UI", sans-serif';
+          ctx.fillText(l[0], bx, by);
+          ctx.fillStyle = '#ECE5E1'; ctx.fillRect(bx + 260, by - 22, 620, 22);
+          ctx.fillStyle = ['#7C214D', '#6F7D4C', '#9C3071'][i];
+          ctx.fillRect(bx + 260, by - 22, 620 * l[1] / 100, 22);
+          ctx.fillStyle = '#7C214D'; ctx.font = '600 28px monospace';
+          ctx.fillText(String(l[1]), bx + 900, by);
+        });
+      }
+      ctx.fillStyle = '#9C8A92'; ctx.font = '400 24px monospace';
+      ctx.fillText(CFG.eventName, 60, H - 46);
+
+      var a = document.createElement('a');
+      a.download = (g.name || 'bloom').replace(/[^\w\- ]/g, '') + '-' + fmt + '.png';
+      try { a.href = cv.toDataURL('image/png'); a.click(); App.track('download:' + fmt); }
+      catch (e) { App.toast(App.lang === 'en' ? 'Could not export the image' : 'No se pudo exportar la imagen'); }
+    }
+
+    var src = App.shots.bouquet || App.shots.flower;
+    if (src) { var im = new Image(); im.onload = function () { finish(im); }; im.onerror = function () { finish(null); }; im.src = src; }
+    else finish(null);
+  }
+
+  /* =================================================================
+     15 · Cierre
+     ================================================================= */
+  App.screens.end = function (app) {
+    App.track('complete');
+    if (App.startedAt) App.track('duration:' + Math.round((Date.now() - App.startedAt) / 15000) * 15 + 's');
+    var en = App.lang === 'en';
+    var wrap = h('div', { class: 'full center screen', style: 'background:var(--wine);color:#fff' }, [
+      h('div', { style: 'text-align:center;padding:calc(var(--s)*3)' }, [
+        h('div', {
+          style: 'font-family:var(--f-display);font-size:calc(var(--s)*4.6);line-height:1.15;max-width:22ch;margin:0 auto',
+          text: en ? 'Thank you for imagining the future of flowers with Deliflor'
+                   : 'Gracias por imaginar el futuro de las flores con Deliflor'
+        }),
+        h('div', {
+          style: 'font-family:var(--f-display);font-style:italic;font-size:calc(var(--s)*2.4);opacity:.85;margin-top:calc(var(--s)*1.4)',
+          text: App.g.name || ''
+        }),
+        h('div', { style: 'display:flex;gap:calc(var(--s)*1);justify-content:center;margin-top:calc(var(--s)*3.4);flex-wrap:wrap' }, [
+          h('button', {
+            class: 'btn big', style: 'background:#fff;color:var(--wine);border-color:#fff',
+            text: en ? 'Create another' : 'Crear otra flor',
+            onclick: function () { App.g = G.base(); App.shots = {}; App.consent = false; App.go('mode'); }
+          }),
+          CFG.galleryOn ? h('button', {
+            class: 'btn big', style: 'background:transparent;color:#fff;border-color:rgba(255,255,255,.5)',
+            text: en ? 'See the gallery' : 'Ver galería',
+            onclick: function () { App.openGallery(); }
+          }) : null,
+          h('button', {
+            class: 'btn big', style: 'background:transparent;color:#fff;border-color:rgba(255,255,255,.5)',
+            text: en ? 'Finish' : 'Finalizar',
+            onclick: function () { App.endSession(); }
+          })
+        ])
+      ])
+    ]);
+    app.appendChild(wrap);
+    App.poke();
+  };
+
+  /* =================================================================
+     Galería del evento
+     ================================================================= */
+  App.openGallery = function () {
+    var app = App.$('#app');
+    App.clear(app);
+    var en = App.lang === 'en';
+    app.appendChild(h('div', { class: 'topbar' }, [
+      h('div', { class: 'brand' }, [
+        h('span', { class: 'mark', text: en ? 'Gallery' : 'Galería' }),
+        h('span', { class: 'sub', text: CFG.eventName })
+      ]),
+      h('div', { class: 'progress' }),
+      h('button', { class: 'icon-btn', text: en ? 'Close' : 'Cerrar', onclick: function () { App.go('attract'); } })
+    ]));
+
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem('bloomlab.gallery') || '[]'); } catch (e) {}
+    arr = arr.filter(function (x) { return !x.hidden; });
+
+    var grid = h('div', { class: 'gallery screen' });
+    if (!arr.length) {
+      grid.appendChild(h('div', {
+        class: 'empty-note',
+        text: en ? 'No flowers have been shared yet. Yours could be the first.'
+                 : 'Todavía no hay flores compartidas. La tuya puede ser la primera.'
+      }));
+    }
+    arr.slice(0, 60).forEach(function (item) {
+      var g = G.decode(item.code);
+      if (!g) return;
+      var cv = h('canvas');
+      grid.appendChild(h('button', {
+        class: 'gitem', onclick: function () { App.g = g; App.shots = {}; App.go('passport'); }
+      }, [cv, h('div', { class: 'gname', text: item.name || '—' })]));
+      App.defer(function () { T.flower(cv, g, { scale: 0.45, cheap: true }); });
+    });
+    app.appendChild(grid);
+    App.poke();
+  };
+
+  /* =================================================================
+     Panel administrativo
+     ================================================================= */
+  App.openAdmin = function () {
+    var pin = '';
+    var app = App.$('#app');
+    App.clear(app);
+    var pad = h('div', { class: 'pinpad' });
+    var view = h('div', { class: 'val', style: 'font-family:var(--f-mono);font-size:calc(var(--s)*2.4);text-align:center' });
+    '123456789'.split('').forEach(function (d) {
+      pad.appendChild(h('button', { class: 'key', text: d, onclick: function () { add(d); } }));
+    });
+    pad.appendChild(h('button', { class: 'key', text: '⌫', onclick: function () { pin = pin.slice(0, -1); view.textContent = pin.replace(/./g, '•'); } }));
+    pad.appendChild(h('button', { class: 'key', text: '0', onclick: function () { add('0'); } }));
+    pad.appendChild(h('button', { class: 'key act', text: '✓', onclick: check }));
+    function add(d) { if (pin.length < 8) { pin += d; view.textContent = pin.replace(/./g, '•'); } }
+    function check() { if (pin === CFG.adminPin) adminPanel(); else { pin = ''; view.textContent = ''; App.toast('PIN'); } }
+
+    app.appendChild(h('div', { class: 'full center' }, [
+      h('div', { style: 'text-align:center' }, [
+        h('h2', { style: 'font-family:var(--f-display);font-weight:400', text: 'Bloom Lab · Panel' }),
+        view, pad,
+        h('button', { class: 'btn ghost', style: 'margin-top:calc(var(--s)*1.5)', text: 'Salir', onclick: function () { App.go('attract'); } })
+      ])
+    ]));
+  };
+
+  function adminPanel() {
+    var app = App.$('#app');
+    App.clear(app);
+    var m = App.metrics();
+    var gal = [];
+    try { gal = JSON.parse(localStorage.getItem('bloomlab.gallery') || '[]'); } catch (e) {}
+
+    app.appendChild(h('div', { class: 'topbar' }, [
+      h('div', { class: 'brand' }, [h('span', { class: 'mark', text: 'Panel' }), h('span', { class: 'sub', text: CFG.eventId })]),
+      h('div', { class: 'progress' }),
+      h('button', { class: 'icon-btn', text: 'Cerrar', onclick: function () { App.go('attract'); } })
+    ]));
+
+    var wrap = h('div', { class: 'admin' });
+
+    wrap.appendChild(h('h3', { text: 'Métricas de la sesión' }));
+    var tbl = h('table');
+    var keys = Object.keys(m).sort();
+    var totals = { sesiones: m['session'] || 0, terminadas: m['complete'] || 0, QR: m['share'] || 0, galería: gal.length };
+    Object.keys(totals).forEach(function (k) {
+      tbl.appendChild(h('tr', {}, [h('td', { text: k }), h('td', { text: String(totals[k]) })]));
+    });
+    keys.forEach(function (k) {
+      if (['session', 'complete', 'share'].indexOf(k) !== -1) return;
+      tbl.appendChild(h('tr', {}, [h('td', { text: k }), h('td', { text: String(m[k]) })]));
+    });
+    wrap.appendChild(tbl);
+
+    wrap.appendChild(h('h3', { text: 'Operación' }));
+    wrap.appendChild(h('div', { class: 'row' }, [
+      h('button', { class: 'btn', text: 'Exportar CSV', onclick: exportCSV }),
+      h('button', {
+        class: 'btn', text: 'Modo demostración', onclick: function () {
+          App.g = G.randomize(G.base()); App.g.name = 'Demo Bloom'; App.go('reveal');
+        }
+      }),
+      h('button', {
+        class: 'btn', text: CFG.galleryOn ? 'Galería: activa' : 'Galería: inactiva',
+        onclick: function (e) { CFG.galleryOn = !CFG.galleryOn; e.currentTarget.textContent = CFG.galleryOn ? 'Galería: activa' : 'Galería: inactiva'; }
+      }),
+      h('button', {
+        class: 'btn', text: 'Limpiar sesiones', onclick: function () {
+          if (!confirm('¿Borrar métricas y galería de este equipo?')) return;
+          localStorage.removeItem('bloomlab.metrics');
+          localStorage.removeItem('bloomlab.gallery');
+          adminPanel();
+        }
+      })
+    ]));
+
+    wrap.appendChild(h('h3', { text: 'Creaciones autorizadas (' + gal.length + ')' }));
+    var list = h('div', { class: 'row' });
+    gal.slice(0, 40).forEach(function (item, i) {
+      list.appendChild(h('button', {
+        class: 'btn' + (item.hidden ? ' ghost' : ''),
+        text: (item.hidden ? '🚫 ' : '') + (item.name || '—'),
+        title: 'Ocultar / mostrar',
+        onclick: function (e) {
+          gal[i].hidden = !gal[i].hidden;
+          localStorage.setItem('bloomlab.gallery', JSON.stringify(gal));
+          e.currentTarget.textContent = (gal[i].hidden ? '🚫 ' : '') + (item.name || '—');
+        }
+      }));
+    });
+    wrap.appendChild(list);
+
+    wrap.appendChild(h('h3', { text: 'Motor' }));
+    wrap.appendChild(h('div', {
+      class: 'row',
+      text: 'Render: ' + (App.webgl ? 'WebGL activo' : 'respaldo 2D') +
+            ' · Idioma: ' + App.lang + ' · Evento: ' + CFG.eventName
+    }));
+
+    app.appendChild(wrap);
+
+    function exportCSV() {
+      var rows = [['clave', 'valor']];
+      Object.keys(m).forEach(function (k) { rows.push([k, m[k]]); });
+      rows.push([]); rows.push(['nombre', 'fecha', 'genoma']);
+      gal.forEach(function (x) { rows.push([x.name, new Date(x.ts).toISOString(), x.code]); });
+      var csv = rows.map(function (r) {
+        return r.map(function (c) { return '"' + String(c === undefined ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+      }).join('\n');
+      var a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+      a.download = 'bloomlab-' + CFG.eventId + '.csv';
+      a.click();
+    }
+  }
+
+  /* =================================================================
+     Vista de la creación compartida (teléfono)
+     ================================================================= */
+  App.showShared = function () {
+    var app = App.$('#app');
+    App.clear(app);
+    app.style.overflow = 'auto';
+    var g = App.g, en = (navigator.language || 'es').slice(0, 2) === 'en';
+    App.lang = en ? 'en' : 'es';
+
+    var cv = h('canvas', { style: 'width:100%;aspect-ratio:1;display:block;border-radius:calc(var(--s)*1.2)' });
+    var cv2 = h('canvas', { style: 'width:100%;aspect-ratio:4/5;display:block;border-radius:calc(var(--s)*1.2)' });
+
+    var wrap = h('div', { class: 'mobile screen' }, [
+      h('div', { style: 'font-family:var(--f-mono);font-size:calc(var(--s)*1.4);letter-spacing:.2em;color:var(--wine);text-transform:uppercase', text: 'Deliflor Bloom Lab' }),
+      h('h1', {
+        style: 'font-family:var(--f-display);font-weight:400;font-size:calc(var(--s)*6);margin:calc(var(--s)*.6) 0 calc(var(--s)*1.4);line-height:1.05',
+        text: g.name || '—'
+      }),
+      cv2, h('div', { style: 'height:calc(var(--s)*1.4)' }), cv
+    ]);
+    app.appendChild(wrap);
+
+    App.defer(function () {
+      T.fallbackScene(cv2, g, 'bouquet');
+      T.flower(cv, g, { scale: 0.44 });
+    });
+
+    var card = App.buildPassport(false);
+    card.style.marginTop = 'calc(var(--s)*2)';
+    wrap.appendChild(card);
+    wrap.appendChild(h('p', {
+      style: 'font-family:var(--f-mono);font-size:calc(var(--s)*1.1);color:var(--ink-faint);line-height:1.6;margin-top:calc(var(--s)*2)',
+      text: en ? 'This variety travels entirely inside the link — nothing about it was stored on a server.'
+               : 'Esta variedad viaja completa dentro del enlace: nada de ella quedó guardado en un servidor.'
+    }));
+  };
+})(window);

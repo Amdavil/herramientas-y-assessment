@@ -1,0 +1,1136 @@
+<title>Deliflor Bloom Lab — Alcance y Fase 1</title>
+
+<style>
+:root{
+  --paper:#F3EFEC;
+  --surface:#FBF9F7;
+  --surface-2:#E9E2DD;
+  --ink:#241A1F;
+  --ink-dim:#6D5A62;
+  --ink-faint:#9A8890;
+  --wine:#7C214D;
+  --magenta:#9C3071;
+  --wine-wash:rgba(124,33,77,.07);
+  --line:rgba(36,26,31,.16);
+  --hair:rgba(36,26,31,.09);
+  --grid:rgba(124,33,77,.075);
+  --leaf:#6F7D4C;
+  --center:#B6C443;
+  --on-wine:#FBF7F5;
+  --ok:#5C7A46;
+  --warn:#A8712A;
+  --crit:#A3382F;
+
+  --f-display:"Hoefler Text","Palatino Linotype","Book Antiqua",Palatino,"Iowan Old Style",Georgia,serif;
+  --f-body:"Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,system-ui,"Helvetica Neue",Arial,sans-serif;
+  --f-mono:ui-monospace,"Cascadia Mono",Consolas,"SF Mono","Roboto Mono",monospace;
+
+  --measure:66ch;
+  --pad:clamp(1.25rem,4vw,3.5rem);
+}
+
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#150E12;
+    --surface:#1E141A;
+    --surface-2:#291A22;
+    --ink:#F1E6EA;
+    --ink-dim:#B09AA4;
+    --ink-faint:#7C6771;
+    --wine:#E79FC2;
+    --magenta:#D782AF;
+    --wine-wash:rgba(231,159,194,.09);
+    --line:rgba(241,230,234,.18);
+    --hair:rgba(241,230,234,.10);
+    --grid:rgba(231,159,194,.065);
+    --leaf:#9DAE74;
+    --center:#C9D566;
+    --on-wine:#1A1014;
+    --ok:#8FB073;
+    --warn:#D6A257;
+    --crit:#E0776C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#150E12;
+  --surface:#1E141A;
+  --surface-2:#291A22;
+  --ink:#F1E6EA;
+  --ink-dim:#B09AA4;
+  --ink-faint:#7C6771;
+  --wine:#E79FC2;
+  --magenta:#D782AF;
+  --wine-wash:rgba(231,159,194,.09);
+  --line:rgba(241,230,234,.18);
+  --hair:rgba(241,230,234,.10);
+  --grid:rgba(231,159,194,.065);
+  --leaf:#9DAE74;
+  --center:#C9D566;
+  --on-wine:#1A1014;
+  --ok:#8FB073;
+  --warn:#D6A257;
+  --crit:#E0776C;
+}
+:root[data-theme="light"]{
+  --paper:#F3EFEC;
+  --surface:#FBF9F7;
+  --surface-2:#E9E2DD;
+  --ink:#241A1F;
+  --ink-dim:#6D5A62;
+  --ink-faint:#9A8890;
+  --wine:#7C214D;
+  --magenta:#9C3071;
+  --wine-wash:rgba(124,33,77,.07);
+  --line:rgba(36,26,31,.16);
+  --hair:rgba(36,26,31,.09);
+  --grid:rgba(124,33,77,.075);
+  --leaf:#6F7D4C;
+  --center:#B6C443;
+  --on-wine:#FBF7F5;
+  --ok:#5C7A46;
+  --warn:#A8712A;
+  --crit:#A3382F;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background-color:var(--paper);
+  background-image:
+    repeating-linear-gradient(0deg,var(--grid) 0 1px,transparent 1px 28px),
+    repeating-linear-gradient(90deg,var(--grid) 0 1px,transparent 1px 28px);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:clamp(15px,.55vw + 13px,17px);
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 var(--pad) 6rem}
+
+p{max-width:var(--measure)}
+
+/* ---------- masthead ---------- */
+.masthead{
+  display:flex;flex-wrap:wrap;gap:1rem 2rem;align-items:flex-end;justify-content:space-between;
+  padding:2.5rem 0 1.1rem;border-bottom:2px solid var(--wine);margin-bottom:.5rem;
+}
+.stamp{
+  font-family:var(--f-mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--wine);line-height:1.8;
+}
+.stamp b{display:block;font-weight:700;color:var(--ink)}
+.masthead h1{
+  font-family:var(--f-display);font-weight:400;font-style:normal;
+  font-size:clamp(2.1rem,5.2vw,3.9rem);line-height:.98;margin:0;letter-spacing:-.015em;
+  text-wrap:balance;
+}
+.masthead h1 em{font-style:italic;color:var(--wine)}
+.rule-thin{height:1px;background:var(--wine);opacity:.45;margin-bottom:2.6rem}
+
+/* ---------- section scaffolding ---------- */
+section{padding-top:3.6rem}
+.eyebrow{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.19em;text-transform:uppercase;
+  color:var(--wine);display:flex;align-items:center;gap:.7rem;margin:0 0 .6rem;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+h2{
+  font-family:var(--f-display);font-weight:400;font-size:clamp(1.6rem,3.1vw,2.4rem);
+  line-height:1.12;margin:0 0 .9rem;letter-spacing:-.01em;text-wrap:balance;
+}
+h3{
+  font-family:var(--f-body);font-weight:650;font-size:1.02rem;margin:2rem 0 .55rem;
+  letter-spacing:-.005em;
+}
+h4{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-dim);margin:0 0 .5rem;font-weight:600}
+.lede{font-size:1.1rem;line-height:1.55;color:var(--ink-dim);max-width:60ch}
+.lede strong{color:var(--ink);font-weight:600}
+
+/* ---------- hero ---------- */
+.hero{
+  display:grid;gap:clamp(1.5rem,3vw,3rem);
+  grid-template-columns:1fr;
+  align-items:center;padding-top:1.2rem;
+}
+@media(min-width:860px){.hero{grid-template-columns:1fr 1.05fr}}
+
+.thesis p{font-size:1.06rem}
+.thesis .kicker{
+  font-family:var(--f-display);font-style:italic;font-size:clamp(1.35rem,2.6vw,1.85rem);
+  line-height:1.3;color:var(--ink);margin:0 0 1rem;max-width:26ch;
+}
+
+.specimen{
+  background:var(--surface);border:1px solid var(--line);
+  padding:1rem 1rem 1.15rem;position:relative;
+}
+.specimen-frame{
+  position:relative;aspect-ratio:1/1;background:var(--surface);
+  border:1px solid var(--hair);overflow:hidden;
+}
+.specimen canvas{display:block;width:100%;height:100%}
+.split-caption{
+  display:flex;justify-content:space-between;gap:1rem;
+  font-family:var(--f-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);padding:.55rem .15rem .8rem;
+}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:.55rem .9rem}
+.ctrl label{
+  display:flex;justify-content:space-between;gap:.5rem;
+  font-family:var(--f-mono);font-size:.61rem;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-dim);margin-bottom:.15rem;
+}
+.ctrl label span{color:var(--wine);font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;margin:0;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line)}
+input[type=range]::-moz-range-track{height:2px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--wine);
+  margin-top:-6.5px;border:2px solid var(--surface);
+}
+input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border:2px solid var(--surface);border-radius:50%;background:var(--wine);
+}
+input[type=range]:focus-visible{outline:2px solid var(--magenta);outline-offset:3px}
+
+.swatches{display:flex;gap:.4rem;align-items:center;margin-top:.9rem;flex-wrap:wrap}
+.sw{
+  width:30px;height:30px;border-radius:50%;border:1px solid var(--line);cursor:pointer;padding:0;
+  position:relative;
+}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--wine)}
+.sw:focus-visible{outline:2px solid var(--magenta);outline-offset:4px}
+.btn-surprise{
+  margin-left:auto;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;
+  background:var(--wine);color:var(--on-wine);border:0;padding:.62rem 1rem;cursor:pointer;
+}
+.btn-surprise:hover{background:var(--magenta)}
+.btn-surprise:focus-visible{outline:2px solid var(--magenta);outline-offset:3px}
+.caption{
+  font-family:var(--f-mono);font-size:.63rem;line-height:1.6;letter-spacing:.05em;
+  color:var(--ink-faint);margin:.9rem 0 0;max-width:46ch;
+}
+
+/* ---------- generic blocks ---------- */
+.grid2{display:grid;gap:1.4rem;grid-template-columns:1fr}
+@media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.grid3{display:grid;gap:1.1rem;grid-template-columns:1fr}
+@media(min-width:700px){.grid3{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.grid3{grid-template-columns:repeat(3,1fr)}}
+
+.panel{background:var(--surface);border:1px solid var(--line);padding:1.3rem 1.35rem 1.45rem}
+.panel.tint{background:var(--wine-wash);border-color:transparent}
+.panel h4{margin-bottom:.7rem}
+.panel ul{margin:0;padding-left:1.05rem}
+.panel li{margin:.3rem 0}
+.panel li::marker{color:var(--wine)}
+
+.tag{
+  display:inline-block;font-family:var(--f-mono);font-size:.6rem;letter-spacing:.12em;
+  text-transform:uppercase;padding:.22rem .5rem;border:1px solid currentColor;
+}
+.t-off{color:var(--ok)}
+.t-net{color:var(--warn)}
+.t-3d{color:var(--wine)}
+
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:.9rem}
+th,td{text-align:left;padding:.68rem .9rem;border-bottom:1px solid var(--hair);vertical-align:top}
+thead th{
+  font-family:var(--f-mono);font-size:.63rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--on-wine);background:var(--wine);font-weight:600;border-bottom:0;
+}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:var(--wine-wash)}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--wine)}
+td.ph{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.1em;color:var(--wine);white-space:nowrap}
+tfoot td{
+  font-family:var(--f-mono);font-size:.76rem;letter-spacing:.06em;
+  background:var(--surface-2);font-weight:600;border-top:2px solid var(--wine);
+}
+
+/* ---------- risks ---------- */
+.risk{
+  display:grid;grid-template-columns:auto 1fr;gap:0 1rem;align-items:start;
+  border-left:3px solid var(--sev,var(--ink-dim));background:var(--surface);
+  border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:.95rem 1.1rem;
+}
+.risk .code{
+  font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--sev,var(--ink-dim));
+  font-weight:700;padding-top:.12rem;
+}
+.risk h5{margin:0 0 .25rem;font-size:.97rem;font-weight:650;grid-column:2}
+.risk p{margin:0;font-size:.9rem;color:var(--ink-dim);grid-column:2;max-width:none}
+.risk p b{color:var(--ink);font-weight:600}
+.risks{display:grid;gap:.6rem}
+.sev-hi{--sev:var(--crit)}
+.sev-md{--sev:var(--warn)}
+.sev-lo{--sev:var(--ok)}
+
+/* ---------- architecture stack ---------- */
+.stack{display:grid;gap:.55rem;margin-top:1.2rem}
+.layer{
+  display:grid;grid-template-columns:1fr;gap:.5rem 1.2rem;
+  border:1px solid var(--line);background:var(--surface);padding:1rem 1.15rem;
+}
+@media(min-width:820px){.layer{grid-template-columns:200px 1fr}}
+.layer .lname{
+  font-family:var(--f-mono);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--wine);font-weight:700;
+}
+.layer .lname small{display:block;text-transform:none;letter-spacing:.02em;color:var(--ink-faint);
+  font-weight:400;margin-top:.25rem;font-size:.66rem}
+.layer p{margin:0 0 .5rem;font-size:.92rem;max-width:none}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{
+  font-family:var(--f-mono);font-size:.62rem;letter-spacing:.06em;
+  background:var(--surface-2);color:var(--ink-dim);padding:.24rem .5rem;
+}
+.layer.core{border-left:3px solid var(--wine)}
+.layer.opt{border-left:3px solid var(--warn);border-style:solid;background:transparent}
+
+/* ---------- screen map ---------- */
+.plates{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));margin-top:1.3rem}
+.plate{border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column}
+.plate .ph{
+  background:var(--surface-2);padding:.5rem .7rem;display:flex;gap:.55rem;align-items:baseline;
+  border-bottom:1px solid var(--hair);
+}
+.plate .no{font-family:var(--f-mono);font-size:.68rem;font-weight:700;color:var(--wine);letter-spacing:.05em}
+.plate .nm{font-weight:650;font-size:.9rem;line-height:1.25}
+.plate .bd{padding:.6rem .7rem .7rem;flex:1;display:flex;flex-direction:column;gap:.45rem}
+.plate .bd p{margin:0;font-size:.8rem;line-height:1.45;color:var(--ink-dim);max-width:none}
+.spec{
+  margin-top:auto;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;
+  font-family:var(--f-mono);font-size:.6rem;letter-spacing:.07em;color:var(--ink-faint);
+  border-top:1px dotted var(--line);padding-top:.5rem;
+}
+.spec .t{color:var(--wine);font-weight:700}
+.plate.key{background:var(--wine-wash)}
+
+/* ---------- flow budget ---------- */
+.budget{display:grid;gap:.3rem;margin:1.2rem 0 .6rem}
+.brow{display:grid;grid-template-columns:minmax(120px,1.1fr) 3fr auto;gap:.8rem;align-items:center;font-size:.85rem}
+.brow .bl{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-dim)}
+.bar{height:14px;background:var(--surface-2);position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--wine);display:block}
+.bar i.alt{background:var(--leaf)}
+.bar i.alt2{background:var(--magenta)}
+.brow .bv{font-family:var(--f-mono);font-size:.72rem;color:var(--wine);font-variant-numeric:tabular-nums}
+
+/* ---------- notes ---------- */
+.note{
+  border-left:3px solid var(--magenta);background:var(--wine-wash);
+  padding:.9rem 1.1rem;margin:1.1rem 0;
+}
+.note h5{margin:0 0 .3rem;font-size:.95rem;font-weight:650}
+.note p{margin:0;font-size:.9rem;color:var(--ink-dim);max-width:none}
+.note p + p{margin-top:.5rem}
+.note b{color:var(--ink)}
+
+pre{
+  font-family:var(--f-mono);font-size:.76rem;line-height:1.6;background:var(--surface);
+  border:1px solid var(--line);padding:.9rem 1rem;overflow-x:auto;margin:.8rem 0;
+}
+code{font-family:var(--f-mono);font-size:.88em;color:var(--wine)}
+pre code{color:var(--ink)}
+
+footer{
+  margin-top:4.5rem;padding-top:1.2rem;border-top:2px solid var(--wine);
+  font-family:var(--f-mono);font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-faint);display:flex;flex-wrap:wrap;gap:.6rem 2rem;justify-content:space-between;
+}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="stamp"><b>Deliflor Américas</b>Propuesta de experiencia · Documento de trabajo</p>
+      <h1>Bloom&nbsp;Lab<br><em>Alcance y Fase&nbsp;1</em></h1>
+    </div>
+    <p class="stamp">
+      Concepto · Arquitectura<br>
+      Flujo · Mapa de pantallas<br>
+      29 · 07 · 2026
+    </p>
+  </header>
+  <div class="rule-thin"></div>
+
+  <!-- ================= HERO ================= -->
+  <div class="hero">
+    <div class="thesis">
+      <p class="eyebrow">La idea rectora</p>
+      <p class="kicker">Mitad jardín, mitad laboratorio: la misma flor, vista por los dos lados.</p>
+      <p>El catálogo de Deliflor ya resolvió el problema de identidad antes que nosotros. Cada variedad aparece <strong>partida por la mitad</strong>: a la izquierda la fotografía real, a la derecha el grabado botánico a lápiz, sobre papel milimetrado. Belleza y medición en la misma imagen.</p>
+      <p>Bloom Lab hereda ese gesto y lo vuelve mecánica. Mientras el visitante decide, ve su flor en las dos mitades: el color que imagina y la geometría que el motor calcula. Al revelarla, el trazo se colorea de un lado al otro. Eso es literalmente lo que hace un fitomejorador, y es lo que hace nuestro motor paramétrico.</p>
+      <p class="caption">La flor de al lado no es una imagen. Es el motor paramétrico corriendo en vivo, con cinco de sus treinta parámetros expuestos. Muévalos.</p>
+    </div>
+
+    <figure class="specimen">
+      <div class="specimen-frame">
+        <canvas id="bloomCanvas" role="img"
+          aria-label="Crisantemo generado por procedimiento, mostrado mitad a color y mitad como grabado botánico. Los controles debajo modifican capas, longitud, curvatura y apertura de los pétalos."></canvas>
+      </div>
+      <div class="split-caption">
+        <span>Lo que ve el visitante</span>
+        <span>Lo que calcula el motor</span>
+      </div>
+      <div class="controls">
+        <div class="ctrl">
+          <label for="cLayers">Capas <span id="vLayers">7</span></label>
+          <input type="range" id="cLayers" min="2" max="12" step="1" value="7">
+        </div>
+        <div class="ctrl">
+          <label for="cLength">Longitud <span id="vLength">0.66</span></label>
+          <input type="range" id="cLength" min="0.30" max="1" step="0.01" value="0.66">
+        </div>
+        <div class="ctrl">
+          <label for="cCurve">Curvatura <span id="vCurve">0.50</span></label>
+          <input type="range" id="cCurve" min="0" max="1" step="0.01" value="0.5">
+        </div>
+        <div class="ctrl">
+          <label for="cOpen">Apertura <span id="vOpen">0.55</span></label>
+          <input type="range" id="cOpen" min="0" max="1" step="0.01" value="0.55">
+        </div>
+      </div>
+      <div class="swatches" id="swatches"></div>
+    </figure>
+  </div>
+
+  <!-- ================= 1. CONCEPTO ================= -->
+  <section id="concepto">
+    <p class="eyebrow">1 · Concepto</p>
+    <h2>Una experiencia que se entiende sin leer nada</h2>
+    <p class="lede">El visitante no configura una flor: la <strong>ve nacer mientras la toca</strong>. Ninguna pantalla pide un dato antes de mostrar un resultado; en cada paso ya existe una flor completa y bonita en pantalla, y lo que el visitante hace es empujarla hacia donde quiere.</p>
+
+    <div class="grid3" style="margin-top:1.6rem">
+      <div class="panel">
+        <h4>Nunca se empieza en cero</h4>
+        <p style="margin:0;font-size:.92rem">Al elegir familia (pantalla 3) el motor carga un <b>genoma base armónico</b> —una flor terminada, del nivel del catálogo—. Las pantallas 4 a 8 son refinamiento, no requisito. Por eso la experiencia se puede terminar en 60 segundos o disfrutar durante cuatro minutos.</p>
+      </div>
+      <div class="panel">
+        <h4>La flor siempre está presente</h4>
+        <p style="margin:0;font-size:.92rem">El modelo vive en un panel fijo del 45 % de la pantalla durante todo el recorrido. Los controles entran y salen a su alrededor. Quien hace fila ve la flor evolucionar aunque no lea una sola etiqueta: <b>la pantalla se explica a distancia</b>.</p>
+      </div>
+      <div class="panel">
+        <h4>El QR lleva la flor adentro</h4>
+        <p style="margin:0;font-size:.92rem">El genoma completo se cuantiza a ~48 bytes y viaja codificado en la propia URL del QR. El teléfono del visitante <b>reconstruye la flor desde el enlace</b>, sin base de datos y sin que el kiosco haya tenido internet. Ver §3.</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <h5>Nombre recomendado: Deliflor Bloom Lab</h5>
+      <p>De las opciones propuestas es la única que nombra las dos mitades del concepto —<b>bloom</b> (la flor) y <b>lab</b> (la hibridación)— y la única que funciona igual en español y en inglés sin traducirse, algo necesario en un evento internacional. El subtítulo «Imagina el crisantemo del futuro» / «Imagine tomorrow's chrysanthemum» se mantiene tal cual.</p>
+    </div>
+
+    <div class="note">
+      <h5>Corrección al brief: la marca no es magenta, es vino</h5>
+      <p>El brief describe la identidad como «magenta, blanco y gris». El catálogo real usa un <b>borgoña profundo #7C214D</b> como color de fondo dominante, un <b>magenta #9C3071</b> solo para titulares y nombres de variedad, y un <b>papel cálido #F3EFEC con retícula milimetrada</b> en lugar de blanco y gris neutros. Un magenta plano sobre blanco se vería como una marca distinta a la del catálogo.</p>
+      <p>Este documento está construido con los colores muestreados del PDF. Propongo adoptarlos como base del sistema de diseño en Fase 2, con confirmación de Deliflor sobre los valores oficiales de marca.</p>
+    </div>
+  </section>
+
+  <!-- ================= 2. ALCANCE ================= -->
+  <section id="alcance">
+    <p class="eyebrow">2 · Documento de alcance</p>
+    <h2>Qué se entrega, qué depende de la red y qué es real</h2>
+    <p class="lede">La regla que ordena todo el proyecto: <strong>el evento nunca puede depender de la red del recinto</strong>. Todo lo indispensable corre en el computador del kiosco; lo que necesita conexión es adicional y tiene una degradación definida.</p>
+
+    <h3>2.1 · Frontera offline / conexión</h3>
+    <div class="grid2">
+      <div class="panel">
+        <h4><span class="tag t-off">100 % offline</span></h4>
+        <ul>
+          <li>Las 15 pantallas del recorrido y todas sus transiciones.</li>
+          <li>Motor paramétrico completo y sus 30 parámetros.</li>
+          <li>Modelo 3D interactivo de la flor (girar, acercar, inclinar).</li>
+          <li>Tallo, follaje y <b>ramo procedural</b> con la variedad creada.</li>
+          <li>Motor de recomendaciones y botón «Sorpréndeme».</li>
+          <li>Generador y moderación de nombres (lista local).</li>
+          <li>Cálculo de Novedad, Armonía y Desafío de hibridación.</li>
+          <li>Pasaporte de la variedad y su exportación a imagen.</li>
+          <li><b>Generación del QR</b>, incluido su contenido.</li>
+          <li>Galería local del evento (sesiones del propio equipo).</li>
+          <li>Analítica anónima acumulada en disco.</li>
+          <li>Panel administrativo y exportación CSV.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h4><span class="tag t-net">Requiere conexión</span></h4>
+        <ul>
+          <li><b>Abrir el QR desde el teléfono del visitante</b> (con su propia red móvil, no la del kiosco).</li>
+          <li>Render fotorrealista por IA del ramo en contexto.</li>
+          <li>Envío por correo de la creación, si el visitante lo pide.</li>
+          <li>Galería en la nube compartida entre varios kioscos.</li>
+          <li>Votación pública de flores favoritas.</li>
+          <li>Sincronización de métricas hacia el servidor central.</li>
+        </ul>
+        <p style="font-size:.86rem;margin:.9rem 0 0;color:var(--ink-dim)">
+          Cada uno de estos seis puntos tiene su comportamiento degradado especificado: ninguno bloquea, ninguno muestra un cargador indefinido y ninguno impide terminar la experiencia.
+        </p>
+      </div>
+    </div>
+
+    <h3>2.2 · Qué es 3D real y qué es imagen generada</h3>
+    <div class="tablewrap" style="margin-top:.7rem">
+      <table>
+        <thead>
+          <tr><th>Elemento</th><th>Naturaleza</th><th>Interactivo</th><th>Depende de red</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Flor individual (pantallas 4–10)</td><td>3D procedural · React Three Fiber</td><td>Sí — gira, acerca, inclina</td><td>No</td></tr>
+          <tr><td>Miniaturas de familia (pantalla 3)</td><td>3D procedural, LOD bajo</td><td>Animación en bucle</td><td>No</td></tr>
+          <tr><td>Tallo, hojas y spray</td><td>3D procedural</td><td>Sí</td><td>No</td></tr>
+          <tr><td>Ramo (pantalla 11)</td><td>3D procedural · instancias del mismo genoma</td><td>Sí</td><td>No</td></tr>
+          <tr><td>Fondos de escena</td><td>HDRI + planos 3D locales</td><td>Cámara</td><td>No</td></tr>
+          <tr><td>Pasaporte (pantalla 13)</td><td>Captura del 3D + composición 2D</td><td>No</td><td>No</td></tr>
+          <tr><td><b>Render fotorrealista del ramo</b></td><td><b>Imagen generada por IA</b></td><td><b>No — se presenta como fotografía</b></td><td><b>Sí</b></td></tr>
+          <tr><td>Galería del evento</td><td>3D procedural en mosaico</td><td>Sí</td><td>Solo si es multi-kiosco</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption" style="max-width:70ch">Regla innegociable del brief, respetada en el diseño: la imagen generada por IA aparece siempre dentro de un marco tipo lámina fotográfica, con el rótulo «Render fotográfico» y sin ningún control de rotación. Nunca se ofrece como modelo manipulable.</p>
+
+    <h3>2.3 · Tiempo estimado por fase</h3>
+    <div class="tablewrap" style="margin-top:.7rem">
+      <table>
+        <thead>
+          <tr><th>Fase</th><th>Contenido</th><th>Días hábiles</th><th>Riesgo</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="ph">F1</td><td>Concepto, arquitectura, flujo, mapa de pantallas <em>(esta entrega)</em></td><td class="num">2 – 3</td><td>Bajo</td></tr>
+          <tr><td class="ph">F2</td><td>Wireframes de las 15 pantallas y sistema de diseño</td><td class="num">3 – 4</td><td>Bajo</td></tr>
+          <tr><td class="ph">F3</td><td>Motor paramétrico, modelo de datos, codificación del genoma</td><td class="num">3 – 5</td><td>Medio</td></tr>
+          <tr><td class="ph">F4</td><td>Prototipo frontend navegable, estados, temporizadores</td><td class="num">6 – 8</td><td>Bajo</td></tr>
+          <tr><td class="ph">F5</td><td><b>Modelo 3D procedural del crisantemo</b></td><td class="num">8 – 12</td><td>Alto</td></tr>
+          <tr><td class="ph">F6</td><td>Ramo, pasaporte, QR, galería</td><td class="num">6 – 8</td><td>Medio</td></tr>
+          <tr><td class="ph">F7</td><td>Backend, IA generativa, panel administrativo</td><td class="num">5 – 7</td><td>Medio</td></tr>
+          <tr><td class="ph">F8</td><td>Pruebas táctiles, resistencia 8 h, kiosco, manual de operación</td><td class="num">5 – 7</td><td>Medio</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Total</td><td>Una persona a tiempo completo</td><td class="num">38 – 54 días · 8–11 semanas</td><td>—</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <p style="margin-top:.8rem">Con <strong>dos personas</strong> —una en el motor 3D desde F3 y otra en interfaz y flujo— las fases F4/F5 y F6/F7 se solapan y el total baja a <strong>6–7 semanas</strong>. Recomiendo esta configuración si la fecha del evento está a menos de dos meses. Necesito la fecha del evento para confirmarlo.</p>
+
+    <h3>2.4 · Riesgos técnicos</h3>
+    <div class="risks">
+      <div class="risk sev-hi">
+        <span class="code">R1</span>
+        <h5>La calidad visual del 3D procedural no alcanza la expectativa creada por el catálogo</h5>
+        <p>Es el riesgo dominante. El catálogo muestra macrofotografía profesional; un motor procedural entregado en tres semanas no llega ahí. <b>Mitigación:</b> cerrar la expectativa al final de F3 con una imagen fija del motor real aprobada por Deliflor, antes de invertir F5 completa. El estilo objetivo es <b>botánico estilizado y elegante</b>, no fotorrealismo; la IA cubre la promesa fotográfica.</p>
+      </div>
+      <div class="risk sev-hi">
+        <span class="code">R2</span>
+        <h5>Degradación de memoria y rendimiento en 8 horas continuas</h5>
+        <p>Cientos de sesiones creando y destruyendo geometrías filtran memoria de GPU y el kiosco termina a 12 fps. <b>Mitigación:</b> un único pool de geometrías reutilizadas, <code>dispose()</code> explícito al cerrar sesión, desmontaje completo del árbol 3D entre visitantes, prueba de resistencia obligatoria de 10 h en F8 con registro de fps y memoria, y reinicio programado de madrugada.</p>
+      </div>
+      <div class="risk sev-md">
+        <span class="code">R3</span>
+        <h5>La red del recinto ferial no funciona o está saturada</h5>
+        <p>Es lo normal en ferias, no la excepción. <b>Mitigación:</b> arquitectura offline-first; el QR autocontenido (§3) hace que compartir funcione sin internet en el kiosco. Se contempla un router 4G propio como respaldo para la capa opcional.</p>
+      </div>
+      <div class="risk sev-md">
+        <span class="code">R4</span>
+        <h5>El servicio de IA responde tarde, caro o con una flor que no es un crisantemo</h5>
+        <p><b>Mitigación:</b> presupuesto duro de <b>12 segundos</b> —no 15— tras el cual se muestra el render 3D sin disculpas y sin cargador; caché de resultados por genoma similar; techo de gasto diario configurable en el panel; y un interruptor de apagado de la IA que el personal puede accionar sin tocar código.</p>
+      </div>
+      <div class="risk sev-md">
+        <span class="code">R5</span>
+        <h5>Pantalla táctil desconocida hasta el día del montaje</h5>
+        <p>Calibración, número de puntos táctiles reales, latencia y rechazo de palma varían mucho entre fabricantes. <b>Mitigación:</b> conocer marca y modelo antes de F8; toda la interacción se resuelve con <b>un solo dedo</b>, y los gestos de dos dedos (acercar) siempre tienen un botón equivalente.</p>
+      </div>
+      <div class="risk sev-lo">
+        <span class="code">R6</span>
+        <h5>Nombres inapropiados en un pasaporte con la marca Deliflor</h5>
+        <p><b>Mitigación:</b> lista negra local en español e inglés con variantes de sustitución de caracteres, bloqueo de repeticiones, y capacidad del panel para ocultar una creación de la galería en un toque. Nada llega a la galería pública sin consentimiento explícito.</p>
+      </div>
+      <div class="risk sev-lo">
+        <span class="code">R7</span>
+        <h5>Cola de visitantes más rápida que la experiencia</h5>
+        <p><b>Mitigación:</b> «Sorpréndeme» disponible en todas las pantallas, valores por defecto ya armónicos, y un <b>modo feria</b> activable desde el panel que acorta animaciones y tiempos de espera cuando hay fila.</p>
+      </div>
+    </div>
+
+    <h3>2.5 · Recursos necesarios</h3>
+    <div class="grid3">
+      <div class="panel">
+        <h4>Equipo humano</h4>
+        <ul>
+          <li>1 desarrollador React + Three.js <em>(todo el proyecto)</em></li>
+          <li>1 diseñador UI para F2 y revisión en F8 <em>(~40 %)</em></li>
+          <li>1 revisor técnico de Deliflor: familias, morfología y nomenclatura <em>(~4 h en F1–F3)</em></li>
+          <li>1 responsable de marca de Deliflor para aprobar identidad <em>(2 hitos)</em></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h4>De parte de Deliflor</h4>
+        <ul>
+          <li>Logo en vectorial (SVG o AI), incluido el sello «Fresh joy for the next gen».</li>
+          <li>Valores de marca oficiales y tipografía corporativa con licencia de uso digital.</li>
+          <li>Nombre y fecha exactos del evento.</li>
+          <li>Confirmación de las familias a incluir y su denominación correcta.</li>
+          <li>Textos legales de consentimiento y tratamiento de datos.</li>
+          <li>Definición del dominio del QR.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h4>Servicios</h4>
+        <ul>
+          <li>Dominio corto para los enlaces del QR.</li>
+          <li>Hosting estático para la página de la creación.</li>
+          <li>Cuenta de generación de imágenes con presupuesto acordado <em>(opcional)</em>.</li>
+          <li>Servidor y base de datos <em>(solo si hay galería multi-kiosco)</em>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>2.6 · Requisitos del computador y la pantalla</h3>
+    <div class="grid2">
+      <div class="panel">
+        <h4>Computador del kiosco</h4>
+        <ul>
+          <li><b>GPU dedicada obligatoria:</b> NVIDIA RTX 3050 / 4060 o superior. Los gráficos integrados no sostienen 4K a 60 fps con sombras.</li>
+          <li>CPU: Intel Core i5 de 12.ª generación o Ryzen 5 5600 en adelante.</li>
+          <li>16 GB de RAM · SSD NVMe de 256 GB.</li>
+          <li>Windows 11 Pro con sesión de kiosco y usuario sin privilegios.</li>
+          <li>Chrome o Edge en <code>--kiosk</code>, con la aplicación instalada como PWA.</li>
+          <li>Suspensión, salvapantallas, notificaciones y actualizaciones automáticas <b>desactivados</b>.</li>
+          <li>UPS pequeña: protege contra los cortes de energía típicos del montaje ferial.</li>
+          <li>Acceso remoto para soporte, si hay red disponible.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h4>Pantalla</h4>
+        <ul>
+          <li>55" a 86", táctil capacitiva, <b>10 puntos o más</b>.</li>
+          <li>4K 3840 × 2160 nativo. La interfaz también se entrega verificada a 1920 × 1080.</li>
+          <li>Orientación horizontal 16:9.</li>
+          <li>Brillo ≥ 400 nits y acabado antirreflejo: la iluminación de feria es dura.</li>
+          <li><b>Altura de montaje:</b> borde inferior a 85–90 cm del piso. Todos los controles interactivos se ubican en la franja de 90 a 150 cm, alcanzable por niños y por personas en silla de ruedas; la mitad superior de la pantalla se reserva para la flor y los títulos, que solo se miran.</li>
+          <li>Cableado asegurado y marco protegido: la pantalla recibirá toques fuertes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. ARQUITECTURA ================= -->
+  <section id="arquitectura">
+    <p class="eyebrow">3 · Arquitectura funcional</p>
+    <h2>Un núcleo que nunca falla y una corona que puede faltar</h2>
+    <p class="lede">Tres capas con una sola regla entre ellas: <strong>ninguna capa superior puede bloquear a una inferior</strong>. Si la capa 3 desaparece por completo, el visitante termina su experiencia y se lleva su QR sin enterarse.</p>
+
+    <div class="stack">
+      <div class="layer core">
+        <div class="lname">Capa 1 · Genoma<small>Determinista, sin dependencias</small></div>
+        <div>
+          <p>Un objeto <code>FlowerGenome</code> de ~30 parámetros es la única fuente de verdad. Todo lo demás —el 3D, el ramo, el pasaporte, el <em>prompt</em> de IA, los indicadores y el QR— son funciones puras de ese objeto. Misma entrada, misma flor, siempre.</p>
+          <div class="chips"><span class="chip">TypeScript</span><span class="chip">Zustand</span><span class="chip">funciones puras</span><span class="chip">semilla reproducible</span></div>
+        </div>
+      </div>
+      <div class="layer core">
+        <div class="lname">Capa 2 · Experiencia<small>Offline · corre en el kiosco</small></div>
+        <div>
+          <p>Las 15 pantallas, el renderizador 3D, el generador de ramos, la moderación de nombres, el pasaporte, el QR, la galería local y la analítica en disco. Es una PWA instalada: funciona con el cable de red desconectado.</p>
+          <div class="chips"><span class="chip">React + Vite</span><span class="chip">React Three Fiber</span><span class="chip">Framer Motion</span><span class="chip">IndexedDB</span><span class="chip">Service Worker</span></div>
+        </div>
+      </div>
+      <div class="layer opt">
+        <div class="lname" style="color:var(--warn)">Capa 3 · Extensión<small>Opcional · degradación definida</small></div>
+        <div>
+          <p>Render fotorrealista por IA, galería en la nube entre kioscos, votación, envío por correo y sincronización de métricas. Cada servicio declara su tiempo máximo y su comportamiento al fallar; la interfaz jamás espera indefinidamente.</p>
+          <div class="chips"><span class="chip">Node + Fastify</span><span class="chip">PostgreSQL</span><span class="chip">API de imágenes</span><span class="chip">cola con reintento</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>El QR autocontenido</h3>
+    <p>La decisión de arquitectura más importante del proyecto, porque resuelve a la vez el criterio 8 (funcionar sin conexión) y el 13 (que el QR lleve a la creación correcta):</p>
+    <pre><code>genoma (30 parámetros)
+  → cuantización a enteros pequeños      // 4 bits color, 6 bits continuos
+  → empaquetado binario                  // ~48 bytes
+  → base64url                            // ~64 caracteres
+  → https://bloom.deliflor.com/f#Aq7_kR2...
+
+El QR se genera en el kiosco, sin internet.
+La página destino es estática: reconstruye el genoma desde el fragmento
+de la URL y vuelve a dibujar la MISMA flor en el teléfono del visitante.
+Sin base de datos, sin identificadores, sin datos personales.</code></pre>
+    <p>Ventaja adicional de privacidad: como el fragmento de la URL (todo lo que va después de <code>#</code>) <strong>no se envía al servidor</strong>, la flor del visitante nunca queda registrada en ningún log salvo que él mismo autorice publicarla en la galería.</p>
+  </section>
+
+  <!-- ================= 4. FLUJO ================= -->
+  <section id="flujo">
+    <p class="eyebrow">4 · Flujo de experiencia</p>
+    <h2>Dos rutas por el mismo recorrido</h2>
+    <p class="lede">El brief pide 15 pantallas con más de setenta decisiones posibles y, a la vez, una experiencia de 2 a 4 minutos. Las dos cosas solo caben si <strong>ninguna decisión es obligatoria</strong>.</p>
+
+    <div class="grid2" style="margin-top:1.4rem">
+      <div class="panel tint">
+        <h4>Ruta rápida · ~75 segundos</h4>
+        <p style="margin:0;font-size:.92rem">Modo creativo → familia → «Sorpréndeme» → hibridación → revelación → nombre automático → QR. Siete toques. Es la ruta del niño, del visitante apurado y de quien tiene gente detrás en la fila.</p>
+      </div>
+      <div class="panel tint">
+        <h4>Ruta completa · ~3 min 30 s</h4>
+        <p style="margin:0;font-size:.92rem">Las quince pantallas con refinamiento en cada una. Es la ruta del cliente profesional, el floricultor y el niño que se enamoró de la pantalla. El temporizador de inactividad la protege sin cortarla.</p>
+      </div>
+    </div>
+
+    <h3>Presupuesto de tiempo de la ruta completa</h3>
+    <div class="budget">
+      <div class="brow"><span class="bl">02 Modo</span><span class="bar"><i style="width:6%"></i></span><span class="bv">10 s</span></div>
+      <div class="brow"><span class="bl">03 Familia</span><span class="bar"><i style="width:11%"></i></span><span class="bv">20 s</span></div>
+      <div class="brow"><span class="bl">04 Forma</span><span class="bar"><i style="width:14%"></i></span><span class="bv">25 s</span></div>
+      <div class="brow"><span class="bl">05 Pétalos</span><span class="bar"><i style="width:19%"></i></span><span class="bv">35 s</span></div>
+      <div class="brow"><span class="bl">06 Color</span><span class="bar"><i style="width:16%"></i></span><span class="bv">30 s</span></div>
+      <div class="brow"><span class="bl">07 Tamaño</span><span class="bar"><i style="width:14%"></i></span><span class="bv">25 s</span></div>
+      <div class="brow"><span class="bl">08 Personalidad</span><span class="bar"><i style="width:8%"></i></span><span class="bv">15 s</span></div>
+      <div class="brow"><span class="bl">09 Hibridación</span><span class="bar"><i class="alt2" style="width:5%"></i></span><span class="bv">8 s</span></div>
+      <div class="brow"><span class="bl">10 Revelación</span><span class="bar"><i class="alt" style="width:14%"></i></span><span class="bv">25 s</span></div>
+      <div class="brow"><span class="bl">11 Ramo</span><span class="bar"><i style="width:16%"></i></span><span class="bv">30 s</span></div>
+      <div class="brow"><span class="bl">12 Nombre</span><span class="bar"><i style="width:14%"></i></span><span class="bv">25 s</span></div>
+      <div class="brow"><span class="bl">13 Pasaporte</span><span class="bar"><i class="alt" style="width:11%"></i></span><span class="bv">20 s</span></div>
+      <div class="brow"><span class="bl">14 Compartir</span><span class="bar"><i class="alt" style="width:11%"></i></span><span class="bv">20 s</span></div>
+      <div class="brow"><span class="bl">15 Cierre</span><span class="bar"><i class="alt" style="width:5%"></i></span><span class="bv">10 s</span></div>
+    </div>
+    <p class="caption" style="max-width:70ch">Vino: decisión del visitante · Magenta: animación del sistema · Verde: contemplación. Total 4 min 18 s en el peor caso, que el temporizador de inactividad recorta a ~3 min 30 s reales. Si las mediciones de F8 lo exceden, la pantalla 05 se divide en dos pasos con menos controles por vista.</p>
+
+    <h3>Temporizadores e higiene de sesión</h3>
+    <div class="grid3">
+      <div class="panel">
+        <h4>Inactividad · 45 s</h4>
+        <p style="margin:0;font-size:.9rem">Aviso discreto «¿sigues ahí?» con cuenta regresiva de 15 s y un toque para continuar. No aparece durante la animación de hibridación ni mientras se escribe el nombre.</p>
+      </div>
+      <div class="panel">
+        <h4>Abandono · 60 s</h4>
+        <p style="margin:0;font-size:.9rem">Sesión borrada de memoria y regreso al modo atracción. En la pantalla 15 el plazo es de 20 s, como pide el brief.</p>
+      </div>
+      <div class="panel">
+        <h4>Higiene · cada sesión</h4>
+        <p style="margin:0;font-size:.9rem">Desmontaje completo del árbol 3D, liberación de texturas y geometrías, y borrado de datos temporales. Solo sobrevive lo consentido y la métrica anónima.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5. MAPA DE PANTALLAS ================= -->
+  <section id="mapa">
+    <p class="eyebrow">5 · Mapa de pantallas</p>
+    <h2>Las quince láminas</h2>
+    <p class="lede">Cada lámina indica su presupuesto de tiempo, cuántas decisiones expone y si necesita red. <strong>Ninguna pantalla del recorrido depende de conexión.</strong></p>
+
+    <div class="plates">
+
+      <div class="plate">
+        <div class="ph"><span class="no">01</span><span class="nm">Atracción</span></div>
+        <div class="bd">
+          <p>Un jardín 3D en bucle: flores que crecen, mutan y se deshojan. Logo, nombre y «Toca la pantalla para comenzar» con un pulso lento. Se ve bien desde 5 metros.</p>
+          <div class="spec"><span class="t">∞</span><span>0 decisiones</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate key">
+        <div class="ph"><span class="no">02</span><span class="nm">Modo creativo</span></div>
+        <div class="bd">
+          <p>Tres tarjetas a pantalla completa —Natural, Experimental, Fantástica— cada una con su flor 3D girando. La elección fija los límites del motor de aquí en adelante.</p>
+          <div class="spec"><span class="t">10 s</span><span>1 decisión</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate key">
+        <div class="ph"><span class="no">03</span><span class="nm">Familia</span></div>
+        <div class="bd">
+          <p>Diez miniaturas 3D animadas: Ballhia, decorativa, Margriet, cuchara, araña, anémona, simple, semidoble, doble y sorpresa. <b>Aquí se carga el genoma base armónico.</b> Sin texto no habría duda.</p>
+          <div class="spec"><span class="t">20 s</span><span>1 decisión</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">04</span><span class="nm">Forma principal</span></div>
+        <div class="bd">
+          <p>Diez siluetas más tres controles deslizantes grandes: apertura, volumen y tamaño del centro. Redondez, simetría y profundidad quedan derivadas para no saturar la vista.</p>
+          <div class="spec"><span class="t">25 s</span><span>1 + 3 ajustes</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">05</span><span class="nm">Pétalos</span></div>
+        <div class="bd">
+          <p>La pantalla más densa: forma, longitud, anchura, curvatura, bordes, organización y densidad. Resuelta con tres pestañas gigantes —Forma · Silueta · Disposición— nunca más de seis opciones a la vista.</p>
+          <div class="spec"><span class="t">35 s</span><span>3 + 4 ajustes</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate key">
+        <div class="ph"><span class="no">06</span><span class="nm">Color</span></div>
+        <div class="bd">
+          <p>Paleta de 19 muestras del catálogo en círculos de 120 px. Cinco destinos (principal, secundario, centro, puntas, reverso) y doce patrones. El tornasol solo existe en modo fantástico.</p>
+          <div class="spec"><span class="t">30 s</span><span>5 + 1 patrón</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">07</span><span class="nm">Tamaño y abundancia</span></div>
+        <div class="bd">
+          <p>Diámetro comparado contra una silueta humana a escala. Flores por tallo con un control gráfico de flores reales, nunca un número. Tallo y follaje en escalas de cinco pasos.</p>
+          <div class="spec"><span class="t">25 s</span><span>5 decisiones</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">08</span><span class="nm">Personalidad</span></div>
+        <div class="bd">
+          <p>Quince atributos, máximo tres. Cada selección cambia en vivo la iluminación y el fondo del panel 3D: el visitante ve para qué sirve lo que está eligiendo.</p>
+          <div class="spec"><span class="t">15 s</span><span>hasta 3</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">09</span><span class="nm">Hibridación</span></div>
+        <div class="bd">
+          <p>Ocho segundos: el trazo botánico del catálogo se dibuja, se llena de color y se convierte en la flor. Diagramas florales y partículas. Rótulo permanente: «creación digital, no una predicción genética».</p>
+          <div class="spec"><span class="t">8 s</span><span>animación</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate key">
+        <div class="ph"><span class="no">10</span><span class="nm">Revelación</span></div>
+        <div class="bd">
+          <p>La flor a pantalla completa con luz de estudio. Gira con un dedo, se acerca con dos, tiene botones de vista frontal, lateral y superior. «Has creado una flor que todavía no existía».</p>
+          <div class="spec"><span class="t">25 s</span><span>juego libre</span><span class="tag t-3d">3D real</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">11</span><span class="nm">Ramo</span></div>
+        <div class="bd">
+          <p>Nueve estilos, cuatro volúmenes, complementos, envoltura y fondo. El ramo se arma con instancias del mismo genoma: es literalmente su flor, repetida con variación natural.</p>
+          <div class="spec"><span class="t">30 s</span><span>5 decisiones</span><span class="tag t-3d">3D real</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">12</span><span class="nm">Nombre</span></div>
+        <div class="bd">
+          <p>Teclado táctil de teclas de 110 px, máximo 24 caracteres. Tres sugerencias generadas a partir del color y la personalidad, más un dado para volver a tirar. Moderación local antes de confirmar.</p>
+          <div class="spec"><span class="t">25 s</span><span>1 entrada</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate key">
+        <div class="ph"><span class="no">13</span><span class="nm">Pasaporte</span></div>
+        <div class="bd">
+          <p>Ficha con la estructura de las tarjetas del catálogo: nombre, flor, ramo, familia, paleta y tira de iconos. Novedad, Armonía y Desafío de hibridación como medidores lúdicos, declarados como tales.</p>
+          <div class="spec"><span class="t">20 s</span><span>0 decisiones</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">14</span><span class="nm">Compartir</span></div>
+        <div class="bd">
+          <p>QR gigante con el genoma adentro. Descarga vertical y cuadrada. Correo y galería solo con consentimiento explícito, con el texto de uso a la vista y opción de seguir sin registrarse.</p>
+          <div class="spec"><span class="t">20 s</span><span>0–2 opt-in</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+      <div class="plate">
+        <div class="ph"><span class="no">15</span><span class="nm">Cierre</span></div>
+        <div class="bd">
+          <p>«Gracias por imaginar el futuro de las flores con Deliflor». Crear otra · Ver galería · Finalizar. A los 20 s la sesión se borra y vuelve el modo atracción.</p>
+          <div class="spec"><span class="t">10 s</span><span>3 salidas</span><span class="tag t-off">offline</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <h3>Pantallas fuera del recorrido</h3>
+    <div class="grid3">
+      <div class="panel">
+        <h4>Galería del evento</h4>
+        <p style="margin:0;font-size:.9rem">Jardín 3D en mosaico con las creaciones autorizadas. Tocar una flor abre su pasaporte. Orden por recientes, favoritas o más innovadoras. Vuelve sola al modo visual.</p>
+      </div>
+      <div class="panel">
+        <h4>Panel administrativo</h4>
+        <p style="margin:0;font-size:.9rem">Protegido con PIN y accesible con un gesto oculto en una esquina. Métricas, exportación CSV, moderación, modo feria, interruptor de IA, modo demostración y limpieza de sesiones.</p>
+      </div>
+      <div class="panel">
+        <h4>Página del QR</h4>
+        <p style="margin:0;font-size:.9rem">Estática, ligera y vertical para el teléfono. Reconstruye la flor desde el enlace, muestra el pasaporte y la marca Deliflor. Funciona aunque el kiosco ya esté apagado.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 6. DECISIONES ================= -->
+  <section id="siguiente">
+    <p class="eyebrow">6 · Para continuar</p>
+    <h2>Lo que necesito confirmar antes de la Fase 2</h2>
+    <p class="lede">Ninguno de estos puntos detiene el trabajo: si no hay respuesta, avanzo con la opción marcada como recomendada y la dejo señalada para revisión.</p>
+
+    <div class="tablewrap" style="margin-top:1rem">
+      <table>
+        <thead><tr><th>Punto</th><th>Por qué importa</th><th>Si no hay respuesta, asumo</th></tr></thead>
+        <tbody>
+          <tr><td><b>Fecha del evento</b></td><td>Define si el proyecto es de una o dos personas</td><td>8 semanas desde la aprobación</td></tr>
+          <tr><td><b>Colores oficiales de marca</b></td><td>El brief dice magenta; el catálogo usa vino #7C214D</td><td>Los valores muestreados del catálogo</td></tr>
+          <tr><td><b>Idiomas del evento</b></td><td>El teclado, los nombres y la moderación cambian</td><td>Español e inglés, con selector visible</td></tr>
+          <tr><td><b>¿Habrá generación por IA?</b></td><td>Es la única partida con costo variable por visitante</td><td>Sí, con techo de gasto y apagado en un toque</td></tr>
+          <tr><td><b>¿Uno o varios kioscos?</b></td><td>Determina si hace falta backend y galería en la nube</td><td>Un kiosco, galería local</td></tr>
+          <tr><td><b>Marca y modelo de la pantalla</b></td><td>Calibración táctil y pruebas de F8</td><td>Genérica de 10 puntos, 4K</td></tr>
+          <tr><td><b>Dominio del QR</b></td><td>Un dominio corto deja más espacio al genoma en el código</td><td>Subdominio provisional de pruebas</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note" style="margin-top:1.6rem">
+      <h5>Fase 2, al aprobar este alcance</h5>
+      <p>Wireframes de las quince pantallas a 1920 × 1080 con las zonas táctiles marcadas y la franja de alcance verificada; y el sistema de diseño completo —escala tipográfica, retícula, componentes táctiles, estados, paleta de las 19 muestras y biblioteca de iconos derivada de la tira de especificaciones del catálogo—.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Deliflor Bloom Lab · Fase 1 · Documento de trabajo</span>
+    <span>Colores e iconografía muestreados del Catálogo Deliflor Américas 2024</span>
+    <span>29 · 07 · 2026</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var canvas = document.getElementById('bloomCanvas');
+  if(!canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext('2d');
+
+  var PALETTES = [
+    {n:'Vespa',      base:'#93206A', shade:'#5C0F44', tip:'#E7ACCE', center:'#C3D24B'},
+    {n:'Superbowl',  base:'#FAF4EA', shade:'#D6C9B8', tip:'#FFFFFF', center:'#D2DD72'},
+    {n:'Cheesecake', base:'#EFBB2C', shade:'#B98416', tip:'#FBE8A2', center:'#A3B234'},
+    {n:'Bronce',     base:'#C1663B', shade:'#843C1F', tip:'#F0B285', center:'#B7C04C'},
+    {n:'Vino',       base:'#7C214D', shade:'#4C0F2E', tip:'#D98FB6', center:'#C3D24B'}
+  ];
+
+  var S = {layers:7, length:0.66, curve:0.5, open:0.55, pal:0};
+  var W=0, H=0, rot=0;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var theme = {bg:'#FBF9F7', ink:'#241A1F', faint:'rgba(36,26,31,.35)'};
+
+  function readTheme(){
+    var cs = getComputedStyle(document.documentElement);
+    theme.bg   = cs.getPropertyValue('--surface').trim()  || '#FBF9F7';
+    theme.ink  = cs.getPropertyValue('--ink').trim()      || '#241A1F';
+    theme.faint= cs.getPropertyValue('--ink-faint').trim()|| '#9A8890';
+  }
+
+  function resize(){
+    var r = canvas.getBoundingClientRect();
+    if(!r.width) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    canvas.width  = Math.round(W*dpr);
+    canvas.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function petalPath(p, L, Wd, bend, curl){
+    p.moveTo(0,0);
+    p.bezierCurveTo(L*0.18, -Wd + bend*0.35, L*0.72, -Wd*0.82 + bend, L, bend*1.15 - Wd*0.05*curl);
+    p.bezierCurveTo(L*0.72,  Wd*0.82 + bend, L*0.18,  Wd + bend*0.35, 0, 0);
+    p.closePath();
+  }
+
+  function eachPetal(cb){
+    var cx = W/2, cy = H/2;
+    var R  = Math.min(W,H)*0.44;
+    var n  = S.layers;
+    for(var i=n-1;i>=0;i--){
+      var f   = n===1 ? 1 : i/(n-1);
+      var L   = R*S.length*(0.42 + 0.58*f);
+      var cnt = Math.round(7 + 13*f + S.open*5);
+      var Wd  = (2*Math.PI*L/cnt)*0.66*(0.85 + 0.30*(1-f));
+      var bend= (0.5-S.open)*Wd*1.9*(0.35+0.65*(1-f)) + (S.curve-0.5)*Wd*1.15;
+      var curl= 1 + S.curve*2.2;
+      var off = i*2.39996 + rot;
+      for(var k=0;k<cnt;k++){
+        ctx.save();
+        ctx.translate(cx,cy);
+        ctx.rotate(off + k*(Math.PI*2/cnt));
+        cb(L, Wd, bend, curl, f);
+        ctx.restore();
+      }
+    }
+  }
+
+  function paintColor(){
+    var P = PALETTES[S.pal];
+    eachPetal(function(L,Wd,bend,curl,f){
+      var g = ctx.createLinearGradient(0,0,L,0);
+      g.addColorStop(0, P.shade);
+      g.addColorStop(0.45, P.base);
+      g.addColorStop(1, P.tip);
+      var p = new Path2D(); petalPath(p,L,Wd,bend,curl);
+      ctx.fillStyle = g; ctx.fill(p);
+      ctx.strokeStyle = P.shade; ctx.globalAlpha = 0.35; ctx.lineWidth = 0.7;
+      ctx.stroke(p); ctx.globalAlpha = 1;
+    });
+    var cx=W/2, cy=H/2, cr=Math.min(W,H)*0.055*(0.7+S.open*0.6);
+    ctx.fillStyle = P.center;
+    ctx.beginPath(); ctx.arc(cx,cy,cr,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    for(var a=0;a<70;a++){
+      var ang = a*2.39996, rr = cr*Math.sqrt(a/70)*0.92;
+      ctx.beginPath();
+      ctx.arc(cx+Math.cos(ang)*rr, cy+Math.sin(ang)*rr, cr*0.055, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function paintInk(){
+    eachPetal(function(L,Wd,bend,curl,f){
+      var p = new Path2D(); petalPath(p,L,Wd,bend,curl);
+      ctx.fillStyle = theme.bg; ctx.fill(p);
+      ctx.strokeStyle = theme.ink; ctx.lineWidth = 0.75; ctx.globalAlpha = 0.85;
+      ctx.stroke(p); ctx.globalAlpha = 1;
+      ctx.strokeStyle = theme.ink; ctx.globalAlpha = 0.28; ctx.lineWidth = 0.55;
+      for(var h=-1;h<=1;h++){
+        ctx.beginPath();
+        ctx.moveTo(L*0.16, bend*0.3 + h*Wd*0.30);
+        ctx.quadraticCurveTo(L*0.55, bend*0.85 + h*Wd*0.30, L*0.86, bend*1.05 + h*Wd*0.12);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    });
+    var cx=W/2, cy=H/2, cr=Math.min(W,H)*0.055*(0.7+S.open*0.6);
+    ctx.fillStyle = theme.bg;
+    ctx.beginPath(); ctx.arc(cx,cy,cr,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = theme.ink; ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.globalAlpha = 0.5;
+    for(var a=0;a<44;a++){
+      var ang = a*2.39996, rr = cr*Math.sqrt(a/44)*0.9;
+      ctx.beginPath();
+      ctx.arc(cx+Math.cos(ang)*rr, cy+Math.sin(ang)*rr, cr*0.05, 0, Math.PI*2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw(){
+    if(!W) return;
+    ctx.clearRect(0,0,W,H);
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0,0,W/2,H); ctx.clip();
+    paintColor();
+    ctx.restore();
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(W/2,0,W/2,H); ctx.clip();
+    paintInk();
+    ctx.restore();
+
+    ctx.strokeStyle = theme.faint;
+    ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  var queued = false;
+  function request(){
+    if(queued) return;
+    queued = true;
+    requestAnimationFrame(function(){ queued=false; draw(); });
+  }
+
+  function loop(){
+    rot += 0.0016;
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function bind(id, valId, key, fmt){
+    var el = document.getElementById(id), out = document.getElementById(valId);
+    el.addEventListener('input', function(){
+      S[key] = parseFloat(el.value);
+      out.textContent = fmt(S[key]);
+      request();
+    });
+  }
+  var int1 = function(v){ return String(v); };
+  var dec2 = function(v){ return v.toFixed(2); };
+
+  bind('cLayers','vLayers','layers',int1);
+  bind('cLength','vLength','length',dec2);
+  bind('cCurve','vCurve','curve',dec2);
+  bind('cOpen','vOpen','open',dec2);
+
+  var sw = document.getElementById('swatches');
+  PALETTES.forEach(function(P,i){
+    var b = document.createElement('button');
+    b.className = 'sw'; b.type = 'button';
+    b.style.background = 'linear-gradient(135deg,'+P.base+' 0 55%,'+P.tip+' 55% 100%)';
+    b.setAttribute('aria-pressed', i===0 ? 'true':'false');
+    b.setAttribute('aria-label','Paleta '+P.n);
+    b.title = P.n;
+    b.addEventListener('click', function(){
+      S.pal = i;
+      Array.prototype.forEach.call(sw.querySelectorAll('.sw'), function(o,j){
+        o.setAttribute('aria-pressed', j===i ? 'true':'false');
+      });
+      request();
+    });
+    sw.appendChild(b);
+  });
+
+  var surprise = document.createElement('button');
+  surprise.className = 'btn-surprise'; surprise.type = 'button';
+  surprise.textContent = 'Sorpréndeme';
+  surprise.addEventListener('click', function(){
+    S.layers = 3 + Math.floor(Math.random()*9);
+    S.length = 0.38 + Math.random()*0.58;
+    S.curve  = Math.random();
+    S.open   = 0.15 + Math.random()*0.8;
+    S.pal    = Math.floor(Math.random()*PALETTES.length);
+    document.getElementById('cLayers').value = S.layers;
+    document.getElementById('cLength').value = S.length;
+    document.getElementById('cCurve').value  = S.curve;
+    document.getElementById('cOpen').value   = S.open;
+    document.getElementById('vLayers').textContent = int1(S.layers);
+    document.getElementById('vLength').textContent = dec2(S.length);
+    document.getElementById('vCurve').textContent  = dec2(S.curve);
+    document.getElementById('vOpen').textContent   = dec2(S.open);
+    Array.prototype.forEach.call(sw.querySelectorAll('.sw'), function(o,j){
+      o.setAttribute('aria-pressed', j===S.pal ? 'true':'false');
+    });
+    request();
+  });
+  sw.appendChild(surprise);
+
+  readTheme();
+  resize();
+  draw();
+
+  if(window.ResizeObserver){
+    new ResizeObserver(function(){ resize(); draw(); }).observe(canvas);
+  } else {
+    window.addEventListener('resize', function(){ resize(); draw(); });
+  }
+
+  new MutationObserver(function(){ readTheme(); request(); })
+    .observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if(mq.addEventListener) mq.addEventListener('change', function(){ readTheme(); request(); });
+
+  if(!reduce) requestAnimationFrame(loop);
+})();
+</script>

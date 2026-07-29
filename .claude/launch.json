@@ -37,6 +37,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "7803"],
       "port": 7803
+    },
+    {
+      "name": "turno-seguro",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7804", "--directory", "turno-seguro"],
+      "port": 7804
+    },
+    {
+      "name": "bloom-lab",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7805", "--directory", "deliflor-bloom-lab"],
+      "port": 7805
     }
   ]
 }
