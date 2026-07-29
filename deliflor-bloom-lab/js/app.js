@@ -841,17 +841,26 @@
   /* ---------------------------------------------------------------
      Arranque
      --------------------------------------------------------------- */
+  function sharedFromHash() {
+    var m = (location.hash || '').match(/[#&]g=([A-Za-z0-9\-_]+)/);
+    if (!m || !App.showShared) return false;
+    var g = G.decode(m[1]);
+    if (!g) return false;
+    App.g = g;
+    App.showShared();
+    return true;
+  }
+
   App.boot = function () {
-    var hash = location.hash || '';
-    var m = hash.match(/[#&]g=([A-Za-z0-9\-_]+)/);
-    if (m) {
-      var g = G.decode(m[1]);
-      if (g && App.showShared) { App.g = g; App.showShared(); return; }
-    }
+    if (sharedFromHash()) return;
     var nav = (navigator.language || 'es').slice(0, 2);
     App.lang = CFG.languages.indexOf(nav) !== -1 ? nav : CFG.languages[0];
     App.render();
   };
+
+  /* Cambiar sólo el fragmento no recarga la página: si alguien escanea un
+     segundo código con la vista compartida ya abierta, hay que atenderlo. */
+  window.addEventListener('hashchange', function () { sharedFromHash(); });
 
   ['pointerdown', 'keydown'].forEach(function (ev) {
     document.addEventListener(ev, function () { App.poke(); }, true);
