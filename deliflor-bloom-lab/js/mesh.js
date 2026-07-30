@@ -105,12 +105,15 @@
     return Math.sqrt(Math.max(0, 1 - t * t));
   }
   function baseTaper(u, k) { return Math.pow(Math.min(1, u / k), 0.6); }
+  /* Sube al ancho completo y se queda ahí: da la cinta espatulada que se ve
+     en la macrofotografía del catálogo, en vez de una elipse acabada en pico. */
+  function plateau(u, rise) { return smoothstep(0, rise, u) * 0.86 + 0.14 * Math.min(1, u / rise); }
 
   function widthProfile(shape, u) {
     var s = Math.sin(PI * u);
     switch (shape) {
-      case 'rounded':  return baseTaper(u, 0.20) * (0.88 + 0.20 * s) * tipRound(u, 0.90);
-      case 'oval':     return baseTaper(u, 0.24) * (0.70 + 0.38 * s) * tipRound(u, 0.88);
+      case 'rounded':  return plateau(u, 0.30) * (0.93 + 0.10 * s) * tipRound(u, 0.88);
+      case 'oval':     return plateau(u, 0.44) * (0.84 + 0.22 * s) * tipRound(u, 0.85);
       case 'long':     return baseTaper(u, 0.16) * 0.76 * (0.92 + 0.12 * s) * tipRound(u, 0.91);
       case 'tubular':  return baseTaper(u, 0.10) * 0.38 * (1 - 0.18 * u) * tipRound(u, 0.93);
       case 'spoon':    return baseTaper(u, 0.14) * (0.34 + 0.62 * smoothstep(0.52, 0.88, u)) * tipRound(u, 0.94);
@@ -175,12 +178,14 @@
 
       var w = widthProfile(P.shape, u) * P.halfW;
       var off, nOff;
+      /* v invertido: deja la normal del lado adaxial (el haz) como cara
+         frontal de la malla. Ver la nota de arriba. */
       if (tube) {
-        var ang = v * PI;
+        var ang = -v * PI;
         off = Math.cos(ang) * w;
         nOff = Math.sin(ang) * w * 0.9;
       } else {
-        off = v * w;
+        off = -v * w;
         nOff = -P.cup * v * v * w * 1.15 + edgeDisp(P.edge, u, v, w);
       }
       return [sx + Bx * off + Nx * nOff, sy + By * off + Ny * nOff, sz + Bz * off + Nz * nOff];
@@ -223,8 +228,12 @@
         case 'iridescent':     col = mixC(pri, tip, smoothstep(0.3, 1, u) * 0.6); break;
         default:               col = pri;
       }
+      /* Nervios longitudinales finos y un tono propio por pétalo: en la foto
+         del catálogo ningún pétalo tiene exactamente el color del vecino. */
+      var stria = 1 - 0.055 * Math.pow(1 - Math.abs(saw(v * 3.2) * 2 - 1), 3);
+      var tone = 0.955 + 0.09 * hash(k, 7.7);
       /* leve oscurecimiento en la base: da profundidad al corazón de la flor */
-      var shade = 0.84 + 0.16 * smoothstep(0, 0.45, u);
+      var shade = (0.84 + 0.16 * smoothstep(0, 0.45, u)) * stria * tone;
       var front = [col[0] * shade, col[1] * shade, col[2] * shade];
       /* El envés de un pétalo es una versión más pálida del haz, no una cara
          gris: mezclarlo con blanco evita el aspecto de plástico apagado. */
@@ -254,7 +263,7 @@
       var phi = Math.asin(clamp(rr / R, 0, 1));
       var px = rr * Math.cos(ang), pz = rr * Math.sin(ang);
       var py = R * Math.cos(phi) * domeH;
-      var s = R * 0.115 * (1 - t * 0.35);
+      var s = R * 0.098 * (1 - t * 0.28);
       var c = t < 0.42 ? dark : color;
       floret(mesh, px, py, pz, s, c);
     }
@@ -301,7 +310,9 @@
 
     /* longitud base del pétalo relativa al radio total */
     var baseLen = 0.42 + g.petalLength * 0.78;
-    var halfW = (0.034 + g.petalWidth * 0.062) * (0.75 + baseLen * 0.4);
+    /* La macrofotografía del catálogo muestra pétalos espatulados, con una
+       proporción de 3:1 a 5:1 entre largo y ancho, no cintas finas. */
+    var halfW = (0.050 + g.petalWidth * 0.160) * (0.75 + baseLen * 0.4);
     /* 0 = incurvado (el pétalo sube y cierra la flor), 1 = reflejo (cae
        hacia afuera). El signo estaba invertido: las Ballhia se abrían en vez
        de cerrarse, que era la causa del aspecto de alcachofa. */
@@ -319,7 +330,7 @@
       var pitch = (PI / 2 - phi) - g.openness * 0.95 - (1 - f) * 0.08;
       var bend = bendBase * (1.05 - 0.28 * f) + droop * (0.35 + 0.65 * f);
 
-      var cnt = Math.round((7 + 30 * f) * (0.45 + g.density * 0.8));
+      var cnt = Math.round((6 + 22 * f) * (0.45 + g.density * 0.58));
       if (g.arrangement === 'compact') cnt = Math.round(cnt * 1.22);
       if (g.arrangement === 'open') cnt = Math.round(cnt * 0.7);
       cnt = Math.max(5, cnt);
@@ -357,7 +368,7 @@
       }
     }
 
-    var floretCount = lod === 'high' ? Math.round(20 + g.centerSize * 150) : Math.round(6 + g.centerSize * 30);
+    var floretCount = lod === 'high' ? Math.round(30 + g.centerSize * 260) : Math.round(8 + g.centerSize * 40);
     addCenter(mesh, Rb * 1.02, domeH, C.center, g.centerSize > 0.12 ? floretCount : 0);
 
     var m = mesh.build();
@@ -377,9 +388,11 @@
   /* ---------------------------------------------------------------
      Tallo y hojas
      --------------------------------------------------------------- */
-  var STEM_GREEN = [0.28, 0.40, 0.20];
-  var LEAF_GREEN = [0.24, 0.38, 0.17];
-  var LEAF_BACK = [0.36, 0.47, 0.28];
+  var STEM_GREEN = [0.30, 0.42, 0.20];
+  /* Verde oscuro algo grisáceo del haz y envés pálido: la pubescencia es más
+     densa por debajo y aclara la cara inferior. */
+  var LEAF_GREEN = [0.19, 0.31, 0.13];
+  var LEAF_BACK = [0.40, 0.50, 0.34];
 
   function addStem(mesh, h, thick, curveX, curveZ, sides, matId) {
     sides = sides || 6;
@@ -393,22 +406,72 @@
       function () { return [STEM_GREEN, STEM_GREEN]; }, matId === undefined ? 2.0 : matId);
   }
 
-  /* Hoja de crisantemo: silueta lobulada, nervadura central marcada */
-  function addLeaf(mesh, x, y, z, ang, tilt, size) {
+  /* -----------------------------------------------------------------
+     Hoja de crisantemo
+
+     Morfología copiada de la lámina del propio catálogo (la página del tallo,
+     que trae la foto y el grabado con la nervadura) y de la descripción
+     botánica de Chrysanthemum x morifolium: limbo pinnatipartido con un
+     nervio central del que salen de 3 a 7 lóbulos triangulares barridos hacia
+     el ápice, senos profundos que no llegan al nervio, margen groseramente
+     dentado con muescas secundarias, y los dos lados desiguales.
+     ----------------------------------------------------------------- */
+  function saw(x) { var f = ((x % 1) + 1) % 1; return f < 0.5 ? f * 2 : 2 - f * 2; }
+
+  function leafHalfWidth(t, side, seed) {
+    if (t <= 0) return 0;
+    /* envolvente ovada del limbo: más ancho en el tercio inferior */
+    var E = Math.pow(Math.sin(PI * Math.pow(t, 0.72)), 0.46);
+    /* lóbulos: distinto número a cada lado, como en una hoja real */
+    var N = side > 0 ? 2.7 : 2.2;
+    var ph = t * N + (side > 0 ? 0 : 0.38) + seed * 0.11;
+    var fr = ph - Math.floor(ph);
+    /* la potencia sobre fr barre el lóbulo hacia la punta de la hoja */
+    var lobe = Math.pow(Math.sin(PI * Math.pow(fr, 0.70)), 0.46);
+    var sinus = 0.44;                    /* los senos no llegan al nervio */
+    var w = E * (sinus + (1 - sinus) * lobe);
+    /* dientes gruesos e irregulares, más una muesca secundaria más fina */
+    w *= 1 + 0.10 * (saw(t * 12 + seed) - 0.5) + 0.05 * (saw(t * 26) - 0.5);
+    return w;
+  }
+
+  function leafColorFn(seed) {
+    /* Cada hoja con su tono: un tallo con seis hojas idénticas se delata */
+    var tone = 0.88 + 0.24 * (hash(seed, 3.1));
+    return function (u, v) {
+      var av = Math.abs(v);
+      /* el nervio central y los laterales son más claros que el limbo */
+      var mid = Math.max(0, 1 - av * 7);
+      var lat = Math.pow(1 - Math.abs(saw(u * 4.6 + av * 1.2) * 2 - 1), 8);
+      var k = tone * (1 + 0.30 * mid + 0.16 * lat);
+      var f = [LEAF_GREEN[0] * k, LEAF_GREEN[1] * k, LEAF_GREEN[2] * k];
+      var b = [LEAF_BACK[0] * tone, LEAF_BACK[1] * tone, LEAF_BACK[2] * tone];
+      return [f, b];
+    };
+  }
+
+  function addLeaf(mesh, x, y, z, ang, tilt, size, res) {
+    var NU = res === 'high' ? 16 : 12;
+    var NV = res === 'high' ? 8 : 6;
     var ca = Math.cos(ang), sa = Math.sin(ang);
     var ct = Math.cos(tilt), st = Math.sin(tilt);
-    addGrid(mesh, 11, 5,
+    var seed = hash(x * 7.3 + z * 3.9, y * 5.1) * 9;
+    var PET = 0.17;                       /* peciolo */
+    addGrid(mesh, NU, NV,
       function (u, v) {
-        var s = Math.sin(PI * Math.pow(u, 0.85));
-        var lobes = 1 + 0.42 * Math.sin(u * 9.2) * (1 - u * 0.4);
-        var w = s * lobes * size * 0.34;
-        var lx = u * size, ly = -Math.abs(v) * Math.abs(v) * size * 0.1 - u * u * size * 0.13;
-        var lz = v * w;
-        /* inclinación y giro en el plano horizontal */
+        var t = u <= PET ? 0 : (u - PET) / (1 - PET);
+        var w = (u <= PET ? 0.05 : leafHalfWidth(t, v >= 0 ? 1 : -1, seed)) * size * 0.52;
+        var lx = u * size;
+        /* Pliegue en V sobre el nervio, arqueo del limbo y una ligera torsión
+           a lo largo: sin la torsión la hoja se lee como una chapa plana. */
+        var ly = -Math.abs(v) * size * 0.075
+                 - Math.pow(u, 1.8) * size * 0.24
+                 + v * Math.pow(u, 1.4) * size * 0.10;
+        var lz = -v * w;
         var px = lx * ct - ly * st, py = lx * st + ly * ct;
         return [x + px * ca - lz * sa, y + py, z + px * sa + lz * ca];
       },
-      function () { return [LEAF_GREEN, LEAF_BACK]; }, 3.0);
+      leafColorFn(seed), 3.0);
   }
 
   /* ---------------------------------------------------------------
@@ -432,8 +495,8 @@
     for (var i = 0; i < nLeaf; i++) {
       var t = 0.18 + (i / nLeaf) * 0.66;
       var lx = curveX * t * t, lz = curveZ * t * t;
-      var lsize = 0.20 * (g.foliage === 'wild' ? 1.25 : g.foliage === 'compact' ? 0.8 : 1) * (1.15 - t * 0.5);
-      addLeaf(mesh, lx, t * h, lz, i * 2.399963 + rand() * 0.5, -0.35 - rand() * 0.45, lsize);
+      var lsize = 0.62 * (g.foliage === 'wild' ? 1.2 : g.foliage === 'compact' ? 0.82 : 1) * (1.2 - t * 0.55);
+      addLeaf(mesh, lx, t * h, lz, i * 2.399963 + rand() * 0.5, -0.20 - rand() * 0.28, lsize, opt.leafRes);
     }
 
     /* flores */
@@ -557,12 +620,12 @@
 
     /* complementos */
     if (B.extras === 'lightFoliage' || B.extras === 'fullFoliage' || B.extras === 'textures') {
-      var nf = B.extras === 'fullFoliage' ? 26 : B.extras === 'textures' ? 18 : 12;
+      var nf = B.extras === 'fullFoliage' ? 18 : B.extras === 'textures' ? 13 : 9;
       for (var q = 0; q < nf; q++) {
         var a2 = q * 2.399963 + 0.7;
         var r2 = Rd * (0.75 + rand() * 0.55);
         addLeaf(mesh, Math.cos(a2) * r2 * 0.5, 1.0 + rand() * 1.3, Math.sin(a2) * r2 * 0.5,
-                a2, -0.5 - rand() * 0.6, 0.17 + rand() * 0.11);
+                a2, -0.12 - rand() * 0.30, 0.34 + rand() * 0.20);
       }
     }
     if (B.extras === 'neutralFlowers' || B.extras === 'dried') {
@@ -620,7 +683,7 @@
      --------------------------------------------------------------- */
   function buildSingleStem(g, lod) {
     var flower = buildFlower(g, { lod: lod || 'high' });
-    var m = buildStem(g, flower, { variant: 0 });
+    var m = buildStem(g, flower, { variant: 0, leafRes: 'high' });
     m.radius = radiusOf(m);
     return m;
   }

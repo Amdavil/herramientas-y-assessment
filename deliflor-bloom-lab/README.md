@@ -159,6 +159,13 @@ El genoma es la única fuente de verdad. La flor 3D, el ramo, el pasaporte, los
 indicadores, el prompt de la IA y el QR son funciones puras de ese objeto: el
 mismo genoma produce siempre exactamente la misma flor.
 
+### Actualizar el kiosco
+
+Las etiquetas de `index.html` llevan un sufijo `?v=N`. **Súbelo en cada
+despliegue.** Sin él, la caché heurística del navegador sigue sirviendo los
+archivos viejos y la actualización parece no haber ocurrido: eso ya nos costó
+varias iteraciones evaluando código que no era el que estaba en disco.
+
 ### El modelo del pétalo
 
 Cada pétalo es una superficie paramétrica sobre un raquis de arco circular. Nace
@@ -166,6 +173,27 @@ en un receptáculo con forma de domo, y el ángulo de nacimiento junto con la
 apertura deciden si la flor resulta una esfera (Ballhia) o un plato (Margriet).
 El perfil de ancho, la curvatura, el retorcido y el borde son funciones
 independientes, así que las combinaciones no se agotan.
+
+El perfil no es una elipse: es una cinta espatulada que alcanza pronto su ancho,
+lo mantiene y redondea sólo al final, con los cortes concentrados en la base y
+en el extremo. Un perfil en seno puro termina en pico y la flor entera se lee
+como una piña.
+
+La malla se orienta con la normal **adaxial** —la del haz— como cara frontal.
+Consecuencia botánicamente correcta: en una variedad incurvada uno ve de verdad
+el envés de los pétalos, así que el «color del reverso» del catálogo aparece
+donde corresponde.
+
+### La hoja
+
+Limbo pinnatipartido con un nervio central del que salen de 3 a 7 lóbulos
+triangulares barridos hacia el ápice, senos profundos que no llegan al nervio,
+margen groseramente dentado con muescas secundarias y los dos lados desiguales.
+Haz verde oscuro y envés pálido por la pubescencia. La morfología está tomada de
+la lámina del propio catálogo —la página del tallo, que trae la foto junto al
+grabado con la nervadura— y de la descripción botánica de *Chrysanthemum ×
+morifolium*. No se incrusta ninguna imagen ajena: las referencias sirvieron para
+escribir la geometría.
 
 ---
 
@@ -236,9 +264,9 @@ contra un servicio simulado en los cuatro caminos, pero nadie ha visto todavía
 una imagen real salida de ella. Hace falta contratar el proveedor y ejecutar
 «Probar conexión» para juzgar la calidad de las láminas.
 
-**Punto más débil del modelo procedural:** el follaje. Las hojas son siluetas
-lobuladas de baja resolución y en el ramo se leen como formas verdes más que
-como hojas de crisantemo. Es el siguiente lugar donde invertir.
+**Punto más débil del modelo procedural:** los lóbulos de la hoja son todavía
+blandos en lugar de triangulares y agudos, sobre todo en la versión de menor
+resolución que usa el ramo.
 
 ---
 

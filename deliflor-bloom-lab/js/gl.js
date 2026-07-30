@@ -38,6 +38,8 @@
     '  if(!front) N = -N;',
     '  vec3 base = front ? vCF : vCB;',
     '  bool petal = vMat < 0.5;',
+    '  bool leaf  = vMat > 2.5 && vMat < 3.5;',
+    '  if(leaf) base = (N.y >= 0.0) ? vCF : vCB;',
     '  vec3 L = normalize(uKey);',
     '  float ndl = dot(N, L);',
     /* iluminación envolvente: los pétalos delgados no se apagan de golpe */
