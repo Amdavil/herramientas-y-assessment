@@ -255,10 +255,11 @@
     App.stageKind = kind || App.stageKind;
     if (!stageCanvas) return;
     if (!App.webgl) { drawFallback(); return; }
-    /* El ramo en detalle alto cuesta ~60 ms de construcción: entrar con él
-       produce un tirón visible en la transición. Se entra en detalle medio y
-       se sube al alto en cuanto la pantalla está quieta. */
-    var first = immediate ? (App.stageKind === 'bouquet' ? 'mid' : 'high') : 'mid';
+    /* Se entra SIEMPRE en detalle medio y se sube al alto en cuanto la
+       pantalla está quieta. Construir en alto cuesta más de 100 ms incluso
+       para una sola flor, y hacerlo durante la transición produce un tirón
+       visible justo en el momento más vistoso de la experiencia. */
+    var first = 'mid';
     pending = { kind: App.stageKind, lod: first };
     clearTimeout(settleTimer);
     if (first !== 'high') {

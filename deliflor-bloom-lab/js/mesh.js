@@ -215,7 +215,10 @@
       u = uMap(u);
       var col;
       switch (pattern) {
-        case 'gradientCenter': col = mixC(sec, pri, smoothstep(0, 0.8, u * 0.65 + f * 0.35)); break;
+        case 'gradientCenter':
+          col = mixC(sec, pri, smoothstep(0, 1, Math.pow(f, 2.1) * 0.92 + u * 0.10));
+          col = mixC(col, tip, smoothstep(0.66, 1, u) * 0.45 * smoothstep(0.22, 0.55, f));
+          break;
         case 'gradientTips':   col = mixC(pri, tip, smoothstep(0.35, 1, u)); break;
         case 'contrastCenter': col = f < 0.32 ? sec : pri; break;
         case 'contrastTips':   col = u > 0.8 ? tip : pri; break;
@@ -286,8 +289,8 @@
     opt = opt || {};
     var lod = opt.lod || 'high';
     var NU = lod === 'high' ? 12 : lod === 'mid' ? 6 : 4;
-    var NV = lod === 'high' ? 6 : lod === 'mid' ? 3 : 2;
-    var petalCap = lod === 'high' ? 520 : lod === 'mid' ? 170 : 80;
+    var NV = lod === 'high' ? 8 : lod === 'mid' ? 3 : 2;
+    var petalCap = lod === 'high' ? 640 : lod === 'mid' ? 190 : 85;
 
     var mesh = new Mesh();
     var C = {
@@ -302,11 +305,11 @@
     /* receptáculo */
     var Rb = 0.06 + g.centerSize * 0.34;
     var domeH = 0.5 + g.volume * 0.75;
-    var phiMax = (0.33 + g.volume * 0.75) * PI * 0.5;
+    var phiMax = (0.20 + g.volume * 0.80) * PI * 0.5;
     /* Los flósculos del disco ocupan la cima del receptáculo; los pétalos
        radiales nacen a partir de ahí. Sin este borde, las flores de pocas
        capas juntaban todos los pétalos en el polo y formaban un cono. */
-    var phiDisc = Math.min(phiMax * 0.92, (0.18 + g.centerSize * 1.15));
+    var phiDisc = Math.min(phiMax * 0.92, (0.06 + g.centerSize * 1.30));
 
     /* longitud base del pétalo relativa al radio total */
     var baseLen = 0.42 + g.petalLength * 0.78;
@@ -327,10 +330,13 @@
     for (var i = 0; i < layers; i++) {
       var f = layers > 1 ? i / (layers - 1) : 1;
       var phi = phiDisc + (phiMax - phiDisc) * Math.pow(f, 0.82);
-      var pitch = (PI / 2 - phi) - g.openness * 0.95 - (1 - f) * 0.08;
+      /* La apertura tumba los pétalos exteriores pero deja el centro casi
+         vertical: en una flor real el corazón permanece cerrado mientras el
+         borde ya está plano. Antes la apertura aplanaba todo por igual. */
+      var pitch = (PI / 2 - phi) - g.openness * 1.05 * Math.pow(f, 0.62);
       var bend = bendBase * (1.05 - 0.28 * f) + droop * (0.35 + 0.65 * f);
 
-      var cnt = Math.round((6 + 22 * f) * (0.45 + g.density * 0.58));
+      var cnt = Math.round((9 + 20 * f) * (0.45 + g.density * 0.58));
       if (g.arrangement === 'compact') cnt = Math.round(cnt * 1.22);
       if (g.arrangement === 'open') cnt = Math.round(cnt * 0.7);
       cnt = Math.max(5, cnt);
@@ -343,7 +349,9 @@
         g.arrangement === 'layered' ? i * (PI / cnt) :
         g.arrangement === 'asym' ? i * 1.1 : 0;
 
-      var L = baseLen * (0.52 + 0.48 * f);
+      /* Gradiente de tamaño: los pétalos del corazón son botones diminutos
+         y crecen hacia afuera. Es lo que forma la espiral central. */
+      var L = baseLen * (0.20 + 0.80 * Math.pow(f, 0.72));
       var asym = 1 - g.symmetry;
 
       for (var k = 0; k < cnt; k++) {
@@ -362,7 +370,7 @@
           L: L * jl, halfW: halfW * (0.85 + 0.3 * f), pitch: pitch + jp,
           bend: bend * (1 + asym * (rand() - 0.5) * 0.6),
           twist: g.petalTwist * (0.6 + 0.8 * f), theta: theta, base: base,
-          cup: cup, shape: g.petalShape, edge: g.petalEdge
+          cup: cup * (1.30 - 0.50 * f), shape: g.petalShape, edge: g.petalEdge
         };
         addGrid(mesh, NU, NV, petalPosFn(P), petalColorFn(C, g.pattern, f, k + i * 31), 0.0);
       }
@@ -427,7 +435,7 @@
     var ph = t * N + (side > 0 ? 0 : 0.38) + seed * 0.11;
     var fr = ph - Math.floor(ph);
     /* la potencia sobre fr barre el lóbulo hacia la punta de la hoja */
-    var lobe = Math.pow(Math.sin(PI * Math.pow(fr, 0.70)), 0.46);
+    var lobe = Math.pow(Math.sin(PI * Math.pow(fr, 0.78)), 0.62);
     var sinus = 0.44;                    /* los senos no llegan al nervio */
     var w = E * (sinus + (1 - sinus) * lobe);
     /* dientes gruesos e irregulares, más una muesca secundaria más fina */
@@ -446,7 +454,7 @@
          amplitud alta se veía como una cuadrícula repetida, no como
          nervadura. Se deja tenue — sugiere textura sin leerse como patrón. */
       var lat = Math.pow(1 - Math.abs(saw(u * 4.6 + av * 1.2) * 2 - 1), 8);
-      var k = tone * (1 + 0.16 * mid + 0.05 * lat);
+      var k = tone * (1 + 0.30 * mid + 0.06 * lat);
       var f = [LEAF_GREEN[0] * k, LEAF_GREEN[1] * k, LEAF_GREEN[2] * k];
       var b = [LEAF_BACK[0] * tone, LEAF_BACK[1] * tone, LEAF_BACK[2] * tone];
       return [f, b];

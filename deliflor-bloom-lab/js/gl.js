@@ -30,7 +30,7 @@
     'varying vec3 vN, vP, vCF, vCB;',
     'varying float vMat;',
     'uniform vec3 uCam, uKey, uFill, uKeyCol, uFillCol, uAmbTop, uAmbBot;',
-    'uniform float uTrans, uRim, uIrid, uSpec;',
+    'uniform float uTrans, uRim, uIrid, uSpec, uExposure;',
     /* ruido barato de un solo valor: sin él la superficie del pétalo es un
        degradado perfecto, que es lo que más delata un render de juguete. */
     'float hash1(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164))) * 43758.5453); }',
@@ -60,7 +60,7 @@
     /* piso más bajo que antes (0.62 → 0.40): con un piso alto la cúpula
        entera quedaba con un brillo parejo y sin relieve, como plástico
        iluminado desde dentro en vez de una flor con sombras propias. */
-    '  if(petal) amb = max(amb, uAmbTop * 0.26);',
+    '  if(petal) amb = max(amb, uAmbTop * 0.34);',
     '  vec3 col = base * (amb + uKeyCol * wrap);',
     '  float ndl2 = clamp(dot(N, normalize(uFill)) * 0.5 + 0.5, 0.0, 1.0);',
     '  col += base * uFillCol * ndl2;',
@@ -84,6 +84,14 @@
     '                           sin(f*8.0 + 2.1 + vP.y*2.5)*0.5+0.5,',
     '                           sin(f*8.0 + 4.2 + vP.y*2.5)*0.5+0.5);',
     '  }',
+    /* Exposición y compresión de altas luces.
+       La suma de ambiental + clave llegaba a ~1.4, así que cualquier color
+       claro se recortaba a blanco puro y la flor perdía su color: por eso
+       salía lavada. Con la exposición por debajo de 1 y una rodilla que sólo
+       comprime lo que pasa de 0.8, los medios tonos conservan su saturación
+       y las luces altas ruedan en vez de recortarse de golpe. */
+    '  col *= uExposure;',
+    '  col = col / (1.0 + max(col - 0.8, 0.0));',
     '  gl_FragColor = vec4(col, 1.0);',
     '}'
   ].join('\n');
@@ -199,6 +207,7 @@
     this.grow = 1; this.targetGrow = 1;
     this.autoSpin = true;
     this.env = BG_ENV.studio; this.mood = MOOD_DEFAULT; this.irid = 0;
+    this.exposure = 0.78;
     this.dpr = 1;
     this.dirty = true;
 
@@ -424,6 +433,7 @@
       u1(gl, P, 'uRim', this.mood.rim);
       u1(gl, P, 'uSpec', this.mood.spec);
       u1(gl, P, 'uIrid', this.irid);
+      u1(gl, P, 'uExposure', this.exposure);
       u1(gl, P, 'uGrow', this.grow);
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
     }

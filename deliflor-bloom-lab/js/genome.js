@@ -101,10 +101,10 @@
       density: 0.98, layers: 13, diameter: 'large', growth: 'disbud'
     },
     decorative: {
-      shape: 'semispherical', openness: 0.46, volume: 0.66, centerSize: 0.08,
-      petalShape: 'oval', petalLength: 0.6, petalWidth: 0.5, petalCurve: 0.4,
-      petalTwist: 0.08, petalEdge: 'smooth', arrangement: 'layered',
-      density: 0.82, layers: 9, diameter: 'large', growth: 'disbud'
+      shape: 'semispherical', openness: 0.80, volume: 0.30, centerSize: 0.05,
+      petalShape: 'rounded', petalLength: 0.66, petalWidth: 0.74, petalCurve: 0.36,
+      petalTwist: 0.05, petalEdge: 'smooth', arrangement: 'spiral',
+      density: 0.68, layers: 9, diameter: 'large', growth: 'disbud'
     },
     margriet: {
       shape: 'flat', openness: 0.95, volume: 0.2, centerSize: 0.4,
