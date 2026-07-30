@@ -248,7 +248,7 @@
      --------------------------------------------------------------- */
   function addCenter(mesh, R, domeH, color, floretCount) {
     var dark = [color[0] * 0.62, color[1] * 0.62, color[2] * 0.66];
-    addGrid(mesh, 10, 12,
+    addGrid(mesh, 13, 16,
       function (u, v) {
         var phi = u * PI * 0.5, th = (v + 1) * PI;
         return [R * Math.sin(phi) * Math.cos(th), R * Math.cos(phi) * domeH, R * Math.sin(phi) * Math.sin(th)];
@@ -442,8 +442,11 @@
       var av = Math.abs(v);
       /* el nervio central y los laterales son más claros que el limbo */
       var mid = Math.max(0, 1 - av * 7);
+      /* la onda de 'lat' no sigue los lóbulos reales de la hoja: con
+         amplitud alta se veía como una cuadrícula repetida, no como
+         nervadura. Se deja tenue — sugiere textura sin leerse como patrón. */
       var lat = Math.pow(1 - Math.abs(saw(u * 4.6 + av * 1.2) * 2 - 1), 8);
-      var k = tone * (1 + 0.30 * mid + 0.16 * lat);
+      var k = tone * (1 + 0.16 * mid + 0.05 * lat);
       var f = [LEAF_GREEN[0] * k, LEAF_GREEN[1] * k, LEAF_GREEN[2] * k];
       var b = [LEAF_BACK[0] * tone, LEAF_BACK[1] * tone, LEAF_BACK[2] * tone];
       return [f, b];
@@ -451,8 +454,8 @@
   }
 
   function addLeaf(mesh, x, y, z, ang, tilt, size, res) {
-    var NU = res === 'high' ? 16 : 12;
-    var NV = res === 'high' ? 8 : 6;
+    var NU = res === 'high' ? 20 : 12;
+    var NV = res === 'high' ? 10 : 6;
     var ca = Math.cos(ang), sa = Math.sin(ang);
     var ct = Math.cos(tilt), st = Math.sin(tilt);
     var seed = hash(x * 7.3 + z * 3.9, y * 5.1) * 9;

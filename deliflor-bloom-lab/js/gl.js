@@ -31,6 +31,9 @@
     'varying float vMat;',
     'uniform vec3 uCam, uKey, uFill, uKeyCol, uFillCol, uAmbTop, uAmbBot;',
     'uniform float uTrans, uRim, uIrid, uSpec;',
+    /* ruido barato de un solo valor: sin él la superficie del pétalo es un
+       degradado perfecto, que es lo que más delata un render de juguete. */
+    'float hash1(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164))) * 43758.5453); }',
     'void main(){',
     '  vec3 N = normalize(vN);',
     '  vec3 V = normalize(uCam - vP);',
@@ -40,12 +43,24 @@
     '  bool petal = vMat < 0.5;',
     '  bool leaf  = vMat > 2.5 && vMat < 3.5;',
     '  if(leaf) base = (N.y >= 0.0) ? vCF : vCB;',
+    /* microrrelieve falso: dos frecuencias de ruido perturbando la normal.
+       hash1 multiplica por ~137 antes del seno, así que un factor de escala
+       de sólo 5-9 sobre una flor de ~0.5-1 unidad ya da varios ciclos por
+       pétalo; con 41-53 el ruido oscilaba miles de veces por pétalo y el
+       antialiasing lo promediaba a cero antes de llegar a la pantalla. */
+    '  vec3 hb = vec3(hash1(vP*7.0)-0.5, hash1(vP*8.0+11.0)-0.5, hash1(vP*9.0+23.0)-0.5)',
+    '           + 0.6*vec3(hash1(vP*22.0)-0.5, hash1(vP*25.0+5.0)-0.5, hash1(vP*28.0+7.0)-0.5);',
+    '  float bumpAmt = petal ? 0.20 : (leaf ? 0.09 : 0.03);',
+    '  N = normalize(N + hb * bumpAmt);',
     '  vec3 L = normalize(uKey);',
     '  float ndl = dot(N, L);',
     /* iluminación envolvente: los pétalos delgados no se apagan de golpe */
     '  float wrap = clamp(ndl * 0.62 + 0.38, 0.0, 1.0);',
     '  vec3 amb = mix(uAmbBot, uAmbTop, N.y * 0.5 + 0.5);',
-    '  if(petal) amb = max(amb, uAmbTop * 0.62);',
+    /* piso más bajo que antes (0.62 → 0.40): con un piso alto la cúpula
+       entera quedaba con un brillo parejo y sin relieve, como plástico
+       iluminado desde dentro en vez de una flor con sombras propias. */
+    '  if(petal) amb = max(amb, uAmbTop * 0.26);',
     '  vec3 col = base * (amb + uKeyCol * wrap);',
     '  float ndl2 = clamp(dot(N, normalize(uFill)) * 0.5 + 0.5, 0.0, 1.0);',
     '  col += base * uFillCol * ndl2;',
@@ -56,8 +71,13 @@
     '  }',
     '  float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);',
     '  col += vec3(1.0) * rim * uRim;',
+    /* sheen satinado: un lóbulo ancho y suave (la superficie del pétalo)
+       más un punto fino encima (la cera de la cutícula). Un solo lóbulo
+       ancho y fuerte es lo que hacía leer la flor como plástico mojado. */
     '  vec3 H = normalize(L + V);',
-    '  col += vec3(0.95, 0.95, 0.92) * pow(max(dot(N, H), 0.0), 46.0) * uSpec;',
+    '  float ndh = max(dot(N, H), 0.0);',
+    '  col += vec3(0.95, 0.95, 0.92) * pow(ndh, 60.0) * uSpec * 0.6;',
+    '  col += vec3(0.90, 0.90, 0.88) * pow(ndh, 7.0)  * uSpec * 0.16;',
     '  if(uIrid > 0.5 && petal){',
     '    float f = pow(1.0 - max(dot(N, V), 0.0), 1.8);',
     '    col += 0.30 * f * vec3(sin(f*8.0 + vP.y*2.5)*0.5+0.5,',
