@@ -9,4 +9,4 @@ compatibility_date = "2026-01-01"
 #   openai  → platform.openai.com, de pago aparte de ChatGPT
 #   fal     → el único junto a stability que respeta el prompt negativo
 [vars]
-IMAGE_PROVIDER = "gemini"
+IMAGE_PROVIDER = "openai"

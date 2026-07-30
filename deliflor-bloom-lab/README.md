@@ -105,7 +105,9 @@ Cuatro reglas la gobiernan, y están verificadas:
 1. **Nunca bloquea.** La petición sale al entrar en la pantalla del nombre, con
    el 3D ya en pantalla. Si nunca vuelve, el visitante termina igual y no se
    entera.
-2. **Presupuesto duro de 12 segundos.** Pasado el plazo se aborta.
+2. **Presupuesto de 18 segundos.** Pasado el plazo se aborta. Se ajustó tras
+   medir en vivo: `gpt-image-1.5` en calidad `low` tarda ~13 s reales contra
+   el proveedor; 12 s se quedaba corto casi siempre.
 3. **Caché por genoma.** Dos visitantes que diseñan la misma flor comparten
    render y no se paga dos veces. El nombre no entra en la clave.
 4. **Tope de gasto diario** configurable, e interruptor de apagado en el panel.
@@ -124,12 +126,31 @@ En el worker, como secretos de Cloudflare:
 | `IMAGE_PROVIDER` | `gemini`, `openai` (por defecto), `stability` o `fal` |
 | `IMAGE_MODEL` | Modelo concreto; opcional |
 
+`IMAGE_PROVIDER` vive en `wrangler.toml` (no es un secreto), y hoy está en
+`openai` con el modelo por defecto `gpt-image-1.5`, calidad `low`.
+
 Una suscripción de ChatGPT o de Gemini en la aplicación **no sirve**: la API es
 un producto aparte, con su propia clave y su propia facturación. Hace falta una
 clave de `platform.openai.com` o de Google AI Studio.
 
 Sólo `fal` y `stability` respetan el prompt negativo de verdad. En `openai` y
 `gemini` la lista de exclusiones se cuela como «Avoid: …», que funciona peor.
+
+**Se probó Gemini primero por su capa gratuita, pero se descartó**: los modelos
+de imagen devuelven `429 · limit: 0` en proyectos sin facturación vinculada, y
+vincularla no garantiza que el uso siga siendo gratis. `openai` quedó como
+proveedor en producción porque la cuenta ya tenía facturación resuelta y el
+resultado, verificado visualmente, es excelente.
+
+### Estado verificado en producción (30-jul-2026)
+
+- Proveedor: `openai` · modelo `gpt-image-1.5` · calidad `low`
+- Latencia medida contra el worker real: **12.8–13.1 s**, dentro del
+  presupuesto de 18 s
+- Costo: ~$0,01–0,02 por imagen — con 160–250 imágenes/día, **menos de $5 para
+  todo el evento**
+- Calidad visual: aprobada — el ramo generado es fotorrealista, respeta color,
+  patrón y envoltura del genoma, y se reconoce como crisantemo
 
 ### Si el modelo desaparece
 
@@ -279,10 +300,11 @@ Comprobado de forma automatizada:
 comportamiento táctil de la pantalla concreta que se instale, la resistencia de
 ocho horas continuas y el escaneo del QR con teléfonos de distintas marcas.
 
-**Pendiente de una clave de proveedor:** la capa fotorrealista está probada
-contra un servicio simulado en los cuatro caminos, pero nadie ha visto todavía
-una imagen real salida de ella. Hace falta contratar el proveedor y ejecutar
-«Probar conexión» para juzgar la calidad de las láminas.
+**Ya en producción:** la capa fotorrealista genera imágenes reales con OpenAI
+`gpt-image-1.5`. Queda por ver cómo se comporta con los prompts que produce
+cada combinación del genoma (el probado hasta ahora fue uno solo, aunque
+representativo) y confirmar el tope de gasto diario adecuado una vez arranque
+el evento.
 
 **Punto más débil del modelo procedural:** los lóbulos de la hoja son todavía
 blandos en lugar de triangulares y agudos, sobre todo en la versión de menor

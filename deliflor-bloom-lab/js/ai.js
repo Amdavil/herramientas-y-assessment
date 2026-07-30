@@ -17,7 +17,12 @@
   var G = root.Genome;
   var KEY = 'bloomlab.ai';
   var CACHE = 'bloomlab.aicache';
-  var BUDGET_MS = 12000;
+  // 18 s: gpt-image-1.5 en calidad 'low' tardó 13 s medido en vivo contra
+  // el worker de producción (30-jul-2026). El visitante sigue escribiendo
+  // su nombre durante buena parte de esta espera, así que el margen no
+  // se nota; lo que sí se nota es una lámina que nunca llega por un plazo
+  // demasiado corto.
+  var BUDGET_MS = 18000;
   var MAX_CACHE = 40;
 
   var DEFAULTS = {
@@ -27,7 +32,9 @@
     apiKey: '',                    /* sólo en modo 'direct'; lo escribe el operador */
     model: '',                     /* vacío = el que decida el worker */
     size: '1024x1024',
-    quality: 'medium',             /* 'low' | 'medium' | 'high' */
+    quality: 'low',                /* 'low' | 'medium' | 'high' — 'low' ya
+                                       da resultados excelentes en pruebas
+                                       reales y es ~5x más barato */
     dailyCap: 300,                 /* techo de imágenes por jornada */
     spent: 0,
     day: ''

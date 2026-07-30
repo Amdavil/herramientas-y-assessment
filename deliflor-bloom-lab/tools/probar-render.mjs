@@ -11,7 +11,7 @@ import { writeFileSync } from 'node:fs';
 
 const WORKER = process.argv[2] || 'https://pal-ai.projectability-pal.workers.dev';
 const ORIGIN = 'https://amdavil.github.io';
-const PRESUPUESTO_MS = 12000;   // el mismo plazo que aplica el kiosco
+const PRESUPUESTO_MS = 18000;   // el mismo plazo que aplica el kiosco
 
 const prompt =
   'Professional botanical product photography of an entirely new chrysanthemum ' +
@@ -47,7 +47,7 @@ try {
     signal: ctrl.signal,
     headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
     body: JSON.stringify({
-      mode: 'bloom-render', prompt, negative, size: '1024x1024', quality: 'medium'
+      mode: 'bloom-render', prompt, negative, size: '1024x1024', quality: 'low'
     })
   });
   clearTimeout(corte);
@@ -57,6 +57,7 @@ try {
   if (!res.ok || !cuerpo.image) {
     console.error(`✕  Falló tras ${(ms / 1000).toFixed(1)} s — HTTP ${res.status}`);
     console.error('   Respuesta:', JSON.stringify(cuerpo).slice(0, 300));
+    if (cuerpo.detail) console.error('   Detalle del proveedor:', JSON.stringify(cuerpo.detail));
     console.error('\n   Qué suele significar:');
     console.error('   503 Image service not configured → falta el secreto IMAGE_API_KEY');
     console.error('   403 Origin not allowed           → el worker no reconoce el origen');
@@ -74,7 +75,7 @@ try {
 
   console.log(`✓  Respondió en ${(ms / 1000).toFixed(1)} s`);
   console.log(`   ${Math.round(bytes.length / 1024)} KB guardados en ${salida}`);
-  console.log('\n   Ábrelo y juzga la lámina. Si tarda más de 12 s en el evento,');
+  console.log('\n   Ábrelo y juzga la lámina. Si tarda más de 18 s en el evento,');
   console.log('   el visitante no la verá: baja la calidad o cambia de modelo.');
 } catch (e) {
   clearTimeout(corte);

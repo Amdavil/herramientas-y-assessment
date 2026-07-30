@@ -76,10 +76,13 @@ async function handleBloomRender(body, env, origin) {
   // El kiosco abandona a los 12 s; aquí cortamos antes para no dejar la
   // petición colgando ni pagar por una imagen que ya nadie va a ver.
   const ctrl = new AbortController();
-  const cut = setTimeout(() => ctrl.abort(), 11000);
+  // Medido en vivo con gpt-image-1.5 en calidad 'low': ~13 s reales.
+  // El corte interno queda por debajo del presupuesto del cliente (18 s)
+  // para que el cliente reciba siempre esta respuesta controlada.
+  const cut = setTimeout(() => ctrl.abort(), 16000);
 
   try {
-    let res, out = null;
+    let res, out = null, debugInfo = null;
     if (provider === "stability") {
       const [w, hgt] = size.split("x").map(Number);
       res = await fetch("https://api.stability.ai/v1/generation/" +
@@ -130,6 +133,7 @@ async function handleBloomRender(body, env, origin) {
       }
       const j = await res.json();
       out = geminiImage(j);
+      if (!out) debugInfo = { status: res.status, body: JSON.stringify(j).slice(0, 500) };
     } else if (provider === "fal") {
       res = await fetch(env.IMAGE_MODEL || "https://fal.run/fal-ai/flux/dev", {
         method: "POST", signal: ctrl.signal,
@@ -138,6 +142,7 @@ async function handleBloomRender(body, env, origin) {
       });
       const j = await res.json();
       if (j.images && j.images[0] && j.images[0].url) out = j.images[0].url;
+      if (!out) debugInfo = { status: res.status, body: JSON.stringify(j).slice(0, 500) };
     } else {
       // OpenAI no admite prompt negativo: se integra como indicación, que
       // funciona bastante peor que un negative_prompt de verdad. Tampoco se
@@ -156,10 +161,14 @@ async function handleBloomRender(body, env, origin) {
       if (j.data && j.data[0]) {
         out = j.data[0].b64_json ? "data:image/png;base64," + j.data[0].b64_json : j.data[0].url;
       }
+      if (!out) debugInfo = { status: res.status, body: JSON.stringify(j).slice(0, 500) };
     }
     clearTimeout(cut);
     if (!out) {
-      return new Response(JSON.stringify({ error: "No image returned" }),
+      // El detalle del proveedor ayuda a diagnosticar sin exponer la clave:
+      // nunca viaja en el cuerpo de la respuesta, sólo en la cabecera de la
+      // petición saliente. Quitar este detalle una vez el proveedor funcione.
+      return new Response(JSON.stringify({ error: "No image returned", detail: debugInfo }),
         { status: 502, headers: corsHeaders(origin) });
     }
     return new Response(JSON.stringify({ image: out }), { headers: corsHeaders(origin) });

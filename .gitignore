@@ -25,3 +25,4 @@ linkedin-agent/data/
 
 # Cloudflare Workers local tooling
 .wrangler/
+render-prueba*.jpg
