@@ -92,6 +92,49 @@ Otros puntos de ajuste:
 
 ---
 
+## Render fotorrealista (capa opcional)
+
+El modelo procedural es botánico estilizado, no fotografía. Para la promesa
+fotográfica hay una capa opcional que genera una imagen a partir del genoma y la
+muestra en el pasaporte como **lámina rotulada**, con un conmutador «Foto /
+Modelo 3D». La lámina no tiene controles de giro: no puede confundirse con el
+modelo manipulable.
+
+Cuatro reglas la gobiernan, y están verificadas:
+
+1. **Nunca bloquea.** La petición sale al entrar en la pantalla del nombre, con
+   el 3D ya en pantalla. Si nunca vuelve, el visitante termina igual y no se
+   entera.
+2. **Presupuesto duro de 12 segundos.** Pasado el plazo se aborta.
+3. **Caché por genoma.** Dos visitantes que diseñan la misma flor comparten
+   render y no se paga dos veces. El nombre no entra en la clave.
+4. **Tope de gasto diario** configurable, e interruptor de apagado en el panel.
+
+### Configurarla
+
+El modo recomendado es **proxy**: el kiosco habla con el worker de Cloudflare de
+[`pal-ai-worker`](../pal-ai-worker/worker.js), donde la clave del proveedor vive
+como secreto y **nunca llega al navegador**.
+
+En el worker, como secretos de Cloudflare:
+
+| Secreto | Para qué |
+|---|---|
+| `IMAGE_API_KEY` | Clave del proveedor de imágenes |
+| `IMAGE_PROVIDER` | `openai` (por defecto), `stability` o `fal` |
+| `IMAGE_MODEL` | Modelo concreto; opcional |
+
+En el panel administrativo del kiosco sólo se escribe la dirección del worker,
+el modelo, el tamaño y el tope diario, y se pulsa «Probar conexión».
+
+El modo **direct** existe únicamente para pruebas: obliga a guardar la clave en
+el navegador del kiosco. No usarlo en el evento.
+
+Si no se configura nada, la capa queda desactivada y la experiencia funciona
+completa con el modelo 3D.
+
+---
+
 ## Cómo está organizado
 
 ```
@@ -106,6 +149,8 @@ deliflor-bloom-lab/
     ├── gl.js             Renderizador WebGL propio y órbita táctil
     ├── thumbs.js         Dibujo 2D: miniaturas y respaldo sin WebGL
     ├── qr.js             Codificador de códigos QR
+    ├── ai.js             Render fotorrealista opcional: presupuesto, caché,
+    │                     tope de gasto y degradación silenciosa
     ├── app.js            Estado, navegación, temporizadores, pantallas 1–8
     └── finish.js         Pantallas 9–15, galería, panel, vista compartida
 ```
@@ -176,10 +221,24 @@ Comprobado de forma automatizada:
 - Encuadre automático sin recortes en Ballhia, Margriet, araña, anémona,
   decorativa y ramo.
 - 40 sesiones seguidas reconstruyendo la malla sin degradación de tiempos.
+- La capa de IA en sus cuatro caminos: éxito, acierto de caché con el servicio
+  caído, fallo HTTP y agotamiento del plazo (aborta a los 12,0 s y el pasaporte
+  queda intacto).
+- La semilla del genoma no se mueve al pedir sugerencias de nombre, así que la
+  flor revelada es la misma que viaja en el QR.
 
 **Pendiente de verificar en hardware real:** los fotogramas por segundo a 4K, el
 comportamiento táctil de la pantalla concreta que se instale, la resistencia de
 ocho horas continuas y el escaneo del QR con teléfonos de distintas marcas.
+
+**Pendiente de una clave de proveedor:** la capa fotorrealista está probada
+contra un servicio simulado en los cuatro caminos, pero nadie ha visto todavía
+una imagen real salida de ella. Hace falta contratar el proveedor y ejecutar
+«Probar conexión» para juzgar la calidad de las láminas.
+
+**Punto más débil del modelo procedural:** el follaje. Las hojas son siluetas
+lobuladas de baja resolución y en el ramo se leen como formas verdes más que
+como hojas de crisantemo. Es el siguiente lugar donde invertir.
 
 ---
 

@@ -11,8 +11,96 @@ const ALLOWED_ORIGINS = [
   "http://localhost:7801", // pruebas locales — Reporte GRI Express
   "http://localhost:7799", // pruebas locales — Diagnóstico de Circularidad
   "http://localhost:7802", // pruebas locales — Estudio de Materialidad Exprés
-  "http://localhost:7803"  // pruebas locales — Inventario GEI Exprés
+  "http://localhost:7803", // pruebas locales — Inventario GEI Exprés
+  "http://localhost:7805"  // pruebas locales — Deliflor Bloom Lab
 ];
+
+/**
+ * Render fotorrealista para Deliflor Bloom Lab.
+ * Capa estrictamente opcional: si algo falla, el kiosco sigue mostrando su
+ * modelo 3D procedural y el visitante no se entera. Por eso aquí nunca se
+ * reintenta ni se espera de más — se responde rápido, con imagen o sin ella.
+ *
+ * Secretos esperados en Cloudflare:
+ *   IMAGE_API_KEY   clave del proveedor de imágenes
+ *   IMAGE_PROVIDER  "openai" (por defecto) | "stability" | "fal"
+ *   IMAGE_MODEL     modelo a usar; por defecto el propio del proveedor
+ */
+async function handleBloomRender(body, env, origin) {
+  if (!env.IMAGE_API_KEY) {
+    return new Response(JSON.stringify({ error: "Image service not configured" }),
+      { status: 503, headers: corsHeaders(origin) });
+  }
+  const prompt = String(body.prompt || "").slice(0, 4000);
+  if (prompt.length < 40) {
+    return new Response(JSON.stringify({ error: "Prompt too short" }),
+      { status: 400, headers: corsHeaders(origin) });
+  }
+  const negative = String(body.negative || "").slice(0, 1500);
+  const size = /^\d{3,4}x\d{3,4}$/.test(body.size || "") ? body.size : "1024x1024";
+  const provider = (env.IMAGE_PROVIDER || "openai").toLowerCase();
+
+  // El kiosco abandona a los 12 s; aquí cortamos antes para no dejar la
+  // petición colgando ni pagar por una imagen que ya nadie va a ver.
+  const ctrl = new AbortController();
+  const cut = setTimeout(() => ctrl.abort(), 11000);
+
+  try {
+    let res, out = null;
+    if (provider === "stability") {
+      const [w, hgt] = size.split("x").map(Number);
+      res = await fetch("https://api.stability.ai/v1/generation/" +
+        (env.IMAGE_MODEL || "stable-diffusion-xl-1024-v1-0") + "/text-to-image", {
+        method: "POST", signal: ctrl.signal,
+        headers: {
+          "Content-Type": "application/json", "Accept": "application/json",
+          "Authorization": `Bearer ${env.IMAGE_API_KEY}`
+        },
+        body: JSON.stringify({
+          text_prompts: [{ text: prompt, weight: 1 },
+                         { text: negative, weight: -1 }],
+          width: w, height: hgt, samples: 1, steps: 30
+        })
+      });
+      const j = await res.json();
+      if (j.artifacts && j.artifacts[0]) out = "data:image/png;base64," + j.artifacts[0].base64;
+    } else if (provider === "fal") {
+      res = await fetch(env.IMAGE_MODEL || "https://fal.run/fal-ai/flux/dev", {
+        method: "POST", signal: ctrl.signal,
+        headers: { "Content-Type": "application/json", "Authorization": `Key ${env.IMAGE_API_KEY}` },
+        body: JSON.stringify({ prompt, negative_prompt: negative, image_size: "square_hd", num_images: 1 })
+      });
+      const j = await res.json();
+      if (j.images && j.images[0] && j.images[0].url) out = j.images[0].url;
+    } else {
+      // OpenAI: no admite prompt negativo, así que se integra como indicación.
+      res = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST", signal: ctrl.signal,
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${env.IMAGE_API_KEY}` },
+        body: JSON.stringify({
+          model: env.IMAGE_MODEL || "gpt-image-1",
+          prompt: prompt + (negative ? " Avoid: " + negative : ""),
+          size, n: 1
+        })
+      });
+      const j = await res.json();
+      if (j.data && j.data[0]) {
+        out = j.data[0].b64_json ? "data:image/png;base64," + j.data[0].b64_json : j.data[0].url;
+      }
+    }
+    clearTimeout(cut);
+    if (!out) {
+      return new Response(JSON.stringify({ error: "No image returned" }),
+        { status: 502, headers: corsHeaders(origin) });
+    }
+    return new Response(JSON.stringify({ image: out }), { headers: corsHeaders(origin) });
+  } catch (e) {
+    clearTimeout(cut);
+    const aborted = e && e.name === "AbortError";
+    return new Response(JSON.stringify({ error: aborted ? "Upstream timeout" : "Image service error" }),
+      { status: aborted ? 504 : 502, headers: corsHeaders(origin) });
+  }
+}
 
 // Reglas de calidad compartidas por TODOS los prompts — se interpolan en cada uno.
 // Objetivo: que cada informe se note anclado a los datos reales recibidos y razonado
@@ -232,6 +320,10 @@ export default {
     let body;
     try { body = await request.json(); }
     catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: corsHeaders(origin) }); }
+
+    // Bloom Lab genera imágenes, no texto: sale por su propia rama antes de
+    // llegar a las validaciones y al prompt de Groq.
+    if (body.mode === "bloom-render") return handleBloomRender(body, env, origin);
 
     const CONTEXT_ONLY_MODES = new Set([
       "circular-summary", "materialidad-informe", "materialidad-sugerir-asuntos", "materialidad-explicar-score",

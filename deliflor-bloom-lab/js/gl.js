@@ -43,6 +43,7 @@
     /* iluminación envolvente: los pétalos delgados no se apagan de golpe */
     '  float wrap = clamp(ndl * 0.62 + 0.38, 0.0, 1.0);',
     '  vec3 amb = mix(uAmbBot, uAmbTop, N.y * 0.5 + 0.5);',
+    '  if(petal) amb = max(amb, uAmbTop * 0.62);',
     '  vec3 col = base * (amb + uKeyCol * wrap);',
     '  float ndl2 = clamp(dot(N, normalize(uFill)) * 0.5 + 0.5, 0.0, 1.0);',
     '  col += base * uFillCol * ndl2;',

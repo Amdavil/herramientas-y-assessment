@@ -429,6 +429,27 @@ input[type=range]::-moz-range-thumb {
   line-height: 1.6; padding: 0 calc(var(--s)*1.6) calc(var(--s)*1.2);
 }
 
+/* lámina fotográfica generada por IA */
+.plate { position: absolute; inset: 0; overflow: hidden; }
+.plate::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 0 calc(var(--s)*.35) rgba(255,255,255,.85),
+              inset 0 0 0 calc(var(--s)*.45) var(--wine-line);
+}
+.plate-tag {
+  position: absolute; left: calc(var(--s)*.9); bottom: calc(var(--s)*.9);
+  font-family: var(--f-mono); font-size: calc(var(--s)*.68); letter-spacing: .14em;
+  text-transform: uppercase; color: #fff; background: rgba(36,26,31,.62);
+  padding: calc(var(--s)*.3) calc(var(--s)*.7); border-radius: 999px;
+}
+.plate-swap {
+  position: absolute; right: calc(var(--s)*.9); top: calc(var(--s)*.9); z-index: 2;
+  border: 0; border-radius: 999px; cursor: pointer; font: inherit;
+  font-size: calc(var(--s)*.82); padding: calc(var(--s)*.5) calc(var(--s)*1.1);
+  background: rgba(255,255,255,.92); color: var(--wine); box-shadow: var(--shadow);
+  animation: enter .45s both;
+}
+
 /* compartir */
 .share { display: grid; grid-template-columns: auto 1fr; gap: calc(var(--s)*3); align-items: center; padding: calc(var(--s)*3); flex: 1; }
 .qrbox { background: #fff; padding: calc(var(--s)*1.4); border-radius: calc(var(--s)*1); box-shadow: var(--shadow-lg); }

@@ -92,25 +92,42 @@
   }
 
   /* ---------------------------------------------------------------
-     Perfil de ancho del pétalo según su forma
+     Perfil de ancho del pétalo
+
+     Un flósculo radial de crisantemo es una cinta: se estrecha donde se
+     inserta, mantiene un ancho casi constante y termina redondeado, no en
+     punta. Ésa es la diferencia entre una flor y una piña. Sólo la forma
+     'puntiagudo' termina realmente en pico.
      --------------------------------------------------------------- */
+  function tipRound(u, start) {
+    if (u <= start) return 1;
+    var t = (u - start) / (1 - start);
+    return Math.sqrt(Math.max(0, 1 - t * t));
+  }
+  function baseTaper(u, k) { return Math.pow(Math.min(1, u / k), 0.6); }
+
   function widthProfile(shape, u) {
     var s = Math.sin(PI * u);
     switch (shape) {
-      case 'rounded':  return Math.pow(s, 0.5);
-      case 'oval':     return Math.pow(s, 0.8);
-      case 'long':     return Math.pow(s, 1.25) * 0.78;
-      case 'tubular':  return 0.30 * (1 - 0.35 * u);
-      case 'spoon':    return u < 0.66 ? 0.26 : 0.26 + Math.pow((u - 0.66) / 0.34, 0.7) * 0.86 * Math.sin(PI * (u - 0.33) / 1.34);
-      case 'curly':    return Math.pow(s, 0.7) * (1 + 0.16 * Math.sin(u * 13));
-      case 'pointed':  return Math.pow(s, 0.45) * Math.pow(1 - u, 0.3);
-      case 'wavy':     return Math.pow(s, 0.8) * (1 + 0.1 * Math.sin(u * 8));
-      case 'spiral':   return Math.pow(s, 1.1) * 0.82;
-      case 'irregular':return Math.pow(s, 0.75) * (1 + 0.22 * Math.sin(u * 6.3) * Math.cos(u * 11.1));
-      default:         return Math.pow(s, 0.7);
+      case 'rounded':  return baseTaper(u, 0.20) * (0.88 + 0.20 * s) * tipRound(u, 0.90);
+      case 'oval':     return baseTaper(u, 0.24) * (0.70 + 0.38 * s) * tipRound(u, 0.88);
+      case 'long':     return baseTaper(u, 0.16) * 0.76 * (0.92 + 0.12 * s) * tipRound(u, 0.91);
+      case 'tubular':  return baseTaper(u, 0.10) * 0.38 * (1 - 0.18 * u) * tipRound(u, 0.93);
+      case 'spoon':    return baseTaper(u, 0.14) * (0.34 + 0.62 * smoothstep(0.52, 0.88, u)) * tipRound(u, 0.94);
+      case 'curly':    return baseTaper(u, 0.20) * (0.86 + 0.18 * s) * (1 + 0.12 * Math.sin(u * 12)) * tipRound(u, 0.89);
+      case 'pointed':  return baseTaper(u, 0.20) * (0.90 + 0.20 * s) * Math.pow(1 - u, 0.42);
+      case 'wavy':     return baseTaper(u, 0.24) * (0.72 + 0.36 * s) * (1 + 0.09 * Math.sin(u * 7)) * tipRound(u, 0.89);
+      case 'spiral':   return baseTaper(u, 0.12) * 0.56 * (0.94 + 0.10 * s) * tipRound(u, 0.93);
+      case 'irregular':return baseTaper(u, 0.22) * (0.76 + 0.30 * s) * (1 + 0.16 * Math.sin(u * 5.7) * Math.cos(u * 9.3)) * tipRound(u, 0.88);
+      default:         return baseTaper(u, 0.22) * (0.80 + 0.28 * s) * tipRound(u, 0.89);
     }
   }
   var TUBULAR = { tubular: 1, spiral: 1 };
+
+  /* Reparto de los cortes a lo largo del pétalo. Con cortes equidistantes la
+     punta redondeada se resolvía en un solo triángulo y volvía a verse en
+     pico; esta curva concentra cortes en la base y en el extremo. */
+  function uMap(u) { return u * u * (3 - 2 * u); }
 
   /* Desplazamiento del borde, perpendicular a la cara del pétalo */
   function edgeDisp(edge, u, v, w) {
@@ -133,6 +150,7 @@
     var cT = Math.cos(P.theta), sT = Math.sin(P.theta);
     var tube = !!TUBULAR[P.shape];
     return function (u, v) {
+      u = uMap(u);
       var a = P.pitch + P.bend * u;
       var ca = Math.cos(a), sa = Math.sin(a);
       /* raquis: arco circular de longitud L en el plano (radial, vertical) */
@@ -189,6 +207,7 @@
   function petalColorFn(C, pattern, f, k) {
     var pri = C.primary, sec = C.secondary, tip = C.tip, rev = C.reverse;
     return function (u, v) {
+      u = uMap(u);
       var col;
       switch (pattern) {
         case 'gradientCenter': col = mixC(sec, pri, smoothstep(0, 0.8, u * 0.65 + f * 0.35)); break;
@@ -205,9 +224,11 @@
         default:               col = pri;
       }
       /* leve oscurecimiento en la base: da profundidad al corazón de la flor */
-      var shade = 0.7 + 0.3 * smoothstep(0, 0.45, u);
+      var shade = 0.84 + 0.16 * smoothstep(0, 0.45, u);
       var front = [col[0] * shade, col[1] * shade, col[2] * shade];
-      var back = mixC(rev, front, 0.28);
+      /* El envés de un pétalo es una versión más pálida del haz, no una cara
+         gris: mezclarlo con blanco evita el aspecto de plástico apagado. */
+      var back = mixC(mixC(front, rev, 0.30), [1, 1, 1], 0.20);
       back = [back[0] * shade, back[1] * shade, back[2] * shade];
       return [front, back];
     };
@@ -255,9 +276,9 @@
   function buildFlower(g, opt) {
     opt = opt || {};
     var lod = opt.lod || 'high';
-    var NU = lod === 'high' ? 10 : lod === 'mid' ? 6 : 4;
-    var NV = lod === 'high' ? 5 : lod === 'mid' ? 3 : 2;
-    var petalCap = lod === 'high' ? 420 : lod === 'mid' ? 150 : 70;
+    var NU = lod === 'high' ? 12 : lod === 'mid' ? 6 : 4;
+    var NV = lod === 'high' ? 6 : lod === 'mid' ? 3 : 2;
+    var petalCap = lod === 'high' ? 520 : lod === 'mid' ? 170 : 80;
 
     var mesh = new Mesh();
     var C = {
@@ -273,11 +294,20 @@
     var Rb = 0.06 + g.centerSize * 0.34;
     var domeH = 0.5 + g.volume * 0.75;
     var phiMax = (0.33 + g.volume * 0.75) * PI * 0.5;
+    /* Los flósculos del disco ocupan la cima del receptáculo; los pétalos
+       radiales nacen a partir de ahí. Sin este borde, las flores de pocas
+       capas juntaban todos los pétalos en el polo y formaban un cono. */
+    var phiDisc = Math.min(phiMax * 0.92, (0.18 + g.centerSize * 1.15));
 
     /* longitud base del pétalo relativa al radio total */
     var baseLen = 0.42 + g.petalLength * 0.78;
-    var halfW = (0.055 + g.petalWidth * 0.115) * (0.75 + baseLen * 0.4);
-    var bendBase = (g.petalCurve - 0.5) * 2.5;
+    var halfW = (0.034 + g.petalWidth * 0.062) * (0.75 + baseLen * 0.4);
+    /* 0 = incurvado (el pétalo sube y cierra la flor), 1 = reflejo (cae
+       hacia afuera). El signo estaba invertido: las Ballhia se abrían en vez
+       de cerrarse, que era la causa del aspecto de alcachofa. */
+    var bendBase = (0.5 - g.petalCurve) * 2.5;
+    /* Los pétalos muy largos pesan y arquean hacia abajo */
+    var droop = -Math.max(0, g.petalLength - 0.55) * 1.5;
     var cup = 0.35 + (1 - g.openness) * 0.5;
 
     var layers = Math.max(1, g.layers);
@@ -285,14 +315,14 @@
 
     for (var i = 0; i < layers; i++) {
       var f = layers > 1 ? i / (layers - 1) : 1;
-      var phi = phiMax * Math.pow(f, 0.82);
+      var phi = phiDisc + (phiMax - phiDisc) * Math.pow(f, 0.82);
       var pitch = (PI / 2 - phi) - g.openness * 0.95 - (1 - f) * 0.08;
-      var bend = bendBase * (0.55 + 0.45 * f);
+      var bend = bendBase * (1.05 - 0.28 * f) + droop * (0.35 + 0.65 * f);
 
-      var cnt = Math.round((4 + 17 * f) * (0.42 + g.density * 1.0));
+      var cnt = Math.round((7 + 30 * f) * (0.45 + g.density * 0.8));
       if (g.arrangement === 'compact') cnt = Math.round(cnt * 1.22);
       if (g.arrangement === 'open') cnt = Math.round(cnt * 0.7);
-      cnt = Math.max(3, cnt);
+      cnt = Math.max(5, cnt);
       if (total + cnt > petalCap) cnt = Math.max(3, petalCap - total);
       if (total >= petalCap) break;
       total += cnt;
@@ -302,7 +332,7 @@
         g.arrangement === 'layered' ? i * (PI / cnt) :
         g.arrangement === 'asym' ? i * 1.1 : 0;
 
-      var L = baseLen * (0.58 + 0.42 * f);
+      var L = baseLen * (0.52 + 0.48 * f);
       var asym = 1 - g.symmetry;
 
       for (var k = 0; k < cnt; k++) {
@@ -367,7 +397,7 @@
   function addLeaf(mesh, x, y, z, ang, tilt, size) {
     var ca = Math.cos(ang), sa = Math.sin(ang);
     var ct = Math.cos(tilt), st = Math.sin(tilt);
-    addGrid(mesh, 8, 4,
+    addGrid(mesh, 11, 5,
       function (u, v) {
         var s = Math.sin(PI * Math.pow(u, 0.85));
         var lobes = 1 + 0.42 * Math.sin(u * 9.2) * (1 - u * 0.4);
@@ -402,7 +432,7 @@
     for (var i = 0; i < nLeaf; i++) {
       var t = 0.18 + (i / nLeaf) * 0.66;
       var lx = curveX * t * t, lz = curveZ * t * t;
-      var lsize = 0.34 * (g.foliage === 'wild' ? 1.25 : g.foliage === 'compact' ? 0.8 : 1) * (1.15 - t * 0.5);
+      var lsize = 0.20 * (g.foliage === 'wild' ? 1.25 : g.foliage === 'compact' ? 0.8 : 1) * (1.15 - t * 0.5);
       addLeaf(mesh, lx, t * h, lz, i * 2.399963 + rand() * 0.5, -0.35 - rand() * 0.45, lsize);
     }
 
@@ -509,7 +539,10 @@
       else if (B.style === 'runway') hs = 1 + rr * 0.25;
       else if (B.style === 'asymmetric') hs = 0.75 + 0.5 * (0.5 + 0.5 * Math.sin(ang * 1.3));
 
-      var tilt = rr * (B.style === 'minimal' ? 0.20 : 0.34);
+      /* Inclinación de cada tallo hacia afuera del eje del ramo. Con valores
+         bajos todas las flores miraban al cenit y de perfil se veían como
+         discos apilados; así el ramo presenta su cúpula al visitante. */
+      var tilt = rr * (B.style === 'minimal' ? 0.42 : B.style === 'runway' ? 0.5 : 0.72);
       var v = variants[k % variants.length];
 
       var M = mul(translate(x * 0.18, 0, z * 0.18),
@@ -529,7 +562,7 @@
         var a2 = q * 2.399963 + 0.7;
         var r2 = Rd * (0.75 + rand() * 0.55);
         addLeaf(mesh, Math.cos(a2) * r2 * 0.5, 1.0 + rand() * 1.3, Math.sin(a2) * r2 * 0.5,
-                a2, -0.5 - rand() * 0.6, 0.4 + rand() * 0.3);
+                a2, -0.5 - rand() * 0.6, 0.17 + rand() * 0.11);
       }
     }
     if (B.extras === 'neutralFlowers' || B.extras === 'dried') {
@@ -619,6 +652,7 @@
   }
 
   root.MeshGen = {
+    widthProfile: widthProfile,
     buildFlower: buildFlower,
     buildStem: buildStem,
     buildSingleStem: buildSingleStem,

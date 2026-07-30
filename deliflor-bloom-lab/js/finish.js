@@ -211,6 +211,9 @@
       hint: App.lang === 'en' ? 'How is your new creation called?' : '¿Cómo se llama tu nueva creación?',
       kind: 'flower'
     });
+    /* El render fotorrealista se pide aquí, no al final: así dispone del
+       tiempo del teclado y del pasaporte para llegar sin hacer esperar. */
+    if (root.AI) root.AI.prefetch(App.g);
 
     var val = h('div', { class: 'val' + (App.g.name ? '' : ' empty') });
     var count = h('span', { class: 'count' });
@@ -263,10 +266,13 @@
     s.body.appendChild(kb);
 
     var sug = h('div', { class: 'suggest' });
+    App._nameSalt = App._nameSalt || 0;
     function refillSuggestions() {
       App.clear(sug);
-      App.g.seed = Math.floor(Math.random() * 65535) + 1;
-      G.suggestNames(App.g, 3).forEach(function (n) {
+      /* Se cambia la sal, nunca g.seed: la semilla ya definió la flor que el
+         visitante acaba de ver y moverla la redibujaría distinta. */
+      App._nameSalt++;
+      G.suggestNames(App.g, 3, App._nameSalt).forEach(function (n) {
         sug.appendChild(h('button', {
           class: 'btn', text: n, onclick: function () { App.g.name = n; paint(); }
         }));
@@ -290,6 +296,45 @@
     });
     paint();
   };
+
+  /* -----------------------------------------------------------------
+     Lámina fotográfica. La imagen generada se rotula siempre y no ofrece
+     ningún control de giro: no se puede confundir con el modelo 3D.
+     ----------------------------------------------------------------- */
+  function photoPlate(box, g, on3D) {
+    if (!root.AI) return;
+    var en = App.lang === 'en';
+
+    function mount(src) {
+      if (!src || !box.isConnected) return;
+      var img = h('img', { src: src, alt: en ? 'Photographic render' : 'Render fotográfico',
+        style: 'width:100%;height:100%;object-fit:cover;display:block' });
+      var plate = h('div', { class: 'plate' }, [
+        img, h('span', { class: 'plate-tag', text: en ? 'Photographic render' : 'Render fotográfico' })
+      ]);
+      var showing = 'photo';
+      var swap = h('button', {
+        class: 'plate-swap', text: en ? '3D model' : 'Modelo 3D',
+        onclick: function (e) {
+          showing = showing === 'photo' ? 'model' : 'photo';
+          plate.style.display = showing === 'photo' ? '' : 'none';
+          if (on3D) on3D.style.display = showing === 'photo' ? 'none' : '';
+          e.currentTarget.textContent = showing === 'photo'
+            ? (en ? '3D model' : 'Modelo 3D') : (en ? 'Photo' : 'Foto');
+        }
+      });
+      if (on3D) on3D.style.display = 'none';
+      box.appendChild(plate);
+      box.appendChild(swap);
+    }
+
+    /* El montaje se aplaza siempre: cuando la imagen ya está en caché,
+       photoPlate corre antes de que su contenedor entre en el documento. */
+    var hit = root.AI.cached(g);
+    if (hit) { App.defer(function () { mount(hit); }); return; }
+    var p = root.AI.pending(g);
+    if (p) p.then(function (src) { App.defer(function () { mount(src); }); });
+  }
 
   /* =================================================================
      13 · Pasaporte
@@ -385,9 +430,14 @@
         h('div', { class: 'pid', text: new Date().toLocaleDateString() })
       ])
     ]);
-    var big = h('div', { class: 'pimg', style: 'flex:1;min-height:0' });
-    if (App.shots.bouquet) big.appendChild(h('img', { src: App.shots.bouquet, alt: '' }));
-    else { var cv = h('canvas'); big.appendChild(cv); App.defer(function () { T.fallbackScene(cv, App.g, 'bouquet'); }); }
+    var big = h('div', { class: 'pimg', style: 'flex:1;min-height:0;position:relative' });
+    var model3d;
+    if (App.shots.bouquet) { model3d = h('img', { src: App.shots.bouquet, alt: '' }); big.appendChild(model3d); }
+    else {
+      var cv = h('canvas'); model3d = cv; big.appendChild(cv);
+      App.defer(function () { T.fallbackScene(cv, App.g, 'bouquet'); });
+    }
+    photoPlate(big, App.g, model3d);
     side.appendChild(h('div', { class: 'pbody', style: 'flex:1' }, big));
     side.appendChild(h('div', { class: 'specs' }, [
       specRow(App.lang === 'en' ? 'Bouquet style' : 'Estilo del ramo', App.lb(App.g.bouquet.style)),
@@ -736,6 +786,82 @@
       }));
     });
     wrap.appendChild(list);
+
+    /* ---- Render fotorrealista ---- */
+    if (root.AI) {
+      var ai = root.AI.cfg();
+      wrap.appendChild(h('h3', { text: 'Render fotorrealista (opcional)' }));
+      wrap.appendChild(h('div', {
+        class: 'row',
+        text: 'Estado: ' + (root.AI.available() ? 'activo' : 'inactivo') +
+              ' · generadas hoy: ' + ai.spent + '/' + ai.dailyCap +
+              ' · aciertos: ' + root.AI.state.ok + ' · fallos: ' + root.AI.state.fail +
+              (root.AI.state.lastError ? ' · último fallo: ' + root.AI.state.lastError : '')
+      }));
+
+      var fields = h('div', { class: 'row' });
+      function field(label, key, type, width) {
+        var inp = h('input', {
+          type: type || 'text', value: ai[key] === undefined ? '' : String(ai[key]),
+          placeholder: label,
+          style: 'font:inherit;font-size:calc(var(--s)*1);padding:calc(var(--s)*.6) calc(var(--s)*.9);' +
+                 'border:1px solid var(--wine-line);border-radius:calc(var(--s)*.5);width:' + (width || '22ch'),
+          onchange: function (e) {
+            var v = e.target.value;
+            if (type === 'number') v = parseInt(v, 10) || 0;
+            var patch = {}; patch[key] = v; root.AI.set(patch);
+          }
+        });
+        fields.appendChild(h('label', { style: 'display:flex;flex-direction:column;gap:calc(var(--s)*.2)' }, [
+          h('span', { style: 'font-family:var(--f-mono);font-size:calc(var(--s)*.72);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)', text: label }),
+          inp
+        ]));
+      }
+      field('Dirección del servicio', 'endpoint', 'text', '34ch');
+      field('Modelo', 'model', 'text', '16ch');
+      field('Tamaño', 'size', 'text', '12ch');
+      field('Tope diario', 'dailyCap', 'number', '8ch');
+      wrap.appendChild(fields);
+
+      var aiRow = h('div', { class: 'row' });
+      aiRow.appendChild(h('button', {
+        class: 'btn', text: ai.enabled ? 'IA: activada' : 'IA: desactivada',
+        onclick: function (e) {
+          var n = !root.AI.cfg().enabled; root.AI.set({ enabled: n });
+          e.currentTarget.textContent = n ? 'IA: activada' : 'IA: desactivada';
+        }
+      }));
+      aiRow.appendChild(h('button', {
+        class: 'btn', text: 'Modo: ' + ai.mode,
+        onclick: function (e) {
+          var n = root.AI.cfg().mode === 'proxy' ? 'direct' : 'proxy';
+          root.AI.set({ mode: n }); e.currentTarget.textContent = 'Modo: ' + n;
+        }
+      }));
+      var testOut = h('span', { style: 'align-self:center;color:var(--ink-dim);font-size:calc(var(--s)*1)' });
+      aiRow.appendChild(h('button', {
+        class: 'btn', text: 'Probar conexión',
+        onclick: function () {
+          testOut.textContent = 'probando…';
+          root.AI.test().then(function (r) { testOut.textContent = (r.ok ? '✓ ' : '✕ ') + r.msg; });
+        }
+      }));
+      aiRow.appendChild(h('button', {
+        class: 'btn', text: 'Vaciar caché de imágenes',
+        onclick: function () { root.AI.clearCache(); App.toast('Caché vaciada'); }
+      }));
+      aiRow.appendChild(testOut);
+      wrap.appendChild(aiRow);
+      wrap.appendChild(h('div', {
+        class: 'row',
+        style: 'color:var(--ink-faint);font-size:calc(var(--s)*.95);max-width:70ch;line-height:1.5',
+        text: 'En modo «proxy» la dirección apunta al worker de Cloudflare y la clave del ' +
+              'proveedor vive allí como secreto, nunca en este equipo. El modo «direct» ' +
+              'exige guardar la clave en este navegador y sólo debería usarse en pruebas. ' +
+              'Si el servicio tarda más de ' + (root.AI.BUDGET_MS / 1000) + ' segundos, la ' +
+              'petición se abandona y el visitante se queda con el modelo 3D sin enterarse.'
+      }));
+    }
 
     wrap.appendChild(h('h3', { text: 'Motor' }));
     wrap.appendChild(h('div', {

@@ -223,13 +223,17 @@
     App.stageKind = kind || App.stageKind;
     if (!stageCanvas) return;
     if (!App.webgl) { drawFallback(); return; }
-    pending = { kind: App.stageKind, lod: immediate ? 'high' : 'mid' };
+    /* El ramo en detalle alto cuesta ~60 ms de construcción: entrar con él
+       produce un tirón visible en la transición. Se entra en detalle medio y
+       se sube al alto en cuanto la pantalla está quieta. */
+    var first = immediate ? (App.stageKind === 'bouquet' ? 'mid' : 'high') : 'mid';
+    pending = { kind: App.stageKind, lod: first };
     clearTimeout(settleTimer);
-    if (!immediate) {
+    if (first !== 'high') {
       settleTimer = setTimeout(function () {
         pending = { kind: App.stageKind, lod: 'high' };
         buildNow();
-      }, 260);
+      }, immediate ? 140 : 260);
     }
     buildNow();
   };

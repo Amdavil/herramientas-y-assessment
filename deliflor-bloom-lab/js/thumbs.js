@@ -7,21 +7,10 @@
   'use strict';
   var PI = Math.PI, TAU = PI * 2;
 
+  /* El perfil vive en mesh.js: las miniaturas deben mostrar exactamente la
+     misma silueta que el modelo 3D. */
   function profile(shape, u) {
-    var s = Math.sin(PI * u);
-    switch (shape) {
-      case 'rounded':  return Math.pow(s, 0.5);
-      case 'oval':     return Math.pow(s, 0.8);
-      case 'long':     return Math.pow(s, 1.25) * 0.78;
-      case 'tubular':  return 0.30 * (1 - 0.35 * u);
-      case 'spoon':    return u < 0.66 ? 0.26 : 0.26 + Math.pow((u - 0.66) / 0.34, 0.7) * 0.8;
-      case 'curly':    return Math.pow(s, 0.7) * (1 + 0.16 * Math.sin(u * 13));
-      case 'pointed':  return Math.pow(s, 0.45) * Math.pow(1 - u, 0.3);
-      case 'wavy':     return Math.pow(s, 0.8) * (1 + 0.1 * Math.sin(u * 8));
-      case 'spiral':   return Math.pow(s, 1.1) * 0.82;
-      case 'irregular':return Math.pow(s, 0.75) * (1 + 0.22 * Math.sin(u * 6.3) * Math.cos(u * 11.1));
-      default:         return Math.pow(s, 0.7);
-    }
+    return root.MeshGen ? root.MeshGen.widthProfile(shape, u) : Math.sin(Math.PI * u);
   }
 
   function fit(canvas) {

@@ -96,9 +96,9 @@
   var PRESETS = {
     ballhia: {
       shape: 'spherical', openness: 0.24, volume: 0.78, centerSize: 0.05,
-      petalShape: 'rounded', petalLength: 0.5, petalWidth: 0.58, petalCurve: 0.3,
+      petalShape: 'rounded', petalLength: 0.52, petalWidth: 0.62, petalCurve: 0.18,
       petalTwist: 0.05, petalEdge: 'smooth', arrangement: 'spiral',
-      density: 0.94, layers: 12, diameter: 'large', growth: 'disbud'
+      density: 0.98, layers: 13, diameter: 'large', growth: 'disbud'
     },
     decorative: {
       shape: 'semispherical', openness: 0.46, volume: 0.66, centerSize: 0.08,
@@ -120,9 +120,9 @@
     },
     spider: {
       shape: 'expanded', openness: 0.74, volume: 0.42, centerSize: 0.12,
-      petalShape: 'tubular', petalLength: 0.97, petalWidth: 0.16, petalCurve: 0.66,
-      petalTwist: 0.42, petalEdge: 'curled', arrangement: 'spiral',
-      density: 0.6, layers: 6, diameter: 'xlarge', growth: 'disbud'
+      petalShape: 'tubular', petalLength: 0.97, petalWidth: 0.22, petalCurve: 0.86,
+      petalTwist: 0.30, petalEdge: 'curled', arrangement: 'spiral',
+      density: 0.5, layers: 5, diameter: 'xlarge', growth: 'disbud'
     },
     anemone: {
       shape: 'circular', openness: 0.9, volume: 0.26, centerSize: 0.52,
@@ -379,8 +379,9 @@
   };
   var NAME_TAIL = ['Bloom','Star','Nova','Joy','Light','Dream','Spirit','Wonder','Élan','Éclat','Aura','Sol'];
 
-  function suggestNames(g, n) {
-    var rand = rng((g.seed || 1) * 2654435761 + PALETTE.length * (g.colors.primary + 1));
+  function suggestNames(g, n, salt) {
+    var rand = rng((g.seed || 1) * 2654435761 + (salt || 0) * 40503 +
+                   PALETTE.length * (g.colors.primary + 1));
     var cWords = NAME_COLOR[PALETTE[g.colors.primary].id] || ['Bloom'];
     var mWords = g.personality.length
       ? (NAME_MOOD[g.personality[0]] || ['Bloom'])
