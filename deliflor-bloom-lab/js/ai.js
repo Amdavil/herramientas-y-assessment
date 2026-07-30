@@ -25,8 +25,9 @@
     mode: 'proxy',                 /* 'proxy' (recomendado) | 'direct' */
     endpoint: '',                  /* p. ej. https://pal-ai.<cuenta>.workers.dev */
     apiKey: '',                    /* sólo en modo 'direct'; lo escribe el operador */
-    model: 'gpt-image-1',
+    model: '',                     /* vacío = el que decida el worker */
     size: '1024x1024',
+    quality: 'medium',             /* 'low' | 'medium' | 'high' */
     dailyCap: 300,                 /* techo de imágenes por jornada */
     spent: 0,
     day: ''
@@ -121,9 +122,7 @@
     if (c.mode === 'direct') {
       url = c.endpoint;
       headers.Authorization = 'Bearer ' + c.apiKey;
-      body = {
-        model: c.model, prompt: G.prompt(g), size: c.size, n: 1, response_format: 'b64_json'
-      };
+      body = { model: c.model || 'gpt-image-1.5', prompt: G.prompt(g), size: c.size, quality: c.quality, n: 1 };
     } else {
       url = c.endpoint.replace(/\/+$/, '');
       body = {
@@ -131,6 +130,8 @@
         prompt: G.prompt(g),
         negative: G.NEGATIVE,
         size: c.size,
+        quality: c.quality,
+        model: c.model || undefined,
         creativeMode: g.mode
       };
     }

@@ -38,7 +38,15 @@ async function handleBloomRender(body, env, origin) {
   }
   const negative = String(body.negative || "").slice(0, 1500);
   const size = /^\d{3,4}x\d{3,4}$/.test(body.size || "") ? body.size : "1024x1024";
+  // La calidad es el mayor factor de coste: en OpenAI va de ~0,01 USD por
+  // imagen en "low" a ~0,20 en "high". El kiosco la manda; aquí sólo se
+  // valida para que nadie pueda pedir la caja cara desde fuera.
+  const quality = ["low", "medium", "high"].indexOf(body.quality) >= 0 ? body.quality : "medium";
   const provider = (env.IMAGE_PROVIDER || "openai").toLowerCase();
+  // El kiosco puede sugerir el modelo, pero sólo como nombre simple. En fal el
+  // "modelo" es una URL, y aceptarla desde fuera convertiría este worker en un
+  // reenviador de peticiones a donde le digan (SSRF): allí manda sólo el env.
+  const askedModel = /^[A-Za-z0-9._-]{1,64}$/.test(body.model || "") ? body.model : null;
 
   // El kiosco abandona a los 12 s; aquí cortamos antes para no dejar la
   // petición colgando ni pagar por una imagen que ya nadie va a ver.
@@ -50,7 +58,7 @@ async function handleBloomRender(body, env, origin) {
     if (provider === "stability") {
       const [w, hgt] = size.split("x").map(Number);
       res = await fetch("https://api.stability.ai/v1/generation/" +
-        (env.IMAGE_MODEL || "stable-diffusion-xl-1024-v1-0") + "/text-to-image", {
+        (env.IMAGE_MODEL || askedModel || "stable-diffusion-xl-1024-v1-0") + "/text-to-image", {
         method: "POST", signal: ctrl.signal,
         headers: {
           "Content-Type": "application/json", "Accept": "application/json",
@@ -73,14 +81,17 @@ async function handleBloomRender(body, env, origin) {
       const j = await res.json();
       if (j.images && j.images[0] && j.images[0].url) out = j.images[0].url;
     } else {
-      // OpenAI: no admite prompt negativo, así que se integra como indicación.
+      // OpenAI no admite prompt negativo: se integra como indicación, que
+      // funciona bastante peor que un negative_prompt de verdad. Tampoco se
+      // envía response_format, que los modelos gpt-image rechazan; ya
+      // devuelven base64 por defecto.
       res = await fetch("https://api.openai.com/v1/images/generations", {
         method: "POST", signal: ctrl.signal,
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${env.IMAGE_API_KEY}` },
         body: JSON.stringify({
-          model: env.IMAGE_MODEL || "gpt-image-1",
+          model: env.IMAGE_MODEL || askedModel || "gpt-image-1.5",
           prompt: prompt + (negative ? " Avoid: " + negative : ""),
-          size, n: 1
+          size, quality, n: 1
         })
       });
       const j = await res.json();

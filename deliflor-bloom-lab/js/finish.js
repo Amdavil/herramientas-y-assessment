@@ -820,6 +820,7 @@
       field('Dirección del servicio', 'endpoint', 'text', '34ch');
       field('Modelo', 'model', 'text', '16ch');
       field('Tamaño', 'size', 'text', '12ch');
+      field('Calidad (low/medium/high)', 'quality', 'text', '10ch');
       field('Tope diario', 'dailyCap', 'number', '8ch');
       wrap.appendChild(fields);
 
