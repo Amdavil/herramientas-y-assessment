@@ -23,9 +23,34 @@ const ALLOWED_ORIGINS = [
  *
  * Secretos esperados en Cloudflare:
  *   IMAGE_API_KEY   clave del proveedor de imágenes
- *   IMAGE_PROVIDER  "openai" (por defecto) | "stability" | "fal"
+ *   IMAGE_PROVIDER  "openai" (por defecto) | "gemini" | "stability" | "fal"
  *   IMAGE_MODEL     modelo a usar; por defecto el propio del proveedor
  */
+/** Gemini devuelve la imagen en sitios distintos según la familia del modelo. */
+function geminiImage(j) {
+  if (!j) return null;
+  if (typeof j.output_image === "string") return "data:image/jpeg;base64," + j.output_image;
+  const steps = j.steps;
+  if (Array.isArray(steps)) {
+    for (const st of steps) {
+      for (const c of (st.content || [])) {
+        if (c && typeof c.data === "string") {
+          return "data:" + (c.mime_type || "image/jpeg") + ";base64," + c.data;
+        }
+      }
+    }
+  }
+  const cand = j.candidates && j.candidates[0];
+  const parts = cand && cand.content && cand.content.parts;
+  if (Array.isArray(parts)) {
+    for (const p of parts) {
+      const d = p.inlineData || p.inline_data;
+      if (d && d.data) return "data:" + (d.mimeType || d.mime_type || "image/png") + ";base64," + d.data;
+    }
+  }
+  return null;
+}
+
 async function handleBloomRender(body, env, origin) {
   if (!env.IMAGE_API_KEY) {
     return new Response(JSON.stringify({ error: "Image service not configured" }),
@@ -72,6 +97,39 @@ async function handleBloomRender(body, env, origin) {
       });
       const j = await res.json();
       if (j.artifacts && j.artifacts[0]) out = "data:image/png;base64," + j.artifacts[0].base64;
+    } else if (provider === "gemini") {
+      // Gemini tampoco admite prompt negativo: se integra como indicación.
+      const model = env.IMAGE_MODEL || askedModel || "gemini-2.5-flash-image";
+      const full = prompt + (negative ? " Avoid: " + negative : "");
+      const [w2] = size.split("x").map(Number);
+      if (model.indexOf("gemini-2.") === 0) {
+        // Familia 2.x: endpoint clásico generateContent
+        res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" +
+          encodeURIComponent(model) + ":generateContent", {
+          method: "POST", signal: ctrl.signal,
+          headers: { "Content-Type": "application/json", "x-goog-api-key": env.IMAGE_API_KEY },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: full }] }],
+            generationConfig: { responseModalities: ["IMAGE"] }
+          })
+        });
+      } else {
+        // Familia 3.x (Nano Banana 2): endpoint interactions
+        res = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+          method: "POST", signal: ctrl.signal,
+          headers: { "Content-Type": "application/json", "x-goog-api-key": env.IMAGE_API_KEY },
+          body: JSON.stringify({
+            model,
+            input: [{ type: "text", text: full }],
+            response_format: {
+              type: "image", mime_type: "image/jpeg",
+              aspect_ratio: "1:1", image_size: w2 >= 1536 ? "2K" : "1K"
+            }
+          })
+        });
+      }
+      const j = await res.json();
+      out = geminiImage(j);
     } else if (provider === "fal") {
       res = await fetch(env.IMAGE_MODEL || "https://fal.run/fal-ai/flux/dev", {
         method: "POST", signal: ctrl.signal,

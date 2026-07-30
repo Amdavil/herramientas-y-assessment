@@ -121,8 +121,28 @@ En el worker, como secretos de Cloudflare:
 | Secreto | Para qué |
 |---|---|
 | `IMAGE_API_KEY` | Clave del proveedor de imágenes |
-| `IMAGE_PROVIDER` | `openai` (por defecto), `stability` o `fal` |
+| `IMAGE_PROVIDER` | `gemini`, `openai` (por defecto), `stability` o `fal` |
 | `IMAGE_MODEL` | Modelo concreto; opcional |
+
+Una suscripción de ChatGPT o de Gemini en la aplicación **no sirve**: la API es
+un producto aparte, con su propia clave y su propia facturación. Hace falta una
+clave de `platform.openai.com` o de Google AI Studio.
+
+Sólo `fal` y `stability` respetan el prompt negativo de verdad. En `openai` y
+`gemini` la lista de exclusiones se cuela como «Avoid: …», que funciona peor.
+
+### Si el modelo desaparece
+
+Los proveedores retiran modelos con el tiempo (`gpt-image-1` deja de estar
+disponible el 23 de octubre de 2026). Cuando pase, la capa de IA empieza a
+fallar y el kiosco sigue funcionando con su modelo 3D sin que el visitante lo
+note. Arreglarlo es cambiar una variable:
+
+```bash
+cd pal-ai-worker && npx wrangler secret put IMAGE_MODEL && npx wrangler deploy
+```
+
+Nada del recorrido, del 3D, del pasaporte ni del QR depende de esto.
 
 En el panel administrativo del kiosco sólo se escribe la dirección del worker,
 el modelo, el tamaño y el tope diario, y se pulsa «Probar conexión».
