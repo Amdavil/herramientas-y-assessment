@@ -1,3 +1,12 @@
 name = "pal-ai"
 main = "worker.js"
 compatibility_date = "2026-01-01"
+
+# Proveedor del render fotorrealista de Deliflor Bloom Lab.
+# La CLAVE va como secreto (`wrangler secret put IMAGE_API_KEY`); esto es sólo
+# el nombre del proveedor, que no es sensible y conviene tener versionado.
+#   gemini  → capa gratuita de Google AI Studio (hasta 500 imágenes/día)
+#   openai  → platform.openai.com, de pago aparte de ChatGPT
+#   fal     → el único junto a stability que respeta el prompt negativo
+[vars]
+IMAGE_PROVIDER = "gemini"
