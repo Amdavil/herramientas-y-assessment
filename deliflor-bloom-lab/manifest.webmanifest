@@ -11,7 +11,7 @@
   "lang": "es",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%237C214D'/><circle cx='256' cy='256' r='150' fill='%23FBF8F4'/><circle cx='256' cy='256' r='52' fill='%23C3D24B'/></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%237C214D'/><g transform='translate(127 41) scale(4.3)'><ellipse cx='30' cy='10' rx='17' ry='10' transform='rotate(-32 30 10)' fill='%23E8604A'/><path d='M30 24 C48 22,52 38,40 50 C24 62,14 70,16 86 C9 78,10 56,22 42 C30 33,28 28,30 24 Z' fill='%232E5C8E'/></g></svg>",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"

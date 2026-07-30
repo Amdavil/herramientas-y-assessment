@@ -192,6 +192,38 @@
   function $(sel) { return document.querySelector(sel); }
   App.$ = $;
 
+  /* ---------------------------------------------------------------
+     Marca Deliflor — SVG inline reconstruido a partir del lockup del
+     catálogo. Aprovecha el sistema df-logo de css/app.css: hereda el color
+     de texto de su contenedor (oscuro sobre papel, blanco sobre el vino
+     de la pantalla de atracción), así que nunca hay que pasarle un color.
+       size: 'sm'  — barra superior, sólo wordmark, sin "Américas"
+             'md'  — pasaporte y vista compartida
+             'lg'  — hero de la pantalla de atracción
+     iconOnly: true — sólo la "i" acentuada, para espacios muy angostos */
+  function logoIcon() {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 60 100');
+    svg.setAttribute('class', 'df-i');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML =
+      '<ellipse cx="30" cy="10" rx="17" ry="10" transform="rotate(-32 30 10)" fill="var(--df-coral)"/>' +
+      '<path d="M30 24 C48 22,52 38,40 50 C24 62,14 70,16 86 C9 78,10 56,22 42 C30 33,28 28,30 24 Z" fill="var(--df-navy)"/>';
+    return svg;
+  }
+  App.logo = function (size, iconOnly) {
+    if (iconOnly) return h('div', { class: 'df-logo icon-only ' + (size || 'sm') }, logoIcon());
+    var word = h('div', { class: 'df-word' }, [
+      document.createTextNode('DEL'), logoIcon(), document.createTextNode('FLOR')
+    ]);
+    var kids = [word];
+    if (size !== 'sm') {
+      kids.push(h('div', { class: 'df-rule' }));
+      kids.push(h('div', { class: 'df-sub', text: 'Américas' }));
+    }
+    return h('div', { class: 'df-logo ' + (size || 'sm') }, kids);
+  };
+
   App.toast = function (msg) {
     var old = $('.toast'); if (old) old.parentNode.removeChild(old);
     var t = h('div', { class: 'toast', text: msg });
@@ -365,7 +397,7 @@
 
     var top = h('div', { class: 'topbar' }, [
       h('div', { class: 'brand' }, [
-        h('span', { class: 'mark', text: 'Deliflor' }),
+        App.logo('sm'),
         h('span', { class: 'sub', text: 'Bloom Lab' })
       ]),
       prog,
@@ -516,7 +548,7 @@
     var wrap = h('div', { class: 'full center', id: 'attract', onpointerdown: begin }, [
       cv,
       h('div', { class: 'att-inner' }, [
-        h('div', { class: 'eyebrow', text: 'Deliflor Américas' }),
+        h('div', { style: 'display:flex;justify-content:center;margin-bottom:calc(var(--s)*1.8)' }, App.logo('lg')),
         h('h1', { html: 'Bloom&nbsp;Lab' }),
         h('div', { class: 'tag', text: App.t('tagline') }),
         h('button', { class: 'btn big', onclick: begin, text: App.t('start') }),

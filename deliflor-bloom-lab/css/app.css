@@ -6,7 +6,14 @@
    ========================================================================= */
 
 :root {
-  --s: min(1vw, 1.7778vh);
+  /* Con piso y techo: sin ellos, --s se acerca a 0 en un teléfono en
+     vertical (1vw es diminuto ahí) y todo el texto basado en --s se vuelve
+     ilegible. El techo evita que crezca sin límite en una pantalla mayor
+     a 4K; en 3840×2160 da ~38.4px, así que en la práctica no se activa. */
+  --s: clamp(8.5px, min(1vw, 1.7778vh), 40px);
+
+  --df-coral:   #E8604A;
+  --df-navy:    #2E5C8E;
 
   --wine:       #7C214D;
   --wine-dark:  #5C0F38;
@@ -65,15 +72,53 @@ html, body {
   background: rgba(255,255,255,.72);
   flex: 0 0 auto;
 }
-.brand { display: flex; align-items: baseline; gap: calc(var(--s)*.9); }
-.brand .mark {
-  font-family: var(--f-display); font-size: calc(var(--s)*2.1); font-weight: 400;
-  color: var(--wine); letter-spacing: -.01em;
-}
+.brand { display: flex; align-items: baseline; gap: calc(var(--s)*1.1); }
 .brand .sub {
   font-family: var(--f-mono); font-size: calc(var(--s)*.78);
   letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint);
 }
+
+/* ---------------------------------------------------------------
+   Marca Deliflor — reconstrucción del lockup del catálogo (wordmark con
+   la "i" minúscula acentuada + "Américas"). El ícono es SVG inline para
+   que escale nítido a cualquier tamaño, del favicon al hero de atracción.
+   --------------------------------------------------------------- */
+.df-logo { display: inline-flex; flex-direction: column; align-items: flex-start; }
+.df-word {
+  /* sin color propio: hereda del contexto — oscuro sobre el papel claro,
+     blanco sobre el fondo vino de la pantalla de atracción */
+  display: inline-flex; align-items: baseline;
+  font-family: "Century Gothic", "Futura", "Avenir Next", "Segoe UI", sans-serif;
+  font-weight: 700; letter-spacing: .01em; white-space: nowrap;
+}
+.df-i {
+  display: inline-block; flex: 0 0 auto; align-self: flex-end;
+  width: .34em; height: .60em; margin: 0 .03em .015em;
+}
+.df-rule { align-self: stretch; height: 1px; background: currentColor; opacity: .3; }
+.df-sub {
+  font-family: var(--f-mono); text-transform: uppercase; color: currentColor; opacity: .6;
+  letter-spacing: .34em;
+}
+/* modo icono: el ancho/alto se fija en --s directamente en vez de em,
+   porque estos badges viven en contextos sin un font-size propio del
+   que heredar (ej. la cabecera del pasaporte) */
+.df-logo.icon-only { flex: 0 0 auto; }
+.df-logo.icon-only .df-i { width: 100%; height: 100%; margin: 0; }
+.df-logo.icon-only.sm { width: calc(var(--s)*1.5); height: calc(var(--s)*2.5); }
+.df-logo.icon-only.md { width: calc(var(--s)*2.1); height: calc(var(--s)*3.5); }
+
+.df-logo.sm .df-word  { font-size: calc(var(--s)*2.2); }
+.df-logo.sm .df-rule  { margin-top: calc(var(--s)*.28); display: none; }
+.df-logo.sm .df-sub   { display: none; }
+
+.df-logo.md .df-word  { font-size: calc(var(--s)*3.4); }
+.df-logo.md .df-rule  { margin-top: calc(var(--s)*.4); width: 100%; }
+.df-logo.md .df-sub   { font-size: calc(var(--s)*.9); margin-top: calc(var(--s)*.45); }
+
+.df-logo.lg .df-word  { font-size: calc(var(--s)*6.4); }
+.df-logo.lg .df-rule  { margin-top: calc(var(--s)*.7); width: 100%; }
+.df-logo.lg .df-sub   { font-size: calc(var(--s)*1.5); margin-top: calc(var(--s)*.7); }
 .progress { flex: 1; display: flex; gap: calc(var(--s)*.42); align-items: center; }
 .progress i {
   flex: 1; height: calc(var(--s)*.42); border-radius: calc(var(--s)*.21);
@@ -473,11 +518,17 @@ input[type=range]::-moz-range-thumb {
 .consent .ctext { font-size: calc(var(--s)*1); line-height: 1.4; color: var(--ink-dim); }
 .consent .ctext b { color: var(--ink); display: block; font-size: calc(var(--s)*1.15); margin-bottom: calc(var(--s)*.2); }
 
-/* vista móvil de la creación compartida */
+/* vista móvil de la creación compartida — la única pantalla de esta app
+   pensada para abrirse en un teléfono real (se llega aquí desde el QR).
+   Redefine --s con una escala propia atada al ancho del teléfono en vez
+   de la fórmula del kiosco: esa fórmula usa vh pensando en una pantalla
+   panorámica y en un móvil vertical se acerca a cero. */
 .mobile {
+  --s: clamp(7px, 2.2vw, 11px);
   position: fixed; inset: 0; overflow-y: auto; background: var(--paper);
   padding: calc(var(--s)*2); display: block;
 }
+.mobile .df-logo { margin-bottom: calc(var(--s)*1.6); }
 
 /* ---------------------------------------------------------------
    Galería y panel
@@ -534,4 +585,27 @@ input[type=range]::-moz-range-thumb {
   .opts.c5 { grid-template-columns: repeat(4, 1fr); }
   .swatches { grid-template-columns: repeat(7, 1fr); }
   .passport { grid-template-columns: 1fr; }
+}
+
+/* El kiosco está diseñado para una pantalla panorámica fija, no para un
+   teléfono — pero si alguien lo abre en uno (revisión, demo, prueba desde
+   el bolsillo) esto evita que el panel de decisiones quede aplastado en
+   una franja de 60 px junto al escenario 3D. Apila el escenario arriba y
+   el panel abajo, con scroll propio, en vez de partir la pantalla en dos
+   columnas angostas. */
+@media (max-width: 640px), (max-aspect-ratio: 2/3) {
+  .body { flex-direction: column; overflow-y: auto; }
+  .stage { flex: 0 0 42vh; min-height: 220px; border-right: 0; border-bottom: 1px solid var(--wine-line); }
+  .panel { padding: calc(var(--s)*1.6) calc(var(--s)*1.8) calc(var(--s)*1.6); overflow: visible; }
+  .panel-body { overflow: visible; }
+  .opts.c5, .opts.c4 { grid-template-columns: repeat(3, 1fr); }
+  .opts.c3 { grid-template-columns: repeat(2, 1fr); }
+  .swatches { grid-template-columns: repeat(5, 1fr); }
+  .cards { grid-template-columns: 1fr; }
+  .passport { grid-template-columns: 1fr; overflow-y: auto; }
+  .share { grid-template-columns: 1fr; text-align: center; }
+  .share .qrbox { margin: 0 auto; }
+  .gallery { grid-template-columns: repeat(3, 1fr); }
+  .topbar { flex-wrap: wrap; }
+  .topbar .progress { order: 3; flex-basis: 100%; }
 }

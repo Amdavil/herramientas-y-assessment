@@ -348,7 +348,10 @@
     var en = App.lang === 'en';
     var card = h('div', { class: 'pcard' }, [
       h('div', { class: 'phead' }, [
-        h('div', { class: 'pname', text: g.name || '—' }),
+        h('div', { style: 'display:flex;align-items:baseline;gap:calc(var(--s)*.7);min-width:0' }, [
+          App.logo('sm', true),
+          h('div', { class: 'pname', text: g.name || '—' })
+        ]),
         h('div', { class: 'pid', text: 'Bloom Lab · ' + CFG.eventName })
       ])
     ]);
@@ -662,8 +665,8 @@
     var en = App.lang === 'en';
     app.appendChild(h('div', { class: 'topbar' }, [
       h('div', { class: 'brand' }, [
-        h('span', { class: 'mark', text: en ? 'Gallery' : 'Galería' }),
-        h('span', { class: 'sub', text: CFG.eventName })
+        App.logo('sm'),
+        h('span', { class: 'sub', text: (en ? 'Gallery' : 'Galería') + ' · ' + CFG.eventName })
       ]),
       h('div', { class: 'progress' }),
       h('button', { class: 'icon-btn', text: en ? 'Close' : 'Cerrar', onclick: function () { App.go('attract'); } })
@@ -729,7 +732,7 @@
     try { gal = JSON.parse(localStorage.getItem('bloomlab.gallery') || '[]'); } catch (e) {}
 
     app.appendChild(h('div', { class: 'topbar' }, [
-      h('div', { class: 'brand' }, [h('span', { class: 'mark', text: 'Panel' }), h('span', { class: 'sub', text: CFG.eventId })]),
+      h('div', { class: 'brand' }, [App.logo('sm'), h('span', { class: 'sub', text: 'Panel · ' + CFG.eventId })]),
       h('div', { class: 'progress' }),
       h('button', { class: 'icon-btn', text: 'Cerrar', onclick: function () { App.go('attract'); } })
     ]));
@@ -902,7 +905,7 @@
     var cv2 = h('canvas', { style: 'width:100%;aspect-ratio:4/5;display:block;border-radius:calc(var(--s)*1.2)' });
 
     var wrap = h('div', { class: 'mobile screen' }, [
-      h('div', { style: 'font-family:var(--f-mono);font-size:calc(var(--s)*1.4);letter-spacing:.2em;color:var(--wine);text-transform:uppercase', text: 'Deliflor Bloom Lab' }),
+      App.logo('md'),
       h('h1', {
         style: 'font-family:var(--f-display);font-weight:400;font-size:calc(var(--s)*6);margin:calc(var(--s)*.6) 0 calc(var(--s)*1.4);line-height:1.05',
         text: g.name || '—'
