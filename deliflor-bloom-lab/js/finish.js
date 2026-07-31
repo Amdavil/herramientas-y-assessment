@@ -629,6 +629,8 @@
           text: en ? 'Thank you for imagining the future of flowers with Deliflor'
                    : 'Gracias por imaginar el futuro de las flores con Deliflor'
         }),
+        /* La marca cierra la experiencia: es lo último que se lleva el visitante */
+        h('div', { style: 'display:flex;justify-content:center;margin-top:calc(var(--s)*2.2)' }, App.logo('md')),
         h('div', {
           style: 'font-family:var(--f-display);font-style:italic;font-size:calc(var(--s)*2.4);opacity:.85;margin-top:calc(var(--s)*1.4)',
           text: App.g.name || ''

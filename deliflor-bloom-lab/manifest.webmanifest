@@ -11,7 +11,7 @@
   "lang": "es",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%237C214D'/><g transform='translate(127 41) scale(4.3)'><ellipse cx='30' cy='10' rx='17' ry='10' transform='rotate(-32 30 10)' fill='%23E8604A'/><path d='M30 24 C48 22,52 38,40 50 C24 62,14 70,16 86 C9 78,10 56,22 42 C30 33,28 28,30 24 Z' fill='%232E5C8E'/></g></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%237C214D'/><g transform='translate(127 41) scale(4.3)'><ellipse cx='30' cy='11' rx='16' ry='10.5' transform='rotate(-30 30 11)' fill='%23E8604A'/><path d='M25 27 C44 27,51 42,41 55 C31 68,17 72,17 83 C17 91,27 96,35 91 C24 98,9 91,9 79 C9 65,25 58,31 48 C36 39,34 32,25 27 Z' fill='%232E5C8E'/></g></svg>",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"

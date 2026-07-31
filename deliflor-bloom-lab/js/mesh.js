@@ -187,6 +187,10 @@
       } else {
         off = -v * w;
         nOff = -P.cup * v * v * w * 1.15 + edgeDisp(P.edge, u, v, w);
+        /* Ondulación propia de cada pétalo: sin ella todos son el mismo
+           troquel liso repetido, que es lo que delata el render. Ondea más
+           en los bordes que sobre el nervio, como un pétalo real. */
+        nOff += P.wave * Math.sin(u * 3.3 + P.wavePh) * (0.25 + 0.75 * Math.abs(v)) * w;
       }
       return [sx + Bx * off + Nx * nOff, sy + By * off + Ny * nOff, sz + Bz * off + Nz * nOff];
     };
@@ -233,10 +237,17 @@
       }
       /* Nervios longitudinales finos y un tono propio por pétalo: en la foto
          del catálogo ningún pétalo tiene exactamente el color del vecino. */
-      var stria = 1 - 0.055 * Math.pow(1 - Math.abs(saw(v * 3.2) * 2 - 1), 3);
-      var tone = 0.955 + 0.09 * hash(k, 7.7);
-      /* leve oscurecimiento en la base: da profundidad al corazón de la flor */
-      var shade = (0.84 + 0.16 * smoothstep(0, 0.45, u)) * stria * tone;
+      var stria = 1 - 0.06 * Math.pow(1 - Math.abs(saw(v * 3.2) * 2 - 1), 3);
+      /* Cada pétalo con su tono: una flor real no tiene dos pétalos iguales */
+      var tone = 0.93 + 0.14 * hash(k, 7.7);
+      /* Oclusión ambiental. La base de cada pétalo queda enterrada bajo la
+         corona anterior y apenas recibe luz; los flancos también se ensombrecen
+         contra los vecinos. Sin esta profundidad todos los pétalos se iluminan
+         por igual y la flor se lee como un dibujo plano en vez de un objeto.
+         Es el factor que más separa un render de una fotografía. */
+      var ao = 0.34 + 0.66 * smoothstep(0, 0.55, u);
+      ao *= 1 - 0.16 * Math.pow(Math.abs(v), 3);
+      var shade = ao * stria * tone;
       var front = [col[0] * shade, col[1] * shade, col[2] * shade];
       /* El envés de un pétalo es una versión más pálida del haz, no una cara
          gris: mezclarlo con blanco evita el aspecto de plástico apagado. */
@@ -325,15 +336,20 @@
     var cup = 0.35 + (1 - g.openness) * 0.5;
 
     var layers = Math.max(1, g.layers);
+    var gradStrength = smoothstep(2, 7, layers) * (0.35 + 0.65 * g.openness);
     var total = 0;
 
     for (var i = 0; i < layers; i++) {
       var f = layers > 1 ? i / (layers - 1) : 1;
       var phi = phiDisc + (phiMax - phiDisc) * Math.pow(f, 0.82);
-      /* La apertura tumba los pétalos exteriores pero deja el centro casi
-         vertical: en una flor real el corazón permanece cerrado mientras el
-         borde ya está plano. Antes la apertura aplanaba todo por igual. */
-      var pitch = (PI / 2 - phi) - g.openness * 1.05 * Math.pow(f, 0.62);
+      /* La apertura tumba los pétalos exteriores dejando el centro casi
+         vertical: en una flor doble el corazón permanece cerrado mientras el
+         borde ya está plano. Pero en una margarita de dos capas la corona
+         interior ES media flor, y dejarla vertical la convertía en un ramillete
+         de cuchillas en el centro: por eso el reparto se mezcla con la apertura
+         uniforme según lo doble que sea la flor. */
+      var openFactor = mix(1, Math.pow(f, 0.62), gradStrength);
+      var pitch = (PI / 2 - phi) - g.openness * 1.05 * openFactor;
       var bend = bendBase * (1.05 - 0.28 * f) + droop * (0.35 + 0.65 * f);
 
       var cnt = Math.round((9 + 20 * f) * (0.45 + g.density * 0.58));
@@ -349,9 +365,13 @@
         g.arrangement === 'layered' ? i * (PI / cnt) :
         g.arrangement === 'asym' ? i * 1.1 : 0;
 
-      /* Gradiente de tamaño: los pétalos del corazón son botones diminutos
-         y crecen hacia afuera. Es lo que forma la espiral central. */
-      var L = baseLen * (0.20 + 0.80 * Math.pow(f, 0.72));
+      /* Gradiente de tamaño: en una flor muy doble los pétalos del corazón
+         son botones diminutos que crecen hacia afuera, y eso es lo que forma
+         la espiral central. Pero una margarita de dos capas tiene pétalos casi
+         iguales, y una Ballhia esférica también: el gradiente se gradúa por
+         número de capas y apertura, o esas dos familias se deshacen. */
+      var Lmin = 1 - 0.80 * gradStrength;
+      var L = baseLen * (Lmin + (1 - Lmin) * Math.pow(f, 0.72));
       var asym = 1 - g.symmetry;
 
       for (var k = 0; k < cnt; k++) {
@@ -359,18 +379,22 @@
         var theta = layerOff + k * (TAU / cnt) + jitterA;
         if (g.arrangement === 'asym') theta += Math.sin(k * 1.7 + i) * asym * 0.5;
 
-        var jl = 1 + asym * (rand() - 0.5) * 0.5;
-        var jp = asym * (rand() - 0.5) * 0.35;
+        var jl = (1 + asym * (rand() - 0.5) * 0.5) * (1 + (rand() - 0.5) * 0.09);
+        var jp = asym * (rand() - 0.5) * 0.35 + (rand() - 0.5) * 0.025;
+        var jw = 1 + (rand() - 0.5) * 0.12;
+        var jb = 1 + (rand() - 0.5) * 0.09;
 
         var base = [Rb * Math.sin(phi) * Math.cos(theta),
                     Rb * Math.cos(phi) * domeH,
                     Rb * Math.sin(phi) * Math.sin(theta)];
 
         var P = {
-          L: L * jl, halfW: halfW * (0.85 + 0.3 * f), pitch: pitch + jp,
-          bend: bend * (1 + asym * (rand() - 0.5) * 0.6),
-          twist: g.petalTwist * (0.6 + 0.8 * f), theta: theta, base: base,
-          cup: cup * (1.30 - 0.50 * f), shape: g.petalShape, edge: g.petalEdge
+          L: L * jl, halfW: halfW * (0.85 + 0.3 * f) * jw, pitch: pitch + jp,
+          bend: bend * jb * (1 + asym * (rand() - 0.5) * 0.6),
+          twist: g.petalTwist * (0.6 + 0.8 * f) + (rand() - 0.5) * 0.025,
+          theta: theta, base: base,
+          cup: cup * (1.30 - 0.50 * f), shape: g.petalShape, edge: g.petalEdge,
+          wave: (0.14 + rand() * 0.18) * (0.55 + 0.45 * gradStrength), wavePh: rand() * TAU
         };
         addGrid(mesh, NU, NV, petalPosFn(P), petalColorFn(C, g.pattern, f, k + i * 31), 0.0);
       }

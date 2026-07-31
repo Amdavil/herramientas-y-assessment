@@ -207,8 +207,9 @@
     svg.setAttribute('class', 'df-i');
     svg.setAttribute('aria-hidden', 'true');
     svg.innerHTML =
-      '<ellipse cx="30" cy="10" rx="17" ry="10" transform="rotate(-32 30 10)" fill="var(--df-coral)"/>' +
-      '<path d="M30 24 C48 22,52 38,40 50 C24 62,14 70,16 86 C9 78,10 56,22 42 C30 33,28 28,30 24 Z" fill="var(--df-navy)"/>';
+      '<ellipse cx="30" cy="11" rx="16" ry="10.5" transform="rotate(-30 30 11)" fill="var(--df-coral)"/>' +
+      '<path d="M25 27 C44 27,51 42,41 55 C31 68,17 72,17 83 C17 91,27 96,35 91 ' +
+      'C24 98,9 91,9 79 C9 65,25 58,31 48 C36 39,34 32,25 27 Z" fill="var(--df-navy)"/>';
     return svg;
   }
   App.logo = function (size, iconOnly) {
