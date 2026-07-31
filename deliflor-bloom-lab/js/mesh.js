@@ -245,8 +245,14 @@
          contra los vecinos. Sin esta profundidad todos los pétalos se iluminan
          por igual y la flor se lee como un dibujo plano en vez de un objeto.
          Es el factor que más separa un render de una fotografía. */
-      var ao = 0.34 + 0.66 * smoothstep(0, 0.55, u);
-      ao *= 1 - 0.16 * Math.pow(Math.abs(v), 3);
+      /* El error real: el degradado llegaba a su meseta en u=0.6, y la
+         mayoría de la superficie VISIBLE de un pétalo exterior está en
+         u>0.6 (sólo la base, oculta bajo la corona anterior, tiene u
+         bajo). Así que el 60% del pétalo que sí se ve quedaba en la
+         meseta plana, con un solo tono — eso es lo que se leía como
+         "dibujo". El degradado ahora cubre casi todo el largo del pétalo. */
+      var ao = 0.16 + 0.84 * smoothstep(0, 0.88, u);
+      ao *= 1 - 0.24 * Math.pow(Math.abs(v), 3);
       var shade = ao * stria * tone;
       var front = [col[0] * shade, col[1] * shade, col[2] * shade];
       /* El envés de un pétalo es una versión más pálida del haz, no una cara
@@ -299,8 +305,12 @@
   function buildFlower(g, opt) {
     opt = opt || {};
     var lod = opt.lod || 'high';
-    var NU = lod === 'high' ? 12 : lod === 'mid' ? 6 : 4;
-    var NV = lod === 'high' ? 8 : lod === 'mid' ? 3 : 2;
+    /* En 'high' se ve de cerca en la revelación: con NV=8 las facetas del
+       ancho del pétalo eran grandes y creaban bordes duros visibles incluso
+       a distancia normal, sobre todo en la silueta. Más segmentos = curva
+       suave en vez de polígono. */
+    var NU = lod === 'high' ? 15 : lod === 'mid' ? 6 : 4;
+    var NV = lod === 'high' ? 11 : lod === 'mid' ? 3 : 2;
     var petalCap = lod === 'high' ? 640 : lod === 'mid' ? 190 : 85;
 
     var mesh = new Mesh();

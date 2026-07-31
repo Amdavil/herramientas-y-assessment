@@ -193,29 +193,27 @@
   App.$ = $;
 
   /* ---------------------------------------------------------------
-     Marca Deliflor — SVG inline reconstruido a partir del lockup del
-     catálogo. Aprovecha el sistema df-logo de css/app.css: hereda el color
-     de texto de su contenedor (oscuro sobre papel, blanco sobre el vino
-     de la pantalla de atracción), así que nunca hay que pasarle un color.
+     Marca Deliflor — wordmark uniforme con un acento coral inclinado
+     sobre la "I", como el lockup real del catálogo. Aprovecha el sistema
+     df-logo de css/app.css: hereda el color de texto de su contenedor
+     (oscuro sobre papel, blanco sobre el vino de la atracción).
        size: 'sm'  — barra superior, sólo wordmark, sin "Américas"
              'md'  — pasaporte y vista compartida
              'lg'  — hero de la pantalla de atracción
-     iconOnly: true — sólo la "i" acentuada, para espacios muy angostos */
-  function logoIcon() {
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 60 100');
-    svg.setAttribute('class', 'df-i');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.innerHTML =
-      '<ellipse cx="30" cy="11" rx="16" ry="10.5" transform="rotate(-30 30 11)" fill="var(--df-coral)"/>' +
-      '<path d="M25 27 C44 27,51 42,41 55 C31 68,17 72,17 83 C17 91,27 96,35 91 ' +
-      'C24 98,9 91,9 79 C9 65,25 58,31 48 C36 39,34 32,25 27 Z" fill="var(--df-navy)"/>';
-    return svg;
-  }
+     iconOnly: true — sólo la "I" con su acento, para espacios angostos */
   App.logo = function (size, iconOnly) {
-    if (iconOnly) return h('div', { class: 'df-logo icon-only ' + (size || 'sm') }, logoIcon());
+    if (iconOnly) {
+      return h('div', { class: 'df-logo icon-only ' + (size || 'sm') }, [
+        h('span', { class: 'df-i', 'aria-hidden': 'true' }),
+        h('span', { class: 'df-ibar', 'aria-hidden': 'true' })
+      ]);
+    }
+    var eye = h('span', { class: 'df-eye' }, [
+      document.createTextNode('I'),
+      h('span', { class: 'df-i', 'aria-hidden': 'true' })
+    ]);
     var word = h('div', { class: 'df-word' }, [
-      document.createTextNode('DEL'), logoIcon(), document.createTextNode('FLOR')
+      document.createTextNode('DEL'), eye, document.createTextNode('FLOR')
     ]);
     var kids = [word];
     if (size !== 'sm') {

@@ -54,13 +54,15 @@
     '  N = normalize(N + hb * bumpAmt);',
     '  vec3 L = normalize(uKey);',
     '  float ndl = dot(N, L);',
-    /* iluminación envolvente: los pétalos delgados no se apagan de golpe */
-    '  float wrap = clamp(ndl * 0.62 + 0.38, 0.0, 1.0);',
+    /* Envolvente, pero con más rango que antes (piso 0.38 → 0.20): con el
+       piso alto, la luz direccional casi no se notaba sobre la curvatura
+       del propio pétalo — toda la cara quedaba igual de iluminada sin
+       importar hacia dónde mirara. Es otra causa del aspecto plano: la
+       curvatura del pétalo (el 'cup') existe en la geometría pero no se
+       veía porque la luz no reaccionaba a ella. */
+    '  float wrap = clamp(ndl * 0.80 + 0.20, 0.0, 1.0);',
     '  vec3 amb = mix(uAmbBot, uAmbTop, N.y * 0.5 + 0.5);',
-    /* piso más bajo que antes (0.62 → 0.40): con un piso alto la cúpula
-       entera quedaba con un brillo parejo y sin relieve, como plástico
-       iluminado desde dentro en vez de una flor con sombras propias. */
-    '  if(petal) amb = max(amb, uAmbTop * 0.34);',
+    '  if(petal) amb = max(amb, uAmbTop * 0.20);',
     '  vec3 col = base * (amb + uKeyCol * wrap);',
     '  float ndl2 = clamp(dot(N, normalize(uFill)) * 0.5 + 0.5, 0.0, 1.0);',
     '  col += base * uFillCol * ndl2;',
@@ -76,8 +78,8 @@
        ancho y fuerte es lo que hacía leer la flor como plástico mojado. */
     '  vec3 H = normalize(L + V);',
     '  float ndh = max(dot(N, H), 0.0);',
-    '  col += vec3(0.95, 0.95, 0.92) * pow(ndh, 60.0) * uSpec * 0.6;',
-    '  col += vec3(0.90, 0.90, 0.88) * pow(ndh, 7.0)  * uSpec * 0.16;',
+    '  col += vec3(0.97, 0.96, 0.94) * pow(ndh, 90.0) * uSpec * 1.05;',
+    '  col += vec3(0.92, 0.91, 0.89) * pow(ndh, 6.0)  * uSpec * 0.26;',
     '  if(uIrid > 0.5 && petal){',
     '    float f = pow(1.0 - max(dot(N, V), 0.0), 1.8);',
     '    col += 0.30 * f * vec3(sin(f*8.0 + vP.y*2.5)*0.5+0.5,',
@@ -92,7 +94,15 @@
        y las luces altas ruedan en vez de recortarse de golpe. */
     '  col *= uExposure;',
     '  col = col / (1.0 + max(col - 0.8, 0.0));',
-    '  gl_FragColor = vec4(col, 1.0);',
+    /* Saturación y contraste al final. La compresión de altas luces por sí
+       sola deja los pétalos algo pastel/apagados frente a una fotografía
+       real, donde el color es más vívido y hay más separación entre sombra
+       y luz. Un empujón modesto aquí, no en el color base, para que siga
+       respondiendo bien a cualquier combinación del genoma. */
+    '  float gray = dot(col, vec3(0.299, 0.587, 0.114));',
+    '  col = mix(vec3(gray), col, 1.22);',
+    '  col = (col - 0.5) * 1.06 + 0.5;',
+    '  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);',
     '}'
   ].join('\n');
 

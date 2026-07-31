@@ -79,32 +79,44 @@ html, body {
 }
 
 /* ---------------------------------------------------------------
-   Marca Deliflor — reconstrucción del lockup del catálogo (wordmark con
-   la "i" minúscula acentuada + "Américas"). El ícono es SVG inline para
-   que escale nítido a cualquier tamaño, del favicon al hero de atracción.
+   Marca Deliflor — wordmark uniforme (hereda currentColor: oscuro sobre
+   papel, blanco sobre el vino de la atracción) con un único acento coral
+   ovalado e inclinado sobre la "I". El lockup real del catálogo es así
+   de simple — no dos letras de colores distintos, sólo la palabra más
+   un pequeño gesto de marca encima de la "I".
    --------------------------------------------------------------- */
 .df-logo { display: inline-flex; flex-direction: column; align-items: flex-start; }
 .df-word {
-  /* sin color propio: hereda del contexto — oscuro sobre el papel claro,
-     blanco sobre el fondo vino de la pantalla de atracción */
-  display: inline-flex; align-items: baseline;
+  display: inline-flex; align-items: baseline; position: relative;
   font-family: "Century Gothic", "Futura", "Avenir Next", "Segoe UI", sans-serif;
   font-weight: 700; letter-spacing: .01em; white-space: nowrap;
 }
+.df-word .df-eye {
+  position: relative; display: inline-block;
+}
 .df-i {
-  display: inline-block; flex: 0 0 auto; align-self: flex-end;
-  width: .34em; height: .60em; margin: 0 .03em .015em;
+  /* el acento: una elipse coral inclinada, no una letra aparte */
+  position: absolute; left: 50%; bottom: 100%;
+  width: .52em; height: .30em; margin-bottom: .06em;
+  background: var(--df-coral); border-radius: 50%;
+  transform: translateX(-50%) rotate(-20deg);
 }
 .df-rule { align-self: stretch; height: 1px; background: currentColor; opacity: .3; }
 .df-sub {
   font-family: var(--f-mono); text-transform: uppercase; color: currentColor; opacity: .6;
   letter-spacing: .34em;
 }
-/* modo icono: el ancho/alto se fija en --s directamente en vez de em,
-   porque estos badges viven en contextos sin un font-size propio del
-   que heredar (ej. la cabecera del pasaporte) */
-.df-logo.icon-only { flex: 0 0 auto; }
-.df-logo.icon-only .df-i { width: 100%; height: 100%; margin: 0; }
+/* modo icono: barra "I" + acento, para espacios donde no cabe la palabra
+   completa (cabecera del pasaporte, favicon) */
+.df-logo.icon-only { flex: 0 0 auto; position: relative; }
+.df-logo.icon-only .df-ibar {
+  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  width: 22%; height: 68%; background: currentColor; border-radius: 999px;
+}
+.df-logo.icon-only .df-i {
+  position: absolute; left: 50%; bottom: 68%; margin-bottom: .1em;
+  width: 62%; height: 34%; transform: translateX(-50%) rotate(-20deg);
+}
 .df-logo.icon-only.sm { width: calc(var(--s)*1.5); height: calc(var(--s)*2.5); }
 .df-logo.icon-only.md { width: calc(var(--s)*2.1); height: calc(var(--s)*3.5); }
 
