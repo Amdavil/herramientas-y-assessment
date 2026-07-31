@@ -17,15 +17,16 @@
      Acumulador de malla
      --------------------------------------------------------------- */
   function Mesh() {
-    this.pos = []; this.nor = []; this.cf = []; this.cb = []; this.mat = [];
+    this.pos = []; this.nor = []; this.cf = []; this.cb = []; this.mat = []; this.edge = [];
   }
-  Mesh.prototype.tri = function (a, b, c, na, nb, nc, cf, cb, m) {
+  Mesh.prototype.tri = function (a, b, c, na, nb, nc, cf, cb, m, ef) {
     this.pos.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
     this.nor.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]);
     for (var i = 0; i < 3; i++) {
       this.cf.push(cf[0], cf[1], cf[2]);
       this.cb.push(cb[0], cb[1], cb[2]);
       this.mat.push(m);
+      this.edge.push(ef || 0);
     }
   };
   /* Copia otra malla aplicando una matriz 4x4 (column-major) */
@@ -43,13 +44,13 @@
                     m1 * x + m5 * y + m9 * z,
                     m2 * x + m6 * y + m10 * z);
     }
-    push(this.cf, src.cf); push(this.cb, src.cb); push(this.mat, src.mat);
+    push(this.cf, src.cf); push(this.cb, src.cb); push(this.mat, src.mat); push(this.edge, src.edge);
   };
   Mesh.prototype.build = function () {
     return {
       pos: new Float32Array(this.pos), nor: new Float32Array(this.nor),
       cf: new Float32Array(this.cf), cb: new Float32Array(this.cb),
-      mat: new Float32Array(this.mat), count: this.pos.length / 3
+      mat: new Float32Array(this.mat), edge: new Float32Array(this.edge), count: this.pos.length / 3
     };
   };
   function push(dst, src) { for (var i = 0; i < src.length; i++) dst.push(src[i]); }
@@ -58,7 +59,7 @@
      Rejilla genérica: evalúa la superficie, deriva normales por
      diferencias finitas y emite triángulos.
      --------------------------------------------------------------- */
-  function addGrid(mesh, NU, NV, posFn, colFn, matId) {
+  function addGrid(mesh, NU, NV, posFn, colFn, matId, edgeFn) {
     var grid = new Array((NU + 1) * (NV + 1)), i, j, u, v;
     for (i = 0; i <= NU; i++) {
       u = i / NU;
@@ -85,8 +86,9 @@
             c = (i + 1) * (NV + 1) + j + 1, d = i * (NV + 1) + j + 1;
         var uc = (i + 0.5) / NU, vc = (j + 0.5) / NV * 2 - 1;
         var col = colFn(uc, vc);
-        mesh.tri(grid[a], grid[b], grid[c], nrm[a], nrm[b], nrm[c], col[0], col[1], matId);
-        mesh.tri(grid[a], grid[c], grid[d], nrm[a], nrm[c], nrm[d], col[0], col[1], matId);
+        var ef = edgeFn ? edgeFn(uc, vc) : 0;
+        mesh.tri(grid[a], grid[b], grid[c], nrm[a], nrm[b], nrm[c], col[0], col[1], matId, ef);
+        mesh.tri(grid[a], grid[c], grid[d], nrm[a], nrm[c], nrm[d], col[0], col[1], matId, ef);
       }
     }
   }
@@ -194,6 +196,18 @@
       }
       return [sx + Bx * off + Nx * nOff, sy + By * off + Ny * nOff, sz + Bz * off + Nz * nOff];
     };
+  }
+
+  /* Cuánto de "canto delgado" hay en cada punto del pétalo: casi nada en la
+     base (enterrada bajo la corona anterior, tejido grueso) y máximo en la
+     punta y el margen (donde el tejido se adelgaza hasta un par de células
+     y la luz lo atraviesa). El shader usa esto para concentrar el brillo a
+     contraluz ahí en vez de repartirlo por igual sobre todo el pétalo. */
+  function petalEdgeFn(u, v) {
+    u = uMap(u);
+    var eu = Math.pow(u, 2.6);
+    var ev = Math.pow(Math.abs(v), 2.4);
+    return clamp(Math.max(eu, ev), 0, 1);
   }
 
   /* ---------------------------------------------------------------
@@ -413,7 +427,7 @@
           cup: cup * (1.30 - 0.50 * f), shape: g.petalShape, edge: g.petalEdge,
           wave: (0.14 + rand() * 0.18) * (0.55 + 0.45 * gradStrength), wavePh: rand() * TAU
         };
-        addGrid(mesh, NU, NV, petalPosFn(P), petalColorFn(C, g.pattern, f, k + i * 31), 0.0);
+        addGrid(mesh, NU, NV, petalPosFn(P), petalColorFn(C, g.pattern, f, k + i * 31), 0.0, petalEdgeFn);
       }
     }
 

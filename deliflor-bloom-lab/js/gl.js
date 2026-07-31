@@ -12,15 +12,16 @@
     'attribute vec3 aCF;',
     'attribute vec3 aCB;',
     'attribute float aMat;',
+    'attribute float aEdge;',
     'uniform mat4 uProj, uView;',
     'uniform float uGrow;',
     'varying vec3 vN, vP, vCF, vCB;',
-    'varying float vMat;',
+    'varying float vMat, vEdge;',
     'void main(){',
     '  vec3 p = aPos;',
     '  p.xz *= uGrow;',
     '  p.y  *= mix(0.55, 1.0, uGrow);',
-    '  vP = p; vN = aNor; vCF = aCF; vCB = aCB; vMat = aMat;',
+    '  vP = p; vN = aNor; vCF = aCF; vCB = aCB; vMat = aMat; vEdge = aEdge;',
     '  gl_Position = uProj * uView * vec4(p, 1.0);',
     '}'
   ].join('\n');
@@ -28,7 +29,7 @@
   var FS_MESH = [
     'precision mediump float;',
     'varying vec3 vN, vP, vCF, vCB;',
-    'varying float vMat;',
+    'varying float vMat, vEdge;',
     'uniform vec3 uCam, uKey, uFill, uKeyCol, uFillCol, uAmbTop, uAmbBot;',
     'uniform float uTrans, uRim, uIrid, uSpec, uExposure;',
     /* ruido barato de un solo valor: sin él la superficie del pétalo es un
@@ -69,7 +70,13 @@
     /* translucidez: luz que atraviesa el pétalo a contraluz */
     '  if(petal){',
     '    float t = pow(clamp(dot(-V, L) * 0.5 + 0.5, 0.0, 1.0), 3.0);',
-    '    col += base * t * uTrans;',
+    /* La base del pétalo, enterrada bajo la corona anterior, es tejido
+       grueso y casi opaco; la punta y el margen se adelgazan hasta dejar
+       pasar la luz. Antes la translucidez se repartía por igual sobre
+       toda la superficie — un contraluz uniforme es justo lo que un
+       pétalo real NO hace: el brillo real se concentra en un borde fino. */
+    '    float edgeBoost = mix(0.22, 1.75, vEdge);',
+    '    col += base * t * uTrans * edgeBoost;',
     '  }',
     /* El rim quedaba blanco puro, que es lo que hace ver vidrio o plástico
        en el borde. Un pétalo real deja pasar SU PROPIO color en el canto
@@ -208,7 +215,7 @@
     this.progSh = program(gl, VS_SHADOW, FS_SHADOW);
     if (!this.progMesh || !this.progBG || !this.progSh) { this.ok = false; return; }
 
-    this.buf = { pos: gl.createBuffer(), nor: gl.createBuffer(), cf: gl.createBuffer(), cb: gl.createBuffer(), mat: gl.createBuffer() };
+    this.buf = { pos: gl.createBuffer(), nor: gl.createBuffer(), cf: gl.createBuffer(), cb: gl.createBuffer(), mat: gl.createBuffer(), edge: gl.createBuffer() };
     this.quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
@@ -241,6 +248,7 @@
     bind(gl, this.buf.cf, m.cf);
     bind(gl, this.buf.cb, m.cb);
     bind(gl, this.buf.mat, m.mat);
+    bind(gl, this.buf.edge, m.edge);
     this.count = m.count;
 
     /* Encuadre automático. Se mide el ancho y el alto por separado: una
@@ -434,6 +442,7 @@
       attr(gl, P, 'aCF', this.buf.cf, 3);
       attr(gl, P, 'aCB', this.buf.cb, 3);
       attr(gl, P, 'aMat', this.buf.mat, 1);
+      attr(gl, P, 'aEdge', this.buf.edge, 1);
       m4(gl, P, 'uProj', proj);
       m4(gl, P, 'uView', view);
       u3(gl, P, 'uCam', eye);
