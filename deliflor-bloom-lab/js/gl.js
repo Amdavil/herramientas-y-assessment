@@ -71,8 +71,12 @@
     '    float t = pow(clamp(dot(-V, L) * 0.5 + 0.5, 0.0, 1.0), 3.0);',
     '    col += base * t * uTrans;',
     '  }',
+    /* El rim quedaba blanco puro, que es lo que hace ver vidrio o plástico
+       en el borde. Un pétalo real deja pasar SU PROPIO color en el canto
+       (por eso el borde de un pétalo rosa brilla rosado, no blanco): se
+       mezcla el rim con la base en vez de sumarlo en blanco. */
     '  float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);',
-    '  col += vec3(1.0) * rim * uRim;',
+    '  col += mix(base, vec3(1.0), 0.45) * rim * uRim;',
     /* sheen satinado: un lóbulo ancho y suave (la superficie del pétalo)
        más un punto fino encima (la cera de la cutícula). Un solo lóbulo
        ancho y fuerte es lo que hacía leer la flor como plástico mojado. */

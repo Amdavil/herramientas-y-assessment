@@ -90,14 +90,23 @@ html, body {
   display: inline-flex; align-items: baseline; position: relative;
   font-family: "Century Gothic", "Futura", "Avenir Next", "Segoe UI", sans-serif;
   font-weight: 700; letter-spacing: .01em; white-space: nowrap;
+  /* line-height:1 aprieta la caja de línea al glifo — sin esto, el
+     interlineado por defecto varía mucho entre fuentes (según la
+     disponible en cada máquina) y el acento queda "flotando" a
+     distancias distintas de la "I" según el navegador. */
+  line-height: 1;
 }
 .df-word .df-eye {
   position: relative; display: inline-block;
 }
 .df-i {
-  /* el acento: una elipse coral inclinada, no una letra aparte */
+  /* el acento: una elipse coral inclinada, no una letra aparte.
+     bottom:100% se apoya en la caja de línea completa, no en el asta
+     de la "I" — con el interlineado de estas fuentes eso deja un hueco
+     visible encima de la letra, así que se compensa con un margen
+     negativo para que el óvalo quede pegado al remate de la "I". */
   position: absolute; left: 50%; bottom: 100%;
-  width: .52em; height: .30em; margin-bottom: .06em;
+  width: .52em; height: .30em; margin-bottom: .04em;
   background: var(--df-coral); border-radius: 50%;
   transform: translateX(-50%) rotate(-20deg);
 }
@@ -114,7 +123,7 @@ html, body {
   width: 22%; height: 68%; background: currentColor; border-radius: 999px;
 }
 .df-logo.icon-only .df-i {
-  position: absolute; left: 50%; bottom: 68%; margin-bottom: .1em;
+  position: absolute; left: 50%; bottom: 68%; margin-bottom: -.06em;
   width: 62%; height: 34%; transform: translateX(-50%) rotate(-20deg);
 }
 .df-logo.icon-only.sm { width: calc(var(--s)*1.5); height: calc(var(--s)*2.5); }
@@ -123,6 +132,10 @@ html, body {
 .df-logo.sm .df-word  { font-size: calc(var(--s)*2.2); }
 .df-logo.sm .df-rule  { margin-top: calc(var(--s)*.28); display: none; }
 .df-logo.sm .df-sub   { display: none; }
+/* A tamaño de barra el óvalo coral cae a ~8px reales y se pierde en el
+   antialiasing — se agranda la proporción sólo aquí para que siga
+   leyéndose como un gesto de marca y no como una mota perdida. */
+.df-logo.sm .df-i     { width: .74em; height: .44em; margin-bottom: .04em; }
 
 .df-logo.md .df-word  { font-size: calc(var(--s)*3.4); }
 .df-logo.md .df-rule  { margin-top: calc(var(--s)*.4); width: 100%; }

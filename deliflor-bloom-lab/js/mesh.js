@@ -238,6 +238,13 @@
       /* Nervios longitudinales finos y un tono propio por pétalo: en la foto
          del catálogo ningún pétalo tiene exactamente el color del vecino. */
       var stria = 1 - 0.06 * Math.pow(1 - Math.abs(saw(v * 3.2) * 2 - 1), 3);
+      /* Variación de matiz por pétalo, no sólo de brillo: dos pétalos con el
+         MISMO tono pero uno más cálido y otro más frío ya no se ven como
+         copias — es lo que distingue una foto de un degradado repetido. */
+      var hueSh = (hash(k, 13.1) - 0.5) * 0.13;
+      col = [
+        col[0] * (1 + hueSh), col[1] * (1 - hueSh * 0.35), col[2] * (1 - hueSh)
+      ];
       /* Cada pétalo con su tono: una flor real no tiene dos pétalos iguales */
       var tone = 0.93 + 0.14 * hash(k, 7.7);
       /* Oclusión ambiental. La base de cada pétalo queda enterrada bajo la
