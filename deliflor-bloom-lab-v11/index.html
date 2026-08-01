@@ -3,62 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="description" content="DELIFLOR Bloom Lab V11 Genome Edition: diseño botánico 3D, pasaporte, descargas y visor móvil por QR.">
   <meta name="theme-color" content="#7C214D">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>DELIFLOR Bloom Lab V11 · Genome Edition</title>
-  <style>
-    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Segoe UI,Arial,sans-serif;background:#f7f1f4;color:#2e2130}
-    main{min-height:100%;display:grid;place-items:center;padding:28px;background:radial-gradient(circle at 50% 28%,#fff 0,#f7f1f4 58%,#eadde5 100%)}
-    .card{width:min(760px,94vw);padding:44px;border:1px solid #ead8e2;border-radius:30px;background:rgba(255,255,255,.94);box-shadow:0 26px 80px rgba(83,31,63,.15);text-align:center}
-    .brand{font-size:31px;font-weight:900;letter-spacing:.26em;color:#a81668}.version{margin-top:9px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#7c214d}
-    h1{margin:30px 0 10px;font-size:34px}p{margin:0 auto;max-width:590px;color:#786d77;line-height:1.55}
-    .bar{height:11px;margin:30px 0 12px;border-radius:99px;background:#f0dce7;overflow:hidden}.bar i{display:block;height:100%;width:12%;border-radius:inherit;background:linear-gradient(90deg,#a81668,#d75b9e);animation:load 1.5s ease-in-out infinite alternate}
-    .status{font-size:13px;color:#9b6e86}.error{display:none;margin-top:22px;padding:17px;border-radius:17px;background:#fff0f5;color:#8f174f;white-space:pre-wrap;text-align:left}
-    button,a{display:inline-flex;align-items:center;justify-content:center;min-height:52px;margin-top:18px;padding:0 22px;border:0;border-radius:15px;background:#a81668;color:#fff;font-weight:800;text-decoration:none;cursor:pointer}
-    .secondary{margin-left:8px;background:#fff;color:#6f0f46;border:1px solid #e8ccd9}@keyframes load{to{width:92%}}
-  </style>
+  <link rel="manifest" href="manifest.webmanifest?v=1101">
+  <link rel="stylesheet" href="../deliflor-bloom-lab/css/app.css?v=33">
+  <link rel="stylesheet" href="css/v11.css?v=1101">
 </head>
 <body>
-<main><section class="card">
-  <div class="brand">DELIFLOR</div><div class="version">Bloom Lab V11 · Genome Edition</div>
-  <h1>Iniciando experiencia 3D</h1>
-  <p>Integrando el motor estable, el atlas morfológico, las descargas y el visor móvil por QR.</p>
-  <div class="bar"><i></i></div><div id="status" class="status">Cargando componentes verificados…</div>
-  <div id="error" class="error"></div>
-  <div id="actions" style="display:none"><button onclick="location.reload()">Intentar nuevamente</button><a class="secondary" href="../deliflor-bloom-lab/">Abrir versión estable</a></div>
-</section></main>
-<script>
-(function(){
-  'use strict';
-  var status=document.getElementById('status'), error=document.getElementById('error'), actions=document.getElementById('actions');
-  var bases=[
-    'https://raw.githubusercontent.com/Amdavil/herramientas-y-assessment/main/.build-v11/',
-    'https://cdn.jsdelivr.net/gh/Amdavil/herramientas-y-assessment@main/.build-v11/'
-  ];
-  function fetchText(url){
-    var ctrl=new AbortController(), timer=setTimeout(function(){ctrl.abort();},15000);
-    return fetch(url,{cache:'no-store',mode:'cors',signal:ctrl.signal}).then(function(r){clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status+' · '+url);return r.text();});
-  }
-  function loadFrom(base){
-    status.textContent='Cargando núcleo V11…';
-    var jobs=[];for(var i=1;i<=5;i++)jobs.push(fetchText(base+'part-'+String(i).padStart(2,'0')+'.txt?v=1100'));
-    return Promise.all(jobs).then(function(parts){
-      status.textContent='Validando aplicación…';
-      var encoded=parts.join('').replace(/\s+/g,'');
-      var bytes=Uint8Array.from(atob(encoded),function(c){return c.charCodeAt(0);});
-      var html=new TextDecoder('utf-8').decode(bytes);
-      if(html.indexOf('<!DOCTYPE html>')!==0||html.indexOf('BloomLabV11')<0||html.indexOf('Genome Edition')<0)throw new Error('La aplicación reconstruida no superó la validación.');
-      status.textContent='Abriendo DELIFLOR Bloom Lab V11…';
-      document.open();document.write(html);document.close();
-    });
-  }
-  loadFrom(bases[0]).catch(function(first){
-    status.textContent='Usando ruta alternativa…';
-    return loadFrom(bases[1]).catch(function(second){
-      error.style.display='block';actions.style.display='block';status.textContent='No fue posible iniciar V11.';
-      error.textContent='Detalle técnico:\n'+(second&&second.message?second.message:String(second))+'\n\nPrimer intento: '+(first&&first.message?first.message:String(first));
-    });
-  });
-})();
-</script>
+  <div id="app" aria-live="polite">
+    <noscript><p style="padding:2rem;font-family:sans-serif">DELIFLOR Bloom Lab necesita JavaScript para funcionar.</p></noscript>
+  </div>
+
+  <!-- Núcleo estable y probado -->
+  <script src="../deliflor-bloom-lab/js/genome.js?v=33"></script>
+  <script src="../deliflor-bloom-lab/js/mesh.js?v=33"></script>
+  <script src="../deliflor-bloom-lab/js/gl.js?v=33"></script>
+  <script src="../deliflor-bloom-lab/js/thumbs.js?v=33"></script>
+  <script src="../deliflor-bloom-lab/js/qr.js?v=33"></script>
+  <script src="../deliflor-bloom-lab/js/ai.js?v=33"></script>
+  <script src="../deliflor-bloom-lab/js/app.js?v=33"></script>
+  <script src="../deliflor-bloom-lab/js/finish.js?v=33"></script>
+
+  <!-- Integración V11: atlas, rutas, exportación y móvil 3D -->
+  <script src="js/v11-atlas.js?v=1101"></script>
+  <script src="js/v11-route.js?v=1101"></script>
+  <script src="js/v11-export.js?v=1101"></script>
+  <script src="js/v11-mobile-ui.js?v=1101"></script>
 </body>
 </html>
