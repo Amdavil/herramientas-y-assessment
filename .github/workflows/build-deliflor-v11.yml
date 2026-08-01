@@ -1,0 +1,131 @@
+name: Build DELIFLOR Bloom Lab V11
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.build-v11/**'
+      - '.github/workflows/build-deliflor-v11.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reconstruct and validate V11
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64, hashlib, re
+
+          parts = [Path(f'.build-v11/part-{i:02d}.txt') for i in range(1, 6)]
+          missing = [str(p) for p in parts if not p.exists()]
+          if missing:
+              raise SystemExit(f'Missing build parts: {missing}')
+
+          encoded = ''.join(re.sub(r'\s+', '', p.read_text(encoding='utf-8')) for p in parts)
+          html = base64.b64decode(encoded, validate=True)
+          digest = hashlib.sha256(html).hexdigest()
+          expected = '2bcc882f53674258645cf0916a8d2fc5477cda8848585ded471f534ad534530d'
+          if digest != expected:
+              raise SystemExit(f'V11 checksum mismatch: {digest}')
+
+          text = html.decode('utf-8')
+          if '<!DOCTYPE html>' not in text or 'BloomLabV11' not in text or 'Genome Edition' not in text:
+              raise SystemExit('V11 application markers were not found')
+
+          out = Path('deliflor-bloom-lab-v11')
+          out.mkdir(parents=True, exist_ok=True)
+          (out / 'index.html').write_text(text, encoding='utf-8')
+
+          manifest = '''{
+            "name": "DELIFLOR Bloom Lab V11 · Genome Edition",
+            "short_name": "Bloom Lab V11",
+            "description": "Diseño botánico 3D, pasaporte, descargas y visor móvil por QR.",
+            "start_url": "./index.html",
+            "scope": "./",
+            "display": "fullscreen",
+            "orientation": "landscape",
+            "background_color": "#7C214D",
+            "theme_color": "#7C214D",
+            "lang": "es"
+          }'''
+          (out / 'manifest.webmanifest').write_text(manifest, encoding='utf-8')
+
+          sw = '''const CACHE = 'deliflor-bloom-lab-v11-1100';
+          const ASSETS = [
+            './', './index.html', './manifest.webmanifest',
+            '../deliflor-bloom-lab/css/app.css?v=33',
+            '../deliflor-bloom-lab/js/genome.js?v=33',
+            '../deliflor-bloom-lab/js/mesh.js?v=33',
+            '../deliflor-bloom-lab/js/gl.js?v=33',
+            '../deliflor-bloom-lab/js/thumbs.js?v=33',
+            '../deliflor-bloom-lab/js/qr.js?v=33',
+            '../deliflor-bloom-lab/js/ai.js?v=33',
+            '../deliflor-bloom-lab/js/app.js?v=33',
+            '../deliflor-bloom-lab/js/finish.js?v=33'
+          ];
+          self.addEventListener('install', event => {
+            event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
+          });
+          self.addEventListener('activate', event => {
+            event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+          });
+          self.addEventListener('fetch', event => {
+            if (event.request.method !== 'GET') return;
+            event.respondWith(caches.match(event.request).then(hit => hit || fetch(event.request).then(response => {
+              if (response && response.ok && new URL(event.request.url).origin === location.origin) {
+                const copy = response.clone(); caches.open(CACHE).then(cache => cache.put(event.request, copy));
+              }
+              return response;
+            })));
+          });'''
+          (out / 'sw.js').write_text(sw, encoding='utf-8')
+
+          readme = '''# DELIFLOR Bloom Lab V11 · Genome Edition
+
+Versión consolidada que combina el núcleo estable del Bloom Lab con atlas morfológico ampliado, validación estricta, ruta rápida, visor móvil 3D, QR local y exportaciones robustas.
+
+## URL pública
+
+https://amdavil.github.io/herramientas-y-assessment/deliflor-bloom-lab-v11/
+
+## Dependencias
+
+La V11 reutiliza los recursos estáticos versionados del núcleo estable ubicado en `../deliflor-bloom-lab/`. No usa cargadores fragmentados, CDN ni compilación en el navegador.
+'''
+          (out / 'README.md').write_text(readme, encoding='utf-8')
+          print(f'Generated V11 index: {len(html):,} bytes · sha256 {digest}')
+
+      - name: Validate embedded JavaScript syntax
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('deliflor-bloom-lab-v11/index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>([\s\S]*?)</script>', html)
+          if not scripts:
+              raise SystemExit('No embedded V11 JavaScript found')
+          Path('/tmp/deliflor-v11.js').write_text(scripts[-1], encoding='utf-8')
+          PY
+          node --check /tmp/deliflor-v11.js
+
+      - name: Commit generated application
+        shell: bash
+        run: |
+          if git diff --quiet -- deliflor-bloom-lab-v11; then
+            echo 'No generated changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deliflor-bloom-lab-v11
+          git commit -m 'Build DELIFLOR Bloom Lab V11 Genome Edition'
+          git push
