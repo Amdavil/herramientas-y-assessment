@@ -26,3 +26,10 @@ linkedin-agent/data/
 # Cloudflare Workers local tooling
 .wrangler/
 render-prueba*.jpg
+
+# Referencias botánicas de Wikimedia Commons (Bloom Lab).
+# Material de consulta para afinar el render y los prompts: no se publica.
+# La mayoría es CC BY-SA y empaquetarlo en el kiosco arrastraría la
+# cláusula de compartir-igual. El catálogo con los enlaces y las licencias
+# sí está versionado (tools/referencias-crisantemo.json).
+deliflor-bloom-lab/assets/referencias/

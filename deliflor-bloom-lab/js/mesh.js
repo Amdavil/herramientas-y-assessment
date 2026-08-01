@@ -19,14 +19,25 @@
   function Mesh() {
     this.pos = []; this.nor = []; this.cf = []; this.cb = []; this.mat = []; this.edge = [];
   }
+  /* cf/cb pueden venir como un color único para el triángulo entero, o como
+     tres colores (uno por vértice) para que la GPU los interpole.
+
+     Lo segundo importa más de lo que parece: con un color por cara, el
+     sombreado de oclusión queda cuantizado en celdas y el pétalo se cubre de
+     un cuadriculado visible — el aspecto de "tela escocesa" que delataba el
+     render por mucho que se afinara la iluminación. Interpolando por vértice
+     el degradado es continuo. */
   Mesh.prototype.tri = function (a, b, c, na, nb, nc, cf, cb, m, ef) {
     this.pos.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
     this.nor.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]);
+    var perVertex = Array.isArray(cf[0]);
+    var perVertexE = Array.isArray(ef);
     for (var i = 0; i < 3; i++) {
-      this.cf.push(cf[0], cf[1], cf[2]);
-      this.cb.push(cb[0], cb[1], cb[2]);
+      var f = perVertex ? cf[i] : cf, k = perVertex ? cb[i] : cb;
+      this.cf.push(f[0], f[1], f[2]);
+      this.cb.push(k[0], k[1], k[2]);
       this.mat.push(m);
-      this.edge.push(ef || 0);
+      this.edge.push((perVertexE ? ef[i] : ef) || 0);
     }
   };
   /* Copia otra malla aplicando una matriz 4x4 (column-major) */
@@ -80,15 +91,32 @@
         nrm[k] = norm(cross(du, dv));
       }
     }
+    /* Color y "canto fino" se evalúan en cada vértice de la rejilla, no en el
+       centro de cada celda: así la GPU los interpola y el degradado sale
+       continuo en vez de a bloques. */
+    var cols = new Array(grid.length), edges = new Array(grid.length);
+    for (i = 0; i <= NU; i++) {
+      u = i / NU;
+      for (j = 0; j <= NV; j++) {
+        v = j / NV * 2 - 1;
+        var gi = i * (NV + 1) + j;
+        cols[gi] = colFn(u, v);
+        edges[gi] = edgeFn ? edgeFn(u, v) : 0;
+      }
+    }
+
     for (i = 0; i < NU; i++) {
       for (j = 0; j < NV; j++) {
         var a = i * (NV + 1) + j, b = (i + 1) * (NV + 1) + j,
             c = (i + 1) * (NV + 1) + j + 1, d = i * (NV + 1) + j + 1;
-        var uc = (i + 0.5) / NU, vc = (j + 0.5) / NV * 2 - 1;
-        var col = colFn(uc, vc);
-        var ef = edgeFn ? edgeFn(uc, vc) : 0;
-        mesh.tri(grid[a], grid[b], grid[c], nrm[a], nrm[b], nrm[c], col[0], col[1], matId, ef);
-        mesh.tri(grid[a], grid[c], grid[d], nrm[a], nrm[c], nrm[d], col[0], col[1], matId, ef);
+        mesh.tri(grid[a], grid[b], grid[c], nrm[a], nrm[b], nrm[c],
+                 [cols[a][0], cols[b][0], cols[c][0]],
+                 [cols[a][1], cols[b][1], cols[c][1]], matId,
+                 [edges[a], edges[b], edges[c]]);
+        mesh.tri(grid[a], grid[c], grid[d], nrm[a], nrm[c], nrm[d],
+                 [cols[a][0], cols[c][0], cols[d][0]],
+                 [cols[a][1], cols[c][1], cols[d][1]], matId,
+                 [edges[a], edges[c], edges[d]]);
       }
     }
   }
@@ -129,6 +157,31 @@
   }
   var TUBULAR = { tubular: 1, spiral: 1 };
 
+  /* Ápice dentado.
+
+     Es el rasgo que más distingue un crisantemo de una margarita o una
+     gerbera: el flósculo radial no termina en una curva lisa sino en dos o
+     tres dientes. Con la punta perfectamente redondeada el pétalo se lee
+     como un troquel, por muy bien iluminado que esté. Ver
+     docs/referencia-botanica.md §3.1 ('Icey Isle', 'Carrie').
+
+     Se resuelve retrocediendo el extremo del pétalo en los senos: el coseno
+     vale 1 en el centro de cada lóbulo (no recorta) y -1 en el seno (recorta
+     todo el fondo). Sólo actúa en el último tramo del pétalo, así que el
+     resto de la silueta queda intacta.
+
+     Las formas tubulares (canuto, araña) y la cuchara no llevan diente: su
+     ápice real es un tubo abierto o una cazoleta redonda. */
+  var NOTCH_TEETH = { rounded: 3, oval: 3, long: 2, wavy: 3, curly: 2, irregular: 3 };
+
+  function tipNotch(shape, u, v) {
+    var teeth = NOTCH_TEETH[shape];
+    if (!teeth) return 0;
+    var gate = smoothstep(0.62, 1, u);
+    if (gate <= 0) return 0;
+    return gate * (1 - Math.cos(teeth * PI * v)) * 0.5;
+  }
+
   /* Reparto de los cortes a lo largo del pétalo. Con cortes equidistantes la
      punta redondeada se resolvía en un solo triángulo y volvía a verse en
      pico; esta curva concentra cortes en la base y en el extremo. */
@@ -156,6 +209,10 @@
     var tube = !!TUBULAR[P.shape];
     return function (u, v) {
       u = uMap(u);
+      /* El diente acorta el pétalo en los senos del ápice. Se aplica sobre
+         el parámetro de arco, no sobre el ancho: recortar el ancho estrecha
+         la punta, y lo que hace un diente es dejarla más corta. */
+      u = Math.max(0, u - P.notch * tipNotch(P.shape, u, v));
       var a = P.pitch + P.bend * u;
       var ca = Math.cos(a), sa = Math.sin(a);
       /* raquis: arco circular de longitud L en el plano (radial, vertical) */
@@ -331,7 +388,12 @@
        a distancia normal, sobre todo en la silueta. Más segmentos = curva
        suave en vez de polígono. */
     var NU = lod === 'high' ? 15 : lod === 'mid' ? 6 : 4;
-    var NV = lod === 'high' ? 11 : lod === 'mid' ? 3 : 2;
+    /* NV sube en alta calidad porque el ápice dentado son tres lóbulos a lo
+       ancho del pétalo: con 11 cortes tocaban a menos de cuatro muestras por
+       diente y salían en pico en vez de redondeados. 13 es el punto donde el
+       diente ya se lee redondo sin disparar el coste (cada punto de NV son
+       ~25 000 vértices más en una Ballhia). */
+    var NV = lod === 'high' ? 13 : lod === 'mid' ? 3 : 2;
     var petalCap = lod === 'high' ? 640 : lod === 'mid' ? 190 : 85;
 
     var mesh = new Mesh();
@@ -425,7 +487,12 @@
           twist: g.petalTwist * (0.6 + 0.8 * f) + (rand() - 0.5) * 0.025,
           theta: theta, base: base,
           cup: cup * (1.30 - 0.50 * f), shape: g.petalShape, edge: g.petalEdge,
-          wave: (0.14 + rand() * 0.18) * (0.55 + 0.45 * gradStrength), wavePh: rand() * TAU
+          wave: (0.14 + rand() * 0.18) * (0.55 + 0.45 * gradStrength), wavePh: rand() * TAU,
+          /* Profundidad del diente, en fracción del largo del pétalo. Los
+             flósculos del corazón todavía son botones inmaduros y no tienen
+             el ápice desarrollado, así que el diente crece hacia afuera.
+             Con variación por pétalo: en la foto no hay dos iguales. */
+          notch: (0.075 + 0.065 * f) * (0.75 + 0.5 * rand())
         };
         addGrid(mesh, NU, NV, petalPosFn(P), petalColorFn(C, g.pattern, f, k + i * 31), 0.0, petalEdgeFn);
       }
