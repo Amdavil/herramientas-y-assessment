@@ -1,0 +1,52 @@
+/* DELIFLOR Bloom Lab V11.1 · Marca oficial y pantalla final */
+.df-logo.df-logo-official{display:inline-flex;align-items:center;justify-content:flex-start;flex:0 0 auto;line-height:1;color:initial;overflow:visible}
+.df-logo.df-logo-official img{display:block;width:auto;height:auto;max-width:100%;object-fit:contain;user-select:none;-webkit-user-drag:none}
+.df-logo.df-logo-official.sm img{width:calc(var(--s)*10.4);max-height:calc(var(--s)*3.45)}
+.df-logo.df-logo-official.md img{width:calc(var(--s)*14.6);max-height:calc(var(--s)*5)}
+.df-logo.df-logo-official.lg img{width:calc(var(--s)*22);max-height:calc(var(--s)*7.4)}
+.df-logo.df-logo-official.icon-only img{width:calc(var(--s)*5.2);max-height:calc(var(--s)*2.4);object-fit:cover;object-position:center}
+.v11-mobile-head .df-logo.df-logo-official img{width:min(50vw,210px);max-height:70px}
+
+body.v11-share-screen #app{overflow:hidden}
+body.v11-share-screen .body{min-height:0;overflow:hidden;align-items:stretch}
+body.v11-share-screen .share{flex:1;min-width:0;min-height:0;height:100%;overflow-y:auto;overscroll-behavior:contain;align-items:start;grid-template-columns:minmax(250px,32%) minmax(0,1fr);gap:calc(var(--s)*2);padding:calc(var(--s)*1.7) calc(var(--s)*2.2) calc(var(--s)*3)}
+body.v11-share-screen .share>div{min-width:0}
+body.v11-share-screen .share .qrbox{width:min(100%,390px);margin:0 auto;padding:calc(var(--s)*1);border:1px solid rgba(124,33,77,.12);box-shadow:0 18px 45px rgba(60,20,40,.12)}
+body.v11-share-screen .share .qrbox canvas{display:block;width:100%!important;height:auto!important;max-width:340px;margin:auto}
+body.v11-share-screen .share .qrlink{width:min(100%,390px);max-width:100%;margin:calc(var(--s)*.65) auto 0;padding:calc(var(--s)*.55) calc(var(--s)*.65);border-radius:calc(var(--s)*.55);background:rgba(255,255,255,.65);border:1px solid var(--wine-line);font-size:calc(var(--s)*.68);line-height:1.35;word-break:break-all;overflow-wrap:anywhere}
+body.v11-share-screen .v11-export-panel{margin-top:calc(var(--s)*1);margin-bottom:calc(var(--s)*1.5);padding:calc(var(--s)*1.05)}
+body.v11-share-screen .v11-export-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.v11-share-screen .v11-export-grid .btn{min-width:0;min-height:calc(var(--s)*3.7);padding:calc(var(--s)*.65)}
+body.v11-share-screen .v11-export-grid .btn.primary{grid-column:1/-1}
+body.v11-share-screen .v11-linkrow{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--s)*.65)}
+body.v11-share-screen .v11-linkrow .btn{width:100%;min-width:0;white-space:normal}
+body.v11-share-screen .nav{position:relative;z-index:50;flex:0 0 auto;background:rgba(255,255,255,.98);box-shadow:0 -12px 34px rgba(60,20,40,.11);backdrop-filter:blur(14px)}
+body.v11-share-screen .nav .btn{min-width:calc(var(--s)*8);white-space:nowrap}
+
+@media(max-height:900px){
+  body.v11-share-screen .share{gap:calc(var(--s)*1.2);padding-top:calc(var(--s)*1.1);padding-bottom:calc(var(--s)*1.8)}
+  body.v11-share-screen .share .qrbox{width:min(100%,275px);padding:calc(var(--s)*.7)}
+  body.v11-share-screen .share .qrbox canvas{max-width:240px}
+  body.v11-share-screen .share .qrlink{width:min(100%,275px);font-size:calc(var(--s)*.62)}
+  body.v11-share-screen .v11-export-panel{margin-top:calc(var(--s)*.65);margin-bottom:calc(var(--s)*.8)}
+  body.v11-share-screen .v11-export-panel h3{font-size:calc(var(--s)*1.55)}
+  body.v11-share-screen .v11-export-panel p{margin-bottom:calc(var(--s)*.6);font-size:calc(var(--s)*.82)}
+  body.v11-share-screen .v11-export-grid .btn{min-height:calc(var(--s)*3.25)}
+  body.v11-share-screen .nav{padding-top:calc(var(--s)*.7);padding-bottom:calc(var(--s)*.7)}
+}
+@media(max-width:1100px){
+  body.v11-share-screen .share{grid-template-columns:minmax(210px,29%) minmax(0,1fr);gap:calc(var(--s)*1.25);padding-left:calc(var(--s)*1.2);padding-right:calc(var(--s)*1.2)}
+  body.v11-share-screen .share .qrbox{width:min(100%,285px)}
+  body.v11-share-screen .share .qrbox canvas{max-width:255px}
+  body.v11-share-screen .share .qrlink{width:min(100%,285px)}
+}
+@media(max-width:760px){
+  body.v11-share-screen #app{overflow:auto}
+  body.v11-share-screen .body{overflow:visible;display:block}
+  body.v11-share-screen .share{display:grid;grid-template-columns:1fr;height:auto;overflow:visible;text-align:left;padding-bottom:calc(var(--s)*2)}
+  body.v11-share-screen .share .qrbox{width:min(82vw,280px)}
+  body.v11-share-screen .share .qrlink{width:min(82vw,520px);text-align:left}
+  body.v11-share-screen .v11-export-grid,body.v11-share-screen .v11-linkrow{grid-template-columns:1fr}
+  body.v11-share-screen .v11-export-grid .btn.primary{grid-column:auto}
+  body.v11-share-screen .nav{position:sticky;bottom:0}
+}
