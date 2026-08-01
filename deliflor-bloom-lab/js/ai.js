@@ -25,10 +25,15 @@
   var BUDGET_MS = 18000;
   var MAX_CACHE = 40;
 
+  /* La configuración vive en localStorage, que es POR DISPOSITIVO: un kiosco
+     recién montado arranca con estos valores y nadie tiene que tocarlos. Por
+     eso el endpoint va aquí y no vacío — con endpoint vacío la capa
+     fotorrealista queda muda aunque esté "activada", que es exactamente lo
+     que pasaba antes: el visitante sólo veía el modelo 3D procedural. */
   var DEFAULTS = {
-    enabled: false,
+    enabled: true,
     mode: 'proxy',                 /* 'proxy' (recomendado) | 'direct' */
-    endpoint: '',                  /* p. ej. https://pal-ai.<cuenta>.workers.dev */
+    endpoint: 'https://pal-ai.projectability-pal.workers.dev/',
     apiKey: '',                    /* sólo en modo 'direct'; lo escribe el operador */
     model: '',                     /* vacío = el que decida el worker */
     size: '1024x1024',
@@ -59,23 +64,23 @@
 
   /* La identidad de la imagen es el genoma sin el nombre: dos visitantes que
      diseñan la misma flor comparten render y no se paga dos veces. */
-  function keyOf(g) {
+  function keyOf(g, subject) {
     var copy = G.clone(g);
     copy.name = '';
-    return G.encode(copy);
+    return (subject || 'bouquet') + ':' + G.encode(copy);
   }
 
   function readCache() {
     try { return JSON.parse(localStorage.getItem(CACHE) || '[]'); } catch (e) { return []; }
   }
-  function cached(g) {
-    var k = keyOf(g), arr = readCache();
+  function cached(g, subject) {
+    var k = keyOf(g, subject), arr = readCache();
     for (var i = 0; i < arr.length; i++) if (arr[i].k === k) return arr[i].img;
     return null;
   }
-  function store(g, img) {
+  function store(g, img, subject) {
     try {
-      var k = keyOf(g);
+      var k = keyOf(g, subject);
       var arr = readCache().filter(function (x) { return x.k !== k; });
       arr.unshift({ k: k, img: img, ts: Date.now() });
       while (arr.length > MAX_CACHE) arr.pop();
@@ -113,8 +118,8 @@
      Petición. Devuelve una promesa que NUNCA se rechaza: resuelve con la
      imagen o con null. Quien llama no necesita gestionar errores.
      ----------------------------------------------------------------- */
-  function request(g) {
-    var hit = cached(g);
+  function request(g, subject) {
+    var hit = cached(g, subject);
     if (hit) return Promise.resolve(hit);
     if (!available()) return Promise.resolve(null);
 
@@ -129,12 +134,12 @@
     if (c.mode === 'direct') {
       url = c.endpoint;
       headers.Authorization = 'Bearer ' + c.apiKey;
-      body = { model: c.model || 'gpt-image-1.5', prompt: G.prompt(g), size: c.size, quality: c.quality, n: 1 };
+      body = { model: c.model || 'gpt-image-1.5', prompt: G.prompt(g, subject), size: c.size, quality: c.quality, n: 1 };
     } else {
       url = c.endpoint.replace(/\/+$/, '');
       body = {
         mode: 'bloom-render',
-        prompt: G.prompt(g),
+        prompt: G.prompt(g, subject),
         negative: G.NEGATIVE,
         size: c.size,
         quality: c.quality,
@@ -155,7 +160,7 @@
         var img = pickImage(j);
         if (!img) throw new Error('sin imagen en la respuesta');
         clearTimeout(timer);
-        store(g, img);
+        store(g, img, subject);
         set({ spent: c.spent + 1 });
         state.busy = false;
         bump('ok', Date.now() - t0);
@@ -196,16 +201,26 @@
 
   /* Arranca la petición en segundo plano y guarda la promesa para que la
      pantalla del pasaporte la recoja cuando llegue. */
-  var inflight = null, inflightKey = null;
-  function prefetch(g) {
-    var k = keyOf(g);
-    if (inflight && inflightKey === k) return inflight;
-    inflightKey = k;
-    inflight = request(g);
-    return inflight;
+  /* Se siguen varias peticiones a la vez, indexadas por clave: la flor y el
+     ramo son dos láminas distintas y se piden en momentos distintos, así que
+     una sola ranura hacía que la segunda borrase el rastro de la primera. */
+  var inflight = {};
+  function prefetch(g, subject) {
+    var k = keyOf(g, subject);
+    if (inflight[k]) return inflight[k];
+    var p = request(g, subject).then(function (img) {
+      /* La entrada se suelta al resolverse. Cada promesa retiene la imagen
+         entera (~2 MB en base64) y un kiosco de feria encadena cientos de
+         flores en una jornada: sin esto la pestaña acaba quedándose sin
+         memoria. La copia duradera ya vive en la caché de localStorage. */
+      delete inflight[k];
+      return img;
+    });
+    inflight[k] = p;
+    return p;
   }
-  function pending(g) {
-    return (inflight && inflightKey === keyOf(g)) ? inflight : null;
+  function pending(g, subject) {
+    return inflight[keyOf(g, subject)] || null;
   }
 
   function test() {

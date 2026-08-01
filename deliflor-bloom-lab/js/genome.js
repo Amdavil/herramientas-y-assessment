@@ -449,10 +449,16 @@
     ab: { small:'8', medium:'15', abundant:'25', monumental:'40' }
   };
 
-  function prompt(g) {
+  /* subject: 'bouquet' (por defecto) o 'bloom'. La pantalla de revelación
+     muestra UNA flor, no un ramo: pedir el ramo ahí devolvía quince flores
+     diminutas donde el visitante espera ver la suya en primer plano. */
+  function prompt(g, subject) {
     var c = function (i) { return PALETTE[i].en.toLowerCase(); };
     var name = g.name || 'Unnamed';
-    var s = 'Professional botanical product photography of an entirely new chrysanthemum cultivar named "' + name + '". ';
+    var bloom = subject === 'bloom';
+    var s = bloom
+      ? 'Extreme close-up macro photograph of a single chrysanthemum bloom, an entirely new cultivar named "' + name + '". '
+      : 'Professional botanical product photography of an entirely new chrysanthemum cultivar named "' + name + '". ';
     s += 'The flower has a ' + EN.shape[g.shape] + ' silhouette, ' +
          (g.density > 0.75 ? 'very high' : g.density > 0.5 ? 'high' : g.density > 0.3 ? 'medium' : 'light') +
          ' petal density and ' + EN.petal[g.petalShape] + ' petals arranged in ' + EN.arrangement[g.arrangement] + '. ';
@@ -460,9 +466,14 @@
          c(g.colors.secondary) + ' accents and a ' + c(g.colors.center) + ' centre. ';
     s += 'Flower diameter is ' + g.diameter + ' (' + DIAMETER_CM[g.diameter] + ' cm). ';
     s += 'Growth habit is ' + EN.growth[g.growth] + '. ';
-    s += 'Create a sophisticated ' + EN.bq[g.bouquet.style] + ' bouquet containing ' +
-         EN.ab[g.bouquet.abundance] + ' stems, presented with ' + EN.wrap[g.bouquet.wrap] +
-         ' against ' + EN.bg[g.bouquet.bg] + ' setting. ';
+    if (bloom) {
+      s += 'One single bloom fills the frame, viewed slightly from above, shallow depth of field with a ' +
+           'softly blurred neutral background, a few green chrysanthemum leaves out of focus behind it. ';
+    } else {
+      s += 'Create a sophisticated ' + EN.bq[g.bouquet.style] + ' bouquet containing ' +
+           EN.ab[g.bouquet.abundance] + ' stems, presented with ' + EN.wrap[g.bouquet.wrap] +
+           ' against ' + EN.bg[g.bouquet.bg] + ' setting. ';
+    }
     s += 'Photorealistic botanical details, realistic chrysanthemum leaves and stems, natural petal ' +
          'translucency, professional floral styling, premium studio lighting, highly detailed, ' +
          'botanically coherent, centered composition, no text, no watermark, no logos.';

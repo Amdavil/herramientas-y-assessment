@@ -59,6 +59,13 @@
     app.appendChild(wrap);
     App.track('lab');
 
+    /* La lámina de la flor se pide aquí, no en la pantalla del nombre: la
+       revelación llega justo después y la petición tarda ~12 s, así que
+       pedirla más tarde significaba que nunca alcanzaba a mostrarse. Los
+       rasgos de la flor ya están fijados en este punto; sólo el ramo y el
+       nombre se deciden después, y ninguno entra en esta imagen. */
+    if (root.AI) root.AI.prefetch(App.g, 'bloom');
+
     var list = MSG[App.lang] || MSG.es;
     var t0 = performance.now(), dur = CFG.labMs, raf = 0;
     var particles = [];
@@ -148,6 +155,11 @@
     });
     s.stage.appendChild(views);
 
+    /* La lámina fotográfica de la flor, si llegó a tiempo. Es el momento en
+       que el visitante juzga "su" flor, así que aquí es donde más pesa que
+       se vea como una fotografía y no como un modelo. */
+    photoPlate(s.stage, App.g, null, 'bloom');
+
     App.defer(function () {
       if (App.renderer && App.renderer.ok) App.renderer.bloomIn();
     });
@@ -213,7 +225,7 @@
     });
     /* El render fotorrealista se pide aquí, no al final: así dispone del
        tiempo del teclado y del pasaporte para llegar sin hacer esperar. */
-    if (root.AI) root.AI.prefetch(App.g);
+    if (root.AI) root.AI.prefetch(App.g, 'bouquet');
 
     var val = h('div', { class: 'val' + (App.g.name ? '' : ' empty') });
     var count = h('span', { class: 'count' });
@@ -301,12 +313,16 @@
      Lámina fotográfica. La imagen generada se rotula siempre y no ofrece
      ningún control de giro: no se puede confundir con el modelo 3D.
      ----------------------------------------------------------------- */
-  function photoPlate(box, g, on3D) {
+  function photoPlate(box, g, on3D, subject) {
     if (!root.AI) return;
     var en = App.lang === 'en';
 
     function mount(src) {
       if (!src || !box.isConnected) return;
+      /* El lienzo 3D de la revelación lo crea el renderizador de forma
+         asíncrona, así que no existe todavía cuando se arma esta lámina:
+         se resuelve al montar, no antes. */
+      if (!on3D) on3D = box.querySelector('canvas');
       var img = h('img', { src: src, alt: en ? 'Photographic render' : 'Render fotográfico',
         style: 'width:100%;height:100%;object-fit:cover;display:block' });
       var plate = h('div', { class: 'plate' }, [
@@ -330,9 +346,9 @@
 
     /* El montaje se aplaza siempre: cuando la imagen ya está en caché,
        photoPlate corre antes de que su contenedor entre en el documento. */
-    var hit = root.AI.cached(g);
+    var hit = root.AI.cached(g, subject);
     if (hit) { App.defer(function () { mount(hit); }); return; }
-    var p = root.AI.pending(g);
+    var p = root.AI.pending(g, subject);
     if (p) p.then(function (src) { App.defer(function () { mount(src); }); });
   }
 
@@ -440,7 +456,7 @@
       var cv = h('canvas'); model3d = cv; big.appendChild(cv);
       App.defer(function () { T.fallbackScene(cv, App.g, 'bouquet'); });
     }
-    photoPlate(big, App.g, model3d);
+    photoPlate(big, App.g, model3d, 'bouquet');
     side.appendChild(h('div', { class: 'pbody', style: 'flex:1' }, big));
     side.appendChild(h('div', { class: 'specs' }, [
       specRow(App.lang === 'en' ? 'Bouquet style' : 'Estilo del ramo', App.lb(App.g.bouquet.style)),
