@@ -1,7 +1,8 @@
-const CACHE='deliflor-bloom-lab-v11-1101';
+const CACHE='deliflor-bloom-lab-v11-1102';
 const ASSETS=[
-  './','./index.html','./manifest.webmanifest?v=1101','./css/v11.css?v=1101',
-  './js/v11-atlas.js?v=1101','./js/v11-route.js?v=1101','./js/v11-export.js?v=1101','./js/v11-mobile-ui.js?v=1101',
+  './','./index.html','./manifest.webmanifest?v=1102','./css/v11.css?v=1101','./css/v11-polish.css?v=1102',
+  './js/v11-atlas.js?v=1101','./js/v11-route.js?v=1101','./js/v11-export.js?v=1101','./js/v11-mobile-ui.js?v=1101','./js/v11-polish.js?v=1102',
+  './assets/deliflor-logo.svg?v=1102',
   '../deliflor-bloom-lab/css/app.css?v=33',
   '../deliflor-bloom-lab/js/genome.js?v=33','../deliflor-bloom-lab/js/mesh.js?v=33','../deliflor-bloom-lab/js/gl.js?v=33',
   '../deliflor-bloom-lab/js/thumbs.js?v=33','../deliflor-bloom-lab/js/qr.js?v=33','../deliflor-bloom-lab/js/ai.js?v=33',
