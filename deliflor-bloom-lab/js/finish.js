@@ -386,6 +386,7 @@
 
     card.appendChild(h('div', { class: 'specs' }, [
       specRow(en ? 'Family' : 'Familia', App.lb(g.family)),
+      specRow(en ? 'Class' : 'Clase', App.ncs(g.family)),
       specRow(en ? 'Main shape' : 'Forma principal', App.lb(g.shape)),
       specRow(en ? 'Petal' : 'Pétalo', App.lb(g.petalShape)),
       specRow(en ? 'Arrangement' : 'Disposición', App.lb(g.arrangement)),
@@ -513,8 +514,12 @@
                  : 'Escanea el código con tu teléfono. La variedad completa viaja dentro del enlace: sin cuenta y sin guardar datos.'
       }),
       h('div', { class: 'row', style: 'display:flex;gap:calc(var(--s)*.8);margin:calc(var(--s)*1.4) 0;flex-wrap:wrap' }, [
-        h('button', { class: 'btn', text: en ? 'Download story' : 'Descargar historia', onclick: function () { download('story'); } }),
-        h('button', { class: 'btn', text: en ? 'Download square' : 'Descargar cuadrada', onclick: function () { download('square'); } })
+        /* El primero usa la hoja nativa de compartir cuando existe: en el
+           móvil es el gesto que el visitante espera. Los demás descargan. */
+        h('button', { class: 'btn primary', text: en ? 'Save or share' : 'Guardar o compartir', onclick: function () { download('square', true); } }),
+        h('button', { class: 'btn', text: en ? 'Story · 1080×1920' : 'Historia · 1080×1920', onclick: function () { download('story'); } }),
+        h('button', { class: 'btn', text: 'HD · 1920×1080', onclick: function () { download('hd'); } }),
+        h('button', { class: 'btn', text: en ? 'Variety passport' : 'Pasaporte de variedad', onclick: function () { download('passport'); } })
       ]),
       CFG.galleryOn ? h('button', {
         class: 'consent', 'aria-pressed': String(!!App.consent),
@@ -556,9 +561,76 @@
     } catch (e) {}
   }
 
-  /* Composición descargable */
-  function download(fmt) {
-    var W = 1080, H = fmt === 'story' ? 1920 : 1080;
+  /* -----------------------------------------------------------------
+     Composición descargable
+
+     Cuatro formatos porque el visitante hace cosas distintas con cada uno:
+     cuadrada para el feed, historia para el vertical del móvil, HD para
+     pantalla o correo, y pasaporte como ficha completa de la variedad.
+
+     La descarga va por Blob y no por toDataURL: una data URL de 2-3 MB
+     supera el límite de longitud de URL de varios navegadores móviles y
+     falla en silencio, que es la peor forma de fallar en un evento.
+     ----------------------------------------------------------------- */
+  var EXPORT_SPEC = {
+    square:   { w: 1080, h: 1080, imgY: 120, imgH: 640 },
+    story:    { w: 1080, h: 1920, imgY: 120, imgH: 1080 },
+    hd:       { w: 1920, h: 1080, imgY: 110, imgH: 660 },
+    /* La lámina del pasaporte es más baja que la de los otros formatos
+       porque debajo tiene que caber la ficha completa: título de sección,
+       nueve atributos en dos columnas, los tres indicadores y el pie. Con
+       930 px de imagen las barras se montaban encima de la tabla. */
+    passport: { w: 1600, h: 2000, imgY: 130, imgH: 820 }
+  };
+
+  function safeName(s) {
+    var base = String(s || 'flor');
+    try { base = base.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {}
+    return base.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'flor';
+  }
+
+  function canvasBlob(cv) {
+    return new Promise(function (res, rej) {
+      if (cv.toBlob) {
+        cv.toBlob(function (b) { b ? res(b) : rej(new Error('sin blob')); }, 'image/png');
+        return;
+      }
+      /* Respaldo para navegadores sin toBlob: se reconstruye desde la data
+         URL. Más lento y con más memoria, pero sólo entra en ese caso. */
+      try {
+        var bin = atob(cv.toDataURL('image/png').split(',')[1]);
+        var arr = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        res(new Blob([arr], { type: 'image/png' }));
+      } catch (e) { rej(e); }
+    });
+  }
+
+  function saveBlob(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = h('a', { href: url, download: name, rel: 'noopener' });
+    document.body.appendChild(a);
+    try { a.click(); } catch (e) { window.open(url, '_blank', 'noopener'); }
+    a.remove();
+    /* La URL se libera tarde: revocarla de inmediato cancela la descarga en
+       los navegadores que la resuelven de forma asíncrona. */
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+
+  function wrapText(ctx, text, x, y, maxW, lh, maxLines) {
+    var words = String(text).split(/\s+/), line = '', lines = [];
+    for (var i = 0; i < words.length; i++) {
+      var test = line ? line + ' ' + words[i] : words[i];
+      if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = words[i]; }
+      else line = test;
+    }
+    if (line) lines.push(line);
+    lines.slice(0, maxLines || 99).forEach(function (l, j) { ctx.fillText(l, x, y + j * lh); });
+  }
+
+  function download(fmt, share) {
+    var spec = EXPORT_SPEC[fmt] || EXPORT_SPEC.square;
+    var W = spec.w, H = spec.h;
     var cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     var ctx = cv.getContext('2d');
@@ -569,64 +641,136 @@
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = '#7C214D'; ctx.fillRect(0, 0, W, 12);
 
-    var imgH = fmt === 'story' ? 1080 : 640;
+    var imgY = spec.imgY, imgH = spec.imgH;
+    var pad = fmt === 'passport' ? 90 : 60;
+    var en = App.lang === 'en';
+
     function finish(img) {
       if (img) {
         var r = Math.max(W / img.width, imgH / img.height);
         var iw = img.width * r, ih = img.height * r;
         ctx.save();
-        ctx.beginPath(); ctx.rect(0, 120, W, imgH); ctx.clip();
-        ctx.drawImage(img, (W - iw) / 2, 120 + (imgH - ih) / 2, iw, ih);
+        ctx.beginPath(); ctx.rect(0, imgY, W, imgH); ctx.clip();
+        ctx.drawImage(img, (W - iw) / 2, imgY + (imgH - ih) / 2, iw, ih);
         ctx.restore();
       }
       ctx.fillStyle = '#7C214D';
       ctx.font = '600 34px "Segoe UI", sans-serif';
-      ctx.fillText('DELIFLOR BLOOM LAB', 60, 82);
+      ctx.fillText('DELIFLOR BLOOM LAB', pad, 82);
 
-      var y = 120 + imgH + 90;
+      var y = imgY + imgH + 90;
       ctx.fillStyle = '#241A1F';
-      ctx.font = '400 78px Georgia, serif';
-      ctx.fillText(g.name || '—', 60, y);
+      ctx.font = '400 ' + (fmt === 'passport' ? 86 : 78) + 'px Georgia, serif';
+      ctx.fillText(g.name || '—', pad, y);
       y += 56;
       ctx.fillStyle = '#6D5A62';
       ctx.font = '400 32px "Segoe UI", sans-serif';
-      ctx.fillText(App.lb(g.family) + ' · ' + App.lb(g.shape) + ' · ' + App.lb(g.diameter), 60, y);
+      /* La clase NCS acompaña siempre al nombre de familia: es la que
+         convierte "Decorativa" en un dato botánico verificable. */
+      wrapText(ctx, App.lb(g.family) + ' · ' + App.ncs(g.family) + ' · ' +
+               App.lb(g.petalShape) + ' · ' + App.lb(g.diameter),
+               pad, y, W - pad * 2, 40, 2);
 
       y += 70;
       ['primary', 'secondary', 'center', 'tip', 'reverse'].forEach(function (k, i) {
         ctx.fillStyle = G.hex(g.colors[k]);
-        ctx.fillRect(60 + i * 92, y, 80, 80);
-        ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.strokeRect(60 + i * 92, y, 80, 80);
+        ctx.fillRect(pad + i * 92, y, 80, 80);
+        ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.strokeRect(pad + i * 92, y, 80, 80);
       });
 
-      if (fmt === 'story') {
-        y += 150;
-        var labels = [
-          [App.lang === 'en' ? 'Novelty' : 'Novedad', sc.novelty],
-          [App.lang === 'en' ? 'Harmony' : 'Armonía', sc.harmony],
-          [App.lang === 'en' ? 'Challenge' : 'Desafío', sc.challenge]
-        ];
-        labels.forEach(function (l, i) {
-          var bx = 60, by = y + i * 74;
+      function bars(bx, by, barW) {
+        [[en ? 'Novelty' : 'Novedad', sc.novelty, '#7C214D'],
+         [en ? 'Harmony' : 'Armonía', sc.harmony, '#6F7D4C'],
+         [en ? 'Challenge' : 'Desafío', sc.challenge, '#9C3071']].forEach(function (l, i) {
+          var yy = by + i * 74;
           ctx.fillStyle = '#241A1F'; ctx.font = '600 30px "Segoe UI", sans-serif';
-          ctx.fillText(l[0], bx, by);
-          ctx.fillStyle = '#ECE5E1'; ctx.fillRect(bx + 260, by - 22, 620, 22);
-          ctx.fillStyle = ['#7C214D', '#6F7D4C', '#9C3071'][i];
-          ctx.fillRect(bx + 260, by - 22, 620 * l[1] / 100, 22);
+          ctx.fillText(l[0], bx, yy);
+          ctx.fillStyle = '#ECE5E1'; ctx.fillRect(bx + 260, yy - 22, barW, 22);
+          ctx.fillStyle = l[2]; ctx.fillRect(bx + 260, yy - 22, barW * l[1] / 100, 22);
           ctx.fillStyle = '#7C214D'; ctx.font = '600 28px monospace';
-          ctx.fillText(String(l[1]), bx + 900, by);
+          ctx.fillText(String(l[1]), bx + 260 + barW + 20, yy);
         });
       }
-      ctx.fillStyle = '#9C8A92'; ctx.font = '400 24px monospace';
-      ctx.fillText(CFG.eventName, 60, H - 46);
 
-      var a = document.createElement('a');
-      a.download = (g.name || 'bloom').replace(/[^\w\- ]/g, '') + '-' + fmt + '.png';
-      try { a.href = cv.toDataURL('image/png'); a.click(); App.track('download:' + fmt); }
-      catch (e) { App.toast(App.lang === 'en' ? 'Could not export the image' : 'No se pudo exportar la imagen'); }
+      if (fmt === 'story') bars(pad, y + 150, 620);
+
+      if (fmt === 'passport') {
+        /* Ficha completa: dos columnas de atributos, los tres indicadores y
+           el QR que reabre exactamente este genoma. */
+        var x1 = pad, x2 = W / 2 + 20, ry = y + 150;
+        ctx.fillStyle = '#7C214D'; ctx.font = '700 30px "Segoe UI", sans-serif';
+        ctx.fillText(en ? 'VARIETY PASSPORT' : 'PASAPORTE DE VARIEDAD', x1, ry);
+        var rows = [
+          [en ? 'Family' : 'Familia', App.lb(g.family)],
+          [en ? 'Class' : 'Clase', App.ncs(g.family)],
+          [en ? 'Shape' : 'Forma', App.lb(g.shape)],
+          [en ? 'Petal' : 'Pétalo', App.lb(g.petalShape)],
+          [en ? 'Arrangement' : 'Disposición', App.lb(g.arrangement)],
+          [en ? 'Pattern' : 'Patrón', App.lb(g.pattern)],
+          [en ? 'Diameter' : 'Diámetro', App.lb(g.diameter) + ' · ' + G.DIAMETER_CM[g.diameter] + ' cm'],
+          [en ? 'Density' : 'Densidad', Math.round(g.density * 100) + '% · ' + g.layers + (en ? ' layers' : ' capas')],
+          [en ? 'Growth' : 'Crecimiento', App.lb(g.growth)]
+        ];
+        var half = Math.ceil(rows.length / 2);
+        rows.forEach(function (r, i) {
+          var xx = i < half ? x1 : x2, yy = ry + 66 + (i < half ? i : i - half) * 62;
+          ctx.fillStyle = '#9C8A92'; ctx.font = '700 18px monospace';
+          ctx.fillText(String(r[0]).toUpperCase(), xx, yy);
+          ctx.fillStyle = '#241A1F'; ctx.font = '400 27px "Segoe UI", sans-serif';
+          ctx.fillText(r[1], xx, yy + 30);
+        });
+        /* Las barras arrancan bajo la última fila de la tabla, calculado a
+           partir de ella y no con una constante: así siguen encajando si
+           mañana cambia el número de atributos. */
+        var rowsEnd = ry + 66 + (half - 1) * 62 + 30;
+        var q = document.createElement('canvas');
+        var hasQR = QR && QR.toCanvas && QR.toCanvas(q, App.shareURL(), { size: 320, quiet: 4 });
+        bars(x1, rowsEnd + 78, 520);
+        if (hasQR) {
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(W - 370, rowsEnd + 30, 290, 290);
+          ctx.drawImage(q, W - 360, rowsEnd + 40, 270, 270);
+        }
+      }
+
+      ctx.fillStyle = '#9C8A92'; ctx.font = '400 24px monospace';
+      ctx.fillText(CFG.eventName, pad, H - 46);
+
+      var name = safeName(g.name) + '_DELIFLOR_' + fmt + '.png';
+      return canvasBlob(cv).then(function (blob) {
+        App.track('download:' + fmt);
+        /* En el móvil, la hoja nativa de compartir es lo que el visitante
+           espera: manda a WhatsApp o Instagram sin pasar por la galería. */
+        if (share && navigator.share && navigator.canShare) {
+          try {
+            var file = new File([blob], name, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              return navigator.share({ title: g.name || 'Deliflor Bloom Lab', files: [file] })
+                .catch(function () { saveBlob(blob, name); });
+            }
+          } catch (e) { /* sin File(): se descarga */ }
+        }
+        saveBlob(blob, name);
+      }).catch(function () {
+        App.toast(en ? 'Could not export the image' : 'No se pudo exportar la imagen');
+      });
     }
 
-    var src = App.shots.bouquet || App.shots.flower;
+    /* Si el visitante llega aquí sin captura previa (por ejemplo entrando
+       desde un enlace compartido, donde nunca pasó por la revelación), se
+       dibuja la flor con el trazador 2D. Sin este respaldo la lámina salía
+       con un hueco en blanco donde debería estar su flor. */
+    function fallbackShot() {
+      try {
+        var t = document.createElement('canvas');
+        t.width = t.height = 1000;
+        t.style.width = t.style.height = '1000px';
+        T.flower(t, g, { scale: 0.44 });
+        return t.toDataURL('image/png');
+      } catch (e) { return null; }
+    }
+
+    var src = App.shots.bouquet || App.shots.flower || fallbackShot();
     if (src) { var im = new Image(); im.onload = function () { finish(im); }; im.onerror = function () { finish(null); }; im.src = src; }
     else finish(null);
   }
@@ -946,4 +1090,19 @@
                : 'Esta variedad viaja completa dentro del enlace: nada de ella quedó guardado en un servidor.'
     }));
   };
+
+  /* Registro del service worker.
+
+     El kiosco de la feria no puede quedarse en blanco porque se caiga el
+     wifi del recinto. Sólo aplica bajo https (o localhost, para poder
+     probarlo aquí): con file:// el navegador lo rechaza y no hay nada que
+     hacer al respecto. */
+  App.defer(function () {
+    if (!('serviceWorker' in navigator)) return;
+    var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (location.protocol !== 'https:' && !local) return;
+    navigator.serviceWorker.register('sw.js?v=38').catch(function (e) {
+      if (window.console) console.warn('service worker:', e);
+    });
+  });
 })(window);

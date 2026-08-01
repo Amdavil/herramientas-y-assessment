@@ -34,7 +34,32 @@
 
   /* Listas ordenadas — el índice viaja en el QR. No reordenar. */
   var MODES        = ['natural', 'experimental', 'fantastic'];
-  var FAMILIES     = ['ballhia','decorative','margriet','spoon','spider','anemone','single','semidouble','double','surprise'];
+  /* El índice dentro de este arreglo es lo que viaja en el QR (4 bits, 16
+     valores). Las cuatro últimas se AÑADIERON después: agregar al final
+     conserva los índices 0-9 y los códigos ya impresos siguen abriendo la
+     misma flor. Nunca reordenar ni sustituir en el sitio — eso remapearía en
+     silencio cada QR que ya salió del stand. */
+  var FAMILIES     = ['ballhia','decorative','margriet','spoon','spider','anemone','single','semidouble','double','surprise',
+                      'quill','reflex','incurve','brush'];
+
+  /* Clase oficial de la National Chrysanthemum Society y morfología de cada
+     familia. Ver docs/referencia-botanica.md §2. */
+  var NCS = {
+    ballhia:   { ncs: 'NCS 3 · Regular Incurve', ray: 'Pétalo corto e incurvado',      disc: 'Centro oculto' },
+    decorative:{ ncs: 'NCS 4 · Decorative',      ray: 'Pétalo ancho superpuesto',      disc: 'Centro no visible' },
+    margriet:  { ncs: 'NCS 7 · Single / Daisy',  ray: 'Pétalo plano ligulado',         disc: 'Disco visible' },
+    spoon:     { ncs: 'NCS 9 · Spoon',           ray: 'Tubo con cazoleta en la punta', disc: 'Disco visible' },
+    spider:    { ncs: 'NCS 11 · Spider',         ray: 'Tubular largo que se enrosca',  disc: 'Centro pequeño' },
+    anemone:   { ncs: 'NCS 8 · Anemone',         ray: 'Rayos planos periféricos',      disc: 'Cojín central elevado' },
+    single:    { ncs: 'NCS 7 · Single',          ray: 'Una fila de rayos',             disc: 'Disco visible' },
+    semidouble:{ ncs: 'NCS 7 · Semi-double',     ray: 'Varias filas de rayos',         disc: 'Disco visible' },
+    double:    { ncs: 'NCS 5 · Intermediate Incurve', ray: 'Rayos parcialmente incurvados', disc: 'Centro lleno' },
+    surprise:  { ncs: 'NCS 13 · Exotic',         ray: 'Morfología libre',              disc: 'Variable' },
+    quill:     { ncs: 'NCS 10 · Quill',          ray: 'Tubular recto de punta abierta', disc: 'Centro oculto' },
+    reflex:    { ncs: 'NCS 2 · Reflex',          ray: 'Pétalo arqueado hacia abajo',   disc: 'Centro oculto' },
+    incurve:   { ncs: 'NCS 1 · Irregular Incurve', ray: 'Incurvado laxo con falda',    disc: 'Centro cerrado' },
+    brush:     { ncs: 'NCS 12 · Brush / Thistle', ray: 'Tubos cortos y erectos',       disc: 'Centro integrado' }
+  };
   var SHAPES       = ['circular','spherical','semispherical','flat','concave','convex','star','organic','compact','expanded'];
   var PETAL_SHAPES = ['rounded','oval','long','tubular','spoon','curly','pointed','wavy','spiral','irregular'];
   var EDGES        = ['smooth','wavy','toothed','curled','faded','sharp'];
@@ -147,6 +172,34 @@
       petalShape: 'oval', petalLength: 0.58, petalWidth: 0.48, petalCurve: 0.42,
       petalTwist: 0.07, petalEdge: 'smooth', arrangement: 'spiral',
       density: 0.8, layers: 8, diameter: 'medium', growth: 'spraySmall'
+    },
+    /* Las cuatro clases NCS que faltaban para cubrir el atlas completo.
+       Ver docs/referencia-botanica.md §2. */
+    quill: {
+      shape: 'expanded', openness: 0.72, volume: 0.48, centerSize: 0.06,
+      petalShape: 'tubular', petalLength: 0.86, petalWidth: 0.18, petalCurve: 0.62,
+      petalTwist: 0.16, petalEdge: 'smooth', arrangement: 'spiral',
+      density: 0.66, layers: 8, diameter: 'large', growth: 'disbud'
+    },
+    reflex: {
+      /* petalCurve alto = el rayo se arquea hacia abajo, que es justamente
+         lo que define la clase: plumaje colgante y centro tapado. */
+      shape: 'semispherical', openness: 0.56, volume: 0.66, centerSize: 0.04,
+      petalShape: 'long', petalLength: 0.82, petalWidth: 0.52, petalCurve: 0.84,
+      petalTwist: 0.06, petalEdge: 'smooth', arrangement: 'layered',
+      density: 0.78, layers: 9, diameter: 'large', growth: 'disbud'
+    },
+    incurve: {
+      shape: 'spherical', openness: 0.22, volume: 0.88, centerSize: 0.03,
+      petalShape: 'rounded', petalLength: 0.62, petalWidth: 0.60, petalCurve: 0.14,
+      petalTwist: 0.04, petalEdge: 'smooth', arrangement: 'spiral',
+      density: 0.94, layers: 12, diameter: 'xlarge', growth: 'disbud'
+    },
+    brush: {
+      shape: 'compact', openness: 0.68, volume: 0.38, centerSize: 0.14,
+      petalShape: 'tubular', petalLength: 0.42, petalWidth: 0.17, petalCurve: 0.46,
+      petalTwist: 0.26, petalEdge: 'curled', arrangement: 'radial',
+      density: 0.74, layers: 6, diameter: 'medium', growth: 'spraySmall'
     },
     surprise: null  /* se resuelve con randomize() */
   };
@@ -675,7 +728,7 @@
     PATTERNS: PATTERNS, GROWTH: GROWTH, DIAMETERS: DIAMETERS, STEMS: STEMS,
     FOLIAGE: FOLIAGE, BQ_STYLES: BQ_STYLES, BQ_ABUNDANCE: BQ_ABUNDANCE,
     BQ_EXTRAS: BQ_EXTRAS, BQ_WRAP: BQ_WRAP, BQ_BG: BQ_BG,
-    PERSONALITY: PERSONALITY, DIAMETER_CM: DIAMETER_CM, PRESETS: PRESETS,
+    PERSONALITY: PERSONALITY, DIAMETER_CM: DIAMETER_CM, PRESETS: PRESETS, NCS: NCS,
     base: base, clone: clone, applyPreset: applyPreset, normalize: normalize,
     randomize: randomize, rng: rng, advice: advice, scores: scores,
     suggestNames: suggestNames, checkName: checkName,

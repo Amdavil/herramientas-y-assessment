@@ -397,6 +397,15 @@ input[type=range]::-moz-range-thumb {
 }
 @keyframes pulse { 0%,100% { opacity: .45 } 50% { opacity: 1 } }
 #attract .btn.big { background: #fff; color: var(--wine); border-color: #fff; }
+/* La ruta rápida es la alternativa, no la opción principal: se ofrece en
+   contorno para que quien no tenga prisa siga viendo un solo botón lleno. */
+#attract .btn.big.alt {
+  background: transparent; color: #fff; border-color: rgba(255,255,255,.55);
+  margin-top: calc(var(--s)*.9); font-size: calc(var(--s)*1.35);
+  padding: calc(var(--s)*1.1) calc(var(--s)*3);
+  min-height: calc(var(--s)*4.4);
+}
+#attract .btn.big.alt:hover { background: rgba(255,255,255,.12); border-color: #fff; }
 
 /* laboratorio de hibridación */
 #lab { background: var(--paper); }

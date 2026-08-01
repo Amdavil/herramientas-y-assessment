@@ -32,6 +32,7 @@
     es: {
       tagline: 'Imagina el crisantemo del futuro',
       start: 'Crear mi flor', touch: 'Toca la pantalla para comenzar',
+      quick: 'Creación rápida · 75 segundos',
       back: 'Atrás', next: 'Continuar', surprise: 'Sorpréndeme',
       step: 'Paso', of: 'de',
       s_mode: 'Elige tu modo creativo', s_mode_h: 'Define hasta dónde puede llegar tu flor.',
@@ -59,6 +60,7 @@
     en: {
       tagline: "Imagine tomorrow's chrysanthemum",
       start: 'Create my flower', touch: 'Touch the screen to begin',
+      quick: 'Quick creation · 75 seconds',
       back: 'Back', next: 'Continue', surprise: 'Surprise me',
       step: 'Step', of: 'of',
       s_mode: 'Choose your creative mode', s_mode_h: 'Set how far your flower may go.',
@@ -96,6 +98,8 @@
     spoon: ['Cuchara', 'Spoon'], spider: ['Araña', 'Spider'], anemone: ['Anémona', 'Anemone'],
     single: ['Simple', 'Single'], semidouble: ['Semidoble', 'Semi-double'], double: ['Doble', 'Double'],
     surprise: ['Sorpresa', 'Surprise'],
+    quill: ['Canuto', 'Quill'], reflex: ['Refleja', 'Reflex'],
+    incurve: ['Incurvada', 'Incurve'], brush: ['Brocha', 'Brush'],
 
     circular: ['Circular', 'Circular'], spherical: ['Esférica', 'Spherical'], semispherical: ['Semiesférica', 'Semi-spherical'],
     flat: ['Plana', 'Flat'], concave: ['Cóncava', 'Concave'], convex: ['Convexa', 'Convex'],
@@ -149,6 +153,11 @@
 
   App.t = function (k) { return (L[App.lang] && L[App.lang][k]) || L.es[k] || k; };
   App.lb = function (k) { var e = LB[k]; return e ? (App.lang === 'en' ? e[1] : e[0]) : k; };
+  /* Clase oficial NCS de una familia. Va junto al nombre comercial en el
+     pasaporte y en las descargas: es el dato que un floricultor reconoce. */
+  App.ncs = function (fam) { var e = G.NCS[fam]; return e ? e.ncs : 'Chrysanthemum'; };
+  App.ncsRay = function (fam) { var e = G.NCS[fam]; return e ? e.ray : ''; };
+  App.ncsDisc = function (fam) { var e = G.NCS[fam]; return e ? e.disc : ''; };
 
   /* ---------------------------------------------------------------
      Estado
@@ -161,6 +170,24 @@
   var FLOW = App.FLOW = ['attract', 'mode', 'family', 'shape', 'petals', 'color', 'size',
                          'personality', 'lab', 'reveal', 'bouquet', 'name', 'passport', 'share', 'end'];
   App.step = 0;
+
+  /* Ruta rápida.
+
+     En una feria con fila, el recorrido completo de 14 pasos es demasiado:
+     la gente se sale a la mitad y el kiosco queda ocupado. Ésta salta el
+     modo creativo, la forma, los pétalos y el ramo — todo eso conserva sus
+     valores del preset de familia, así que la flor sigue saliendo completa
+     y coherente, sólo que decidida por nosotros en vez de por el visitante.
+
+     Es un subconjunto de FLOW, no una lista aparte: las pantallas son las
+     mismas y no hay que mantener dos recorridos. */
+  var QUICK = App.QUICK = ['family', 'color', 'size', 'personality',
+                           'lab', 'reveal', 'name', 'passport', 'share', 'end'];
+  App.route = null;   /* null = laboratorio completo; 'quick' = ruta rápida */
+
+  /* Lista de pasos activa según la ruta. */
+  function steps() { return App.route === 'quick' ? QUICK : FLOW; }
+  App.steps = steps;
 
   /* ---------------------------------------------------------------
      Utilidades DOM
@@ -332,6 +359,7 @@
     App.track('abandon:' + FLOW[App.step]);
     App.g = G.base();
     App.consent = false;
+    App.route = null;   /* el siguiente visitante empieza de cero */
     App.step = 0;
     App.render();
   };
@@ -359,10 +387,23 @@
     App.step = i < 0 ? 0 : i;
     App.render();
   };
+  /* next/prev caminan sobre la ruta activa. En la completa el índice de FLOW
+     y la posición coinciden; en la rápida hay que traducir de una a otra. */
   App.next = function () {
+    var list = steps();
+    if (App.route === 'quick') {
+      var i = list.indexOf(FLOW[App.step]);
+      if (i >= 0 && i < list.length - 1) return App.go(list[i + 1]);
+    }
     if (App.step < FLOW.length - 1) { App.step++; App.render(); }
   };
   App.prev = function () {
+    var list = steps();
+    if (App.route === 'quick') {
+      var i = list.indexOf(FLOW[App.step]);
+      if (i > 0) return App.go(list[i - 1]);
+      return;
+    }
     if (App.step > 1) { App.step--; App.render(); }
   };
 
@@ -388,7 +429,17 @@
   /* Cabecera + escenario + panel + navegación */
   App.shell = function (app, opts) {
     var id = FLOW[App.step];
-    var stepNo = App.step, totalSteps = FLOW.length - 2;
+    /* El contador y la barra siguen la ruta activa: en la rápida marcar
+       "paso 3 de 13" cuando sólo quedan siete sería desmoralizante, y es
+       justo lo que hace que alguien con prisa abandone. */
+    var stepNo, totalSteps;
+    if (App.route === 'quick') {
+      stepNo = QUICK.indexOf(id) + 1;
+      totalSteps = QUICK.length - 1;   /* 'end' no cuenta como paso */
+    } else {
+      stepNo = App.step;
+      totalSteps = FLOW.length - 2;
+    }
 
     var prog = h('div', { class: 'progress' });
     for (var i = 1; i <= totalSteps; i++) {
@@ -552,17 +603,27 @@
         h('h1', { html: 'Bloom&nbsp;Lab' }),
         h('div', { class: 'tag', text: App.t('tagline') }),
         h('button', { class: 'btn big', onclick: begin, text: App.t('start') }),
+        h('button', {
+          class: 'btn big alt',
+          text: App.t('quick'),
+          onclick: function (e) { e.stopPropagation(); begin('quick'); }
+        }),
         h('div', { class: 'touch', text: App.t('touch') })
       ])
     ]);
     app.appendChild(wrap);
     startAttract(cv);
-    function begin() {
-      App.track('session');
+    /* Tocar cualquier parte de la pantalla arranca el recorrido completo;
+       sólo el botón de la ruta rápida la activa, y por eso detiene la
+       propagación: si no, el onpointerdown del fondo se le adelantaba. */
+    function begin(route) {
+      App.route = route === 'quick' ? 'quick' : null;
+      App.track(App.route === 'quick' ? 'session:quick' : 'session');
       App.startedAt = Date.now();
       App.g = G.base();
       G.applyPreset(App.g, 'ballhia');
-      App.go('mode');
+      if (App.route === 'quick') { G.normalize(App.g); App.go('family'); }
+      else App.go('mode');
     }
   };
 
@@ -646,7 +707,12 @@
   /* 03 · Familia ----------------------------------------------------- */
   App.screens.family = function (app) {
     var s = App.shell(app, { title: App.t('s_family'), hint: App.t('s_family_h'), kind: 'flower' });
-    var items = ids(G.FAMILIES);
+    /* Cada familia lleva su clase oficial NCS como subtítulo: convierte la
+       elección en un dato botánico reconocible para el floricultor que pasa
+       por el stand, sin estorbar al visitante que sólo mira la forma. */
+    var items = G.FAMILIES.map(function (k) {
+      return { id: k, label: App.lb(k), desc: App.ncs(k).replace(/^NCS\s*/, 'NCS ') };
+    });
     s.body.appendChild(optionGrid(items, App.g.family, function (id) {
       if (id === 'surprise') {
         App.g = G.randomize(App.g);

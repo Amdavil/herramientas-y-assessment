@@ -20,13 +20,47 @@ copia la carpeta a un computador y funciona.
 
 **Cero red.** Las quince pantallas, el modelo 3D, el ramo, el pasaporte y el QR
 funcionan con el cable desconectado. La red de un recinto ferial no es una
-dependencia aceptable.
+dependencia aceptable. Un service worker (`sw.js`) guarda todo lo necesario en
+la primera visita, así que el kiosco arranca aunque el wifi del recinto no
+aparezca nunca. **Su lista de assets lleva el mismo `?v=` que `index.html`: hay
+que subir los dos en cada despliegue.**
 
 **El QR lleva la flor adentro.** El genoma completo se comprime a unos 40 bytes y
 viaja codificado en la propia dirección del enlace. El teléfono del visitante
 reconstruye la flor desde la URL: sin base de datos, sin cuenta y sin registrar
 nada en ningún servidor. Como el fragmento que sigue a `#` nunca se envía, la
 creación no queda ni en los registros del servidor.
+
+---
+
+## Dos recorridos
+
+La pantalla de atracción ofrece dos caminos sobre el mismo genoma:
+
+- **Laboratorio completo** — las 14 pantallas, 2 a 4 minutos. El recorrido
+  pensado para quien quiere diseñar de verdad.
+- **Creación rápida** — 9 pantallas, ~75 segundos. Salta modo creativo, forma,
+  pétalos y ramo; esos valores los pone el preset de la familia, así que la
+  flor sale igual de completa. Existe porque en una feria con fila el recorrido
+  largo hace que la gente se salga a la mitad y deje el kiosco ocupado.
+
+No son dos aplicaciones: la rápida es un subconjunto de `FLOW`, con las mismas
+pantallas y el mismo genoma. Ver `App.QUICK` en `js/app.js`.
+
+---
+
+## Atlas morfológico
+
+Las 14 familias corresponden a clases reales de la National Chrysanthemum
+Society, y cada una muestra su clase junto al nombre comercial. La
+justificación botánica de cada forma está en
+[`docs/referencia-botanica.md`](docs/referencia-botanica.md), contrastada
+contra un banco de 139 fotografías de variedades reales.
+
+> El índice de familia viaja en 4 bits del QR. Las cuatro últimas se
+> **añadieron al final** justamente para no mover los índices 0-9: reordenar
+> o sustituir en el sitio haría que cada QR ya impreso abriera una flor
+> distinta, sin ningún aviso.
 
 ---
 
