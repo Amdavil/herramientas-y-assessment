@@ -1,0 +1,12 @@
+{
+  "name": "DELIFLOR Bloom Lab V11 · Genome Edition",
+  "short_name": "Bloom Lab V11",
+  "description": "Diseño botánico 3D, pasaporte, descargas y visor móvil por QR.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#7C214D",
+  "theme_color": "#7C214D",
+  "lang": "es"
+}
