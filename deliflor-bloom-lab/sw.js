@@ -17,8 +17,8 @@
 
    IMPORTANTE: subir CACHE en cada despliegue, junto con el ?v= de index.html.
    ========================================================================= */
-var CACHE = 'bloom-lab-v40';
-var V = '?v=40';
+var CACHE = 'bloom-lab-v43';
+var V = '?v=43';
 
 var ASSETS = [
   './',

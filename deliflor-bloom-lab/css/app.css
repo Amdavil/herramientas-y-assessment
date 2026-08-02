@@ -12,12 +12,14 @@
      a 4K; en 3840×2160 da ~38.4px, así que en la práctica no se activa. */
   --s: clamp(8.5px, min(1vw, 1.7778vh), 40px);
 
-  --df-coral:   #E8604A;
-  --df-navy:    #2E5C8E;
-  /* Azul del asta de la "i". La variante clara es para el vino de la
-     pantalla de atracción, donde el azul de marca casi desaparece. */
-  --df-blue:    #2E5C8E;
-  --df-blue-lt: #8FB6DE;
+  /* Colores muestreados del isotipo oficial de Deliflor, no estimados:
+     el rojo es un bermellón, no un coral, y el azul es un añil oscuro. */
+  --df-coral:   #E72E3B;
+  --df-navy:    #223A77;
+  --df-blue:    #223A77;
+  /* Sobre el vino de la marca, el añil oficial queda casi ilegible.
+     Esta es la misma tinta aclarada para fondos oscuros. */
+  --df-blue-lt: #8C9FD4;
 
   --wine:       #7C214D;
   --wine-dark:  #5C0F38;
@@ -110,8 +112,11 @@ html, body {
   width: .50em; align-self: baseline;
 }
 .df-word .df-eye svg {
-  position: absolute; left: 50%; bottom: -.22em;
-  height: 1.44em; width: auto; transform: translateX(-52%);
+  /* El gancho baja un poco de la línea base, como en el original, pero sin
+     descolgarse: a 1.44em invadía el aire bajo la palabra y rompía el
+     equilibrio con la regla. */
+  position: absolute; left: 50%; bottom: -.10em;
+  height: 1.32em; width: auto; transform: translateX(-52%);
   overflow: visible;
 }
 .df-dot  { fill: var(--df-coral); }
@@ -124,9 +129,18 @@ html, body {
 .v11-shared .df-stem { fill: var(--df-blue-lt); }
 
 .df-rule { align-self: stretch; height: 1px; background: currentColor; opacity: .3; }
+/* "AMÉRICAS" va CENTRADO bajo la palabra, no alineado a la izquierda: en el
+   lockup original queda a eje con "DELIFLOR".
+
+   El tracking deja un hueco sobrante DESPUÉS de la última letra que entra en
+   la caja pero no se ve, así que el texto visible queda descentrado hacia la
+   izquierda. Se corrige empujando la MITAD de ese hueco: desplazarlo entero
+   pasa el centro al otro lado. */
 .df-sub {
   font-family: var(--f-mono); text-transform: uppercase; color: currentColor; opacity: .6;
   letter-spacing: .34em;
+  align-self: center;
+  margin-left: .17em;
 }
 /* Modo icono: sólo el glifo, para donde no cabe la palabra entera
    (cabecera del pasaporte). */

@@ -1101,7 +1101,7 @@
     if (!('serviceWorker' in navigator)) return;
     var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     if (location.protocol !== 'https:' && !local) return;
-    navigator.serviceWorker.register('sw.js?v=40').catch(function (e) {
+    navigator.serviceWorker.register('sw.js?v=43').catch(function (e) {
       if (window.console) console.warn('service worker:', e);
     });
   });
