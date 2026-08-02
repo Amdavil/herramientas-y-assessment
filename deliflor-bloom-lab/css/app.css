@@ -14,6 +14,10 @@
 
   --df-coral:   #E8604A;
   --df-navy:    #2E5C8E;
+  /* Azul del asta de la "i". La variante clara es para el vino de la
+     pantalla de atracción, donde el azul de marca casi desaparece. */
+  --df-blue:    #2E5C8E;
+  --df-blue-lt: #8FB6DE;
 
   --wine:       #7C214D;
   --wine-dark:  #5C0F38;
@@ -79,63 +83,61 @@ html, body {
 }
 
 /* ---------------------------------------------------------------
-   Marca Deliflor — wordmark uniforme (hereda currentColor: oscuro sobre
-   papel, blanco sobre el vino de la atracción) con un único acento coral
-   ovalado e inclinado sobre la "I". El lockup real del catálogo es así
-   de simple — no dos letras de colores distintos, sólo la palabra más
-   un pequeño gesto de marca encima de la "I".
+   Marca Deliflor.
+
+   El wordmark hereda currentColor (oscuro sobre papel, blanco sobre el
+   vino de la atracción), pero la "i" NO: es un glifo caligráfico de dos
+   tintas propias —óvalo coral sobre asta azul con gancho— y ésas son
+   colores de marca, no del tema.
+
+   Peso 400 y tracking amplio: el lockup real es de trazo ligero y muy
+   espaciado; en negrita se convierte en otra marca.
    --------------------------------------------------------------- */
 .df-logo { display: inline-flex; flex-direction: column; align-items: flex-start; }
 .df-word {
   display: inline-flex; align-items: baseline; position: relative;
   font-family: "Century Gothic", "Futura", "Avenir Next", "Segoe UI", sans-serif;
-  font-weight: 700; letter-spacing: .01em; white-space: nowrap;
-  /* line-height:1 aprieta la caja de línea al glifo — sin esto, el
-     interlineado por defecto varía mucho entre fuentes (según la
-     disponible en cada máquina) y el acento queda "flotando" a
-     distancias distintas de la "I" según el navegador. */
+  font-weight: 400; letter-spacing: .14em; white-space: nowrap;
+  /* line-height:1 aprieta la caja de línea al glifo: sin esto el
+     interlineado varía según la fuente disponible en cada máquina y el
+     glifo queda a distintas alturas en cada navegador. */
   line-height: 1;
 }
+/* El hueco que ocupa la "i" dentro de la palabra. El glifo se posiciona
+   dentro, colgando bajo la línea base como en el original. */
 .df-word .df-eye {
   position: relative; display: inline-block;
+  width: .50em; align-self: baseline;
 }
-.df-i {
-  /* el acento: una elipse coral inclinada, no una letra aparte.
-     bottom:100% se apoya en la caja de línea completa, no en el asta
-     de la "I" — con el interlineado de estas fuentes eso deja un hueco
-     visible encima de la letra, así que se compensa con un margen
-     negativo para que el óvalo quede pegado al remate de la "I". */
-  position: absolute; left: 50%; bottom: 100%;
-  width: .52em; height: .30em; margin-bottom: .04em;
-  background: var(--df-coral); border-radius: 50%;
-  transform: translateX(-50%) rotate(-20deg);
+.df-word .df-eye svg {
+  position: absolute; left: 50%; bottom: -.22em;
+  height: 1.44em; width: auto; transform: translateX(-52%);
+  overflow: visible;
 }
+.df-dot  { fill: var(--df-coral); }
+.df-stem { fill: var(--df-blue); }
+/* Sobre vino el azul de marca pierde casi todo el contraste. Se aclara en
+   las tres superficies oscuras donde aparece el logo: la atracción, la
+   cabecera del pasaporte y la vista compartida del móvil. */
+#attract .df-stem,
+.phead .df-stem,
+.v11-shared .df-stem { fill: var(--df-blue-lt); }
+
 .df-rule { align-self: stretch; height: 1px; background: currentColor; opacity: .3; }
 .df-sub {
   font-family: var(--f-mono); text-transform: uppercase; color: currentColor; opacity: .6;
   letter-spacing: .34em;
 }
-/* modo icono: barra "I" + acento, para espacios donde no cabe la palabra
-   completa (cabecera del pasaporte, favicon) */
+/* Modo icono: sólo el glifo, para donde no cabe la palabra entera
+   (cabecera del pasaporte). */
 .df-logo.icon-only { flex: 0 0 auto; position: relative; }
-.df-logo.icon-only .df-ibar {
-  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
-  width: 22%; height: 68%; background: currentColor; border-radius: 999px;
-}
-.df-logo.icon-only .df-i {
-  position: absolute; left: 50%; bottom: 68%; margin-bottom: -.06em;
-  width: 62%; height: 34%; transform: translateX(-50%) rotate(-20deg);
-}
-.df-logo.icon-only.sm { width: calc(var(--s)*1.5); height: calc(var(--s)*2.5); }
-.df-logo.icon-only.md { width: calc(var(--s)*2.1); height: calc(var(--s)*3.5); }
+.df-logo.icon-only svg { width: 100%; height: 100%; display: block; }
+.df-logo.icon-only.sm { width: calc(var(--s)*1.5); height: calc(var(--s)*3); }
+.df-logo.icon-only.md { width: calc(var(--s)*2.1); height: calc(var(--s)*4.2); }
 
 .df-logo.sm .df-word  { font-size: calc(var(--s)*2.2); }
-.df-logo.sm .df-rule  { margin-top: calc(var(--s)*.28); display: none; }
+.df-logo.sm .df-rule  { display: none; }
 .df-logo.sm .df-sub   { display: none; }
-/* A tamaño de barra el óvalo coral cae a ~8px reales y se pierde en el
-   antialiasing — se agranda la proporción sólo aquí para que siga
-   leyéndose como un gesto de marca y no como una mota perdida. */
-.df-logo.sm .df-i     { width: .74em; height: .44em; margin-bottom: .04em; }
 
 .df-logo.md .df-word  { font-size: calc(var(--s)*3.4); }
 .df-logo.md .df-rule  { margin-top: calc(var(--s)*.4); width: 100%; }

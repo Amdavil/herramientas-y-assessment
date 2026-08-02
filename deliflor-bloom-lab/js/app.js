@@ -228,17 +228,45 @@
              'md'  — pasaporte y vista compartida
              'lg'  — hero de la pantalla de atracción
      iconOnly: true — sólo la "I" con su acento, para espacios angostos */
+  /* Marca Deliflor.
+
+     La "i" no es una letra: es un glifo caligráfico de dos tintas — un óvalo
+     coral inclinado sobre un asta azul con gancho. Sustituirla por una "I"
+     normal con un punto encima, como se intentó antes, pierde justo lo que
+     identifica a la marca.
+
+     Se dibuja como SVG en línea y no como archivo aparte porque el kiosco
+     funciona sin red y una petición menos es una cosa menos que puede
+     fallar. El trazado está en coordenadas 100x210. */
+  var GLYPH_D = 'M40 32 C60 32,72 44,70 64 C68 88,54 112,49 132 ' +
+                'C45 148,51 160,65 160 C74 160,81 154,84 146 ' +
+                'C84 165,71 178,54 178 C33 178,22 160,26 136 ' +
+                'C30 110,47 86,49 66 C50 48,44 40,32 38 Z';
+
+  function glyphSVG() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 100 210');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    var el = document.createElementNS(ns, 'ellipse');
+    el.setAttribute('cx', '56'); el.setAttribute('cy', '11');
+    el.setAttribute('rx', '25'); el.setAttribute('ry', '14');
+    el.setAttribute('transform', 'rotate(-24 56 11)');
+    el.setAttribute('class', 'df-dot');
+    var p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', GLYPH_D);
+    p.setAttribute('class', 'df-stem');
+    svg.appendChild(el); svg.appendChild(p);
+    return svg;
+  }
+
   App.logo = function (size, iconOnly) {
+    /* Modo icono: sólo el glifo, para donde no cabe la palabra entera. */
     if (iconOnly) {
-      return h('div', { class: 'df-logo icon-only ' + (size || 'sm') }, [
-        h('span', { class: 'df-i', 'aria-hidden': 'true' }),
-        h('span', { class: 'df-ibar', 'aria-hidden': 'true' })
-      ]);
+      return h('div', { class: 'df-logo icon-only ' + (size || 'sm') }, [glyphSVG()]);
     }
-    var eye = h('span', { class: 'df-eye' }, [
-      document.createTextNode('I'),
-      h('span', { class: 'df-i', 'aria-hidden': 'true' })
-    ]);
+    var eye = h('span', { class: 'df-eye' }, [glyphSVG()]);
     var word = h('div', { class: 'df-word' }, [
       document.createTextNode('DEL'), eye, document.createTextNode('FLOR')
     ]);
