@@ -1,10 +1,10 @@
 /* DELIFLOR Bloom Lab V11.1 · Marca oficial y pantalla final */
 .df-logo.df-logo-official{display:inline-flex;align-items:center;justify-content:flex-start;flex:0 0 auto;line-height:1;color:initial;overflow:visible}
-.df-logo.df-logo-official img{display:block;width:auto;height:auto;max-width:100%;object-fit:contain;user-select:none;-webkit-user-drag:none}
+.df-logo.df-logo-official img{display:block;width:auto;height:auto;max-width:100%;object-fit:contain;object-position:center;user-select:none;-webkit-user-drag:none}
 .df-logo.df-logo-official.sm img{width:calc(var(--s)*10.4);max-height:calc(var(--s)*3.45)}
 .df-logo.df-logo-official.md img{width:calc(var(--s)*14.6);max-height:calc(var(--s)*5)}
 .df-logo.df-logo-official.lg img{width:calc(var(--s)*22);max-height:calc(var(--s)*7.4)}
-.df-logo.df-logo-official.icon-only img{width:calc(var(--s)*5.2);max-height:calc(var(--s)*2.4);object-fit:cover;object-position:center}
+.df-logo.df-logo-official.icon-only img{width:calc(var(--s)*7.2);max-height:calc(var(--s)*2.4);object-fit:contain;object-position:center}
 .v11-mobile-head .df-logo.df-logo-official img{width:min(50vw,210px);max-height:70px}
 
 body.v11-share-screen #app{overflow:hidden}
