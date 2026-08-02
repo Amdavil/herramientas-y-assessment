@@ -3,9 +3,9 @@
   'use strict';
   var App=root.App;
   if(!App||!App.h)return;
-  var LOGO='assets/deliflor-logo.svg?v=1102';
+  var LOGO='assets/deliflor-logo.svg?v=1103';
 
-  /* Sustituye el wordmark reconstruido por el activo oficial exacto. */
+  /* Usa siempre el archivo oficial completo, sin reconstrucción tipográfica. */
   App.logo=function(size,iconOnly){
     var cls='df-logo df-logo-official '+(size||'sm')+(iconOnly?' icon-only':'');
     return App.h('div',{class:cls},[
