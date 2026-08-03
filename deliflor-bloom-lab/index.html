@@ -1,38 +1,37 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <link rel="canonical" href="https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/">
-  <title>DELIFLOR Bloom Lab — redirigiendo…</title>
-  <!--
-    La flor completa viaja en el fragmento (#g=...) del enlace, y ni un
-    meta-refresh ni location.replace() con una URL sin fragmento lo
-    conservan: el visitante que escaneaba un QR ya impreso acababa en la
-    pantalla de inicio, sin su variedad. Por eso el salto se hace desde
-    JavaScript arrastrando location.hash.
-
-    El meta-refresh se dejó fuera a propósito: se dispara antes que el
-    script y se llevaría por delante el fragmento. Sin JavaScript la
-    aplicación no funciona de todos modos, así que ahí basta el enlace
-    manual de abajo.
-  -->
-  <script>
-    (function () {
-      var destino = 'https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/';
-      location.replace(destino + location.search + location.hash);
-    })();
-  </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="description" content="Deliflor Bloom Lab — imagina el crisantemo del futuro. Experiencia interactiva para pantalla táctil.">
+<meta name="theme-color" content="#7C214D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Deliflor Bloom Lab</title>
+<!-- El sufijo ?v= evita que el kiosco siga sirviendo una copia en
+     caché tras una actualización. Súbelo en cada despliegue. -->
+<link rel="manifest" href="manifest.webmanifest">
+<!-- El mismo glifo caligráfico del logo, no una barra recta: a 16 px es lo
+     único que identifica la pestaña. Azul claro para que se lea sobre vino. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-6 -6 112 212'><rect x='-6' y='-6' width='112' height='212' rx='16' fill='%237C214D'/><path d='M77.24 0.00C79.27 -0.14,86.59 -0.14,88.62 0.00C90.65 0.14,88.89 0.68,89.43 0.81C89.97 0.95,90.65 0.41,91.87 0.81C93.09 1.22,95.53 2.44,96.75 3.25C97.97 4.07,98.64 5.01,99.19 5.69C99.73 6.37,99.86 5.83,100.00 7.32C100.14 8.81,100.14 13.01,100.00 14.63C99.86 16.26,99.86 15.85,99.19 17.07C98.51 18.29,97.15 20.46,95.93 21.95C94.72 23.44,93.63 24.53,91.87 26.02C90.11 27.51,88.08 29.27,85.37 30.89C82.66 32.52,79.13 34.42,75.61 35.77C72.09 37.13,68.56 38.48,64.23 39.02C59.89 39.57,52.85 39.30,49.59 39.02C46.34 38.75,46.21 38.21,44.72 37.40C43.22 36.59,41.60 35.23,40.65 34.15C39.70 33.06,39.30 32.38,39.02 30.89C38.75 29.40,38.35 27.37,39.02 25.20C39.70 23.04,41.46 20.05,43.09 17.89C44.72 15.72,46.88 13.82,48.78 12.20C50.68 10.57,51.90 9.62,54.47 8.13C57.05 6.64,61.25 4.47,64.23 3.25C67.21 2.03,70.33 1.22,72.36 0.81C74.39 0.41,75.61 0.95,76.42 0.81C77.24 0.68,75.20 0.14,77.24 0.00Z' fill='%23E72E3B'/><path d='M40.65 57.72C44.31 56.91,49.59 57.18,52.85 57.72C56.10 58.27,58.13 59.35,60.16 60.98C62.20 62.60,64.23 65.99,65.04 67.48C65.85 68.97,64.91 69.38,65.04 69.92C65.18 70.46,65.72 68.97,65.85 70.73C65.99 72.49,66.26 77.51,65.85 80.49C65.45 83.47,65.04 85.09,63.41 88.62C61.79 92.14,61.25 94.72,56.10 101.63C50.95 108.54,38.35 122.49,32.52 130.08C26.69 137.67,24.12 142.14,21.14 147.15C18.16 152.17,15.99 157.18,14.63 160.16C13.28 163.14,13.28 163.55,13.01 165.04C12.74 166.53,11.52 167.48,13.01 169.11C14.50 170.73,19.65 173.58,21.95 174.80C24.25 176.02,25.47 176.15,26.83 176.42C28.18 176.69,29.40 176.29,30.08 176.42C30.76 176.56,29.40 177.10,30.89 177.24C32.38 177.37,36.31 177.64,39.02 177.24C41.73 176.83,44.72 176.02,47.15 174.80C49.59 173.58,51.63 171.14,53.66 169.92C55.69 168.70,57.05 167.89,59.35 167.48C61.65 167.07,65.58 167.21,67.48 167.48C69.38 167.75,69.65 168.29,70.73 169.11C71.82 169.92,73.17 171.14,73.98 172.36C74.80 173.58,75.47 174.80,75.61 176.42C75.75 178.05,75.47 180.22,74.80 182.11C74.12 184.01,72.90 186.18,71.54 187.80C70.19 189.43,68.70 190.51,66.67 191.87C64.63 193.22,62.47 194.72,59.35 195.93C56.23 197.15,51.76 198.64,47.97 199.19C44.17 199.73,38.62 199.32,36.59 199.19C34.55 199.05,36.31 198.51,35.77 198.37C35.23 198.24,34.82 198.78,33.33 198.37C31.84 197.97,29.27 197.43,26.83 195.93C24.39 194.44,20.46 191.06,18.70 189.43C16.94 187.80,17.21 187.94,16.26 186.18C15.31 184.42,13.55 181.71,13.01 178.86C12.47 176.02,14.23 172.09,13.01 169.11C11.79 166.12,7.45 163.41,5.69 160.98C3.93 158.54,3.25 156.50,2.44 154.47C1.63 152.44,1.08 150.27,0.81 148.78C0.54 147.29,0.95 146.21,0.81 145.53C0.68 144.85,0.14 148.37,0.00 144.72C-0.14 141.06,-0.14 127.24,0.00 123.58C0.14 119.92,0.68 123.71,0.81 122.76C0.95 121.82,0.68 118.83,0.81 117.89C0.95 116.94,1.22 118.83,1.63 117.07C2.03 115.31,2.03 111.52,3.25 107.32C4.47 103.12,7.18 95.93,8.94 91.87C10.70 87.80,11.79 86.18,13.82 82.93C15.85 79.67,18.29 75.75,21.14 72.36C23.98 68.97,27.64 65.04,30.89 62.60C34.15 60.16,36.99 58.54,40.65 57.72Z' fill='%238C9FD4'/></svg>">
+<link rel="stylesheet" href="css/app.css?v=47">
 </head>
 <body>
-  <p>DELIFLOR Bloom Lab se movió a su propio repositorio.
-  Si no lo redirige automáticamente, entre aquí:
-  <a id="ir" href="https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/">https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/</a></p>
-  <script>
-    /* El enlace manual también conserva la flor. */
-    (function () {
-      var a = document.getElementById('ir');
-      if (a) a.href += location.search + location.hash;
-    })();
-  </script>
+
+<div id="app" aria-live="polite">
+  <noscript>
+    <p style="padding:2rem;font-family:sans-serif">Deliflor Bloom Lab necesita JavaScript para funcionar.</p>
+  </noscript>
+</div>
+
+<script src="js/genome.js?v=47"></script>
+<script src="js/mesh.js?v=47"></script>
+<script src="js/gl.js?v=47"></script>
+<script src="js/thumbs.js?v=47"></script>
+<script src="js/qr.js?v=47"></script>
+<script src="js/ai.js?v=47"></script>
+<script src="js/app.js?v=47"></script>
+<script src="js/finish.js?v=47"></script>
 </body>
 </html>
