@@ -2,14 +2,37 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/">
   <link rel="canonical" href="https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/">
   <title>DELIFLOR Bloom Lab — redirigiendo…</title>
-  <script>location.replace("https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/");</script>
+  <!--
+    La flor completa viaja en el fragmento (#g=...) del enlace, y ni un
+    meta-refresh ni location.replace() con una URL sin fragmento lo
+    conservan: el visitante que escaneaba un QR ya impreso acababa en la
+    pantalla de inicio, sin su variedad. Por eso el salto se hace desde
+    JavaScript arrastrando location.hash.
+
+    El meta-refresh se dejó fuera a propósito: se dispara antes que el
+    script y se llevaría por delante el fragmento. Sin JavaScript la
+    aplicación no funciona de todos modos, así que ahí basta el enlace
+    manual de abajo.
+  -->
+  <script>
+    (function () {
+      var destino = 'https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/';
+      location.replace(destino + location.search + location.hash);
+    })();
+  </script>
 </head>
 <body>
   <p>DELIFLOR Bloom Lab se movió a su propio repositorio.
   Si no lo redirige automáticamente, entre aquí:
-  <a href="https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/">https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/</a></p>
+  <a id="ir" href="https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/">https://amdavil.github.io/deliflor-bloom-lab/deliflor-bloom-lab/</a></p>
+  <script>
+    /* El enlace manual también conserva la flor. */
+    (function () {
+      var a = document.getElementById('ir');
+      if (a) a.href += location.search + location.hash;
+    })();
+  </script>
 </body>
 </html>
