@@ -9,10 +9,29 @@
 
   App.shots = {};
 
+  /* Captura del escenario 3D.
+
+     Leer el lienzo sin más no basta: el bucle de dibujo va por
+     requestAnimationFrame, y cualquier redimensionado reinicia el búfer y
+     lo deja en blanco hasta el siguiente fotograma. Si el visitante pulsa
+     "Continuar" justo en ese hueco, la captura sale vacía y la lámina que
+     se lleva no tiene flor. Por eso se fuerza un fotograma y se espera a
+     que la GPU termine ANTES de leer. */
   function snapshot() {
     try {
       var cv = App.stageEl;
-      return cv && cv.toDataURL ? cv.toDataURL('image/png') : null;
+      if (!cv || !cv.toDataURL) return null;
+      var r = App.renderer;
+      if (r && r.ok && r.count) {
+        r.dirty = true;
+        r.frame(0);
+        r.gl.finish();
+      }
+      var d = cv.toDataURL('image/png');
+      /* Una imagen uniforme (todo negro o todo del color de fondo) comprime
+         a unos pocos KB. Por debajo de ese umbral se descarta: es preferible
+         recurrir al trazador 2D que entregar una lámina en blanco. */
+      return (d && d.length > 8000) ? d : null;
     } catch (e) { return null; }
   }
 
@@ -572,15 +591,27 @@
      supera el límite de longitud de URL de varios navegadores móviles y
      falla en silencio, que es la peor forma de fallar en un evento.
      ----------------------------------------------------------------- */
+  /* Alto que ocupa el bloque bajo la imagen, medido desde el borde inferior
+     de la foto. Se declara aquí y la altura de la imagen se DEDUCE de él,
+     en vez de fijar las dos por separado: así el pie no puede acabar encima
+     de los cuadros de color, que es lo que pasaba en cuadrada y en HD.
+
+       90  hueco hasta la línea base del nombre
+       56  del nombre al subtítulo
+       70  del subtítulo a los cuadros de color
+       80  alto de los cuadros
+       60  aire antes del pie
+     ------
+      356  total; los formatos con indicadores suman su alto. */
+  var BLOCK = 356, BARS = 150 + 3 * 74;
+
   var EXPORT_SPEC = {
-    square:   { w: 1080, h: 1080, imgY: 120, imgH: 640 },
-    story:    { w: 1080, h: 1920, imgY: 120, imgH: 1080 },
-    hd:       { w: 1920, h: 1080, imgY: 110, imgH: 660 },
-    /* La lámina del pasaporte es más baja que la de los otros formatos
-       porque debajo tiene que caber la ficha completa: título de sección,
-       nueve atributos en dos columnas, los tres indicadores y el pie. Con
-       930 px de imagen las barras se montaban encima de la tabla. */
-    passport: { w: 1600, h: 2000, imgY: 130, imgH: 820 }
+    square:   { w: 1080, h: 1080, imgY: 100, below: BLOCK },
+    story:    { w: 1080, h: 1920, imgY: 120, below: BLOCK + BARS },
+    hd:       { w: 1920, h: 1080, imgY: 100, below: BLOCK },
+    /* El pasaporte reserva mucho más: título de sección, nueve atributos en
+       dos columnas, los tres indicadores y el QR. */
+    passport: { w: 1600, h: 2000, imgY: 130, below: 1050 }
   };
 
   function safeName(s) {
@@ -641,7 +672,8 @@
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = '#7C214D'; ctx.fillRect(0, 0, W, 12);
 
-    var imgY = spec.imgY, imgH = spec.imgH;
+    var imgY = spec.imgY;
+    var imgH = H - imgY - spec.below;
     var pad = fmt === 'passport' ? 90 : 60;
     var en = App.lang === 'en';
 
@@ -667,7 +699,7 @@
       ctx.font = '400 32px "Segoe UI", sans-serif';
       /* La clase NCS acompaña siempre al nombre de familia: es la que
          convierte "Decorativa" en un dato botánico verificable. */
-      wrapText(ctx, App.lb(g.family) + ' · ' + App.ncs(g.family) + ' · ' +
+      wrapText(ctx, App.lb(g.family) + ' · ' + App.ncsShort(g.family) + ' · ' +
                App.lb(g.petalShape) + ' · ' + App.lb(g.diameter),
                pad, y, W - pad * 2, 40, 2);
 
@@ -677,6 +709,7 @@
         ctx.fillRect(pad + i * 92, y, 80, 80);
         ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.strokeRect(pad + i * 92, y, 80, 80);
       });
+      var paletteBottom = y + 80;
 
       function bars(bx, by, barW) {
         [[en ? 'Novelty' : 'Novedad', sc.novelty, '#7C214D'],
@@ -733,8 +766,10 @@
         }
       }
 
+      /* El pie va abajo, pero nunca por encima de lo ya dibujado: con una
+         posición fija se montaba sobre los cuadros de color. */
       ctx.fillStyle = '#9C8A92'; ctx.font = '400 24px monospace';
-      ctx.fillText(CFG.eventName, pad, H - 46);
+      ctx.fillText(CFG.eventName, pad, Math.max(H - 46, paletteBottom + 46));
 
       var name = safeName(g.name) + '_DELIFLOR_' + fmt + '.png';
       return canvasBlob(cv).then(function (blob) {
@@ -770,7 +805,26 @@
       } catch (e) { return null; }
     }
 
-    var src = App.shots.bouquet || App.shots.flower || fallbackShot();
+    /* Orden de preferencia de la imagen que se lleva el visitante.
+
+       La lámina fotorrealista va PRIMERO: es la que vio en la revelación y
+       la que reconoce como "su" flor. Antes se exportaba el modelo 3D aunque
+       existiera la foto, y lo que acababa en WhatsApp era un render apagado
+       en vez de la creación que le habían enseñado. El pasaporte prefiere la
+       flor sola; el resto de formatos, el ramo si lo hay. */
+    function bestShot() {
+      if (root.AI) {
+        var order = fmt === 'passport' ? ['bloom', 'bouquet'] : ['bouquet', 'bloom'];
+        for (var i = 0; i < order.length; i++) {
+          var hit = root.AI.cached(g, order[i]);
+          if (hit) return hit;
+        }
+      }
+      if (fmt === 'passport') return App.shots.flower || App.shots.bouquet || fallbackShot();
+      return App.shots.bouquet || App.shots.flower || fallbackShot();
+    }
+
+    var src = bestShot();
     if (src) { var im = new Image(); im.onload = function () { finish(im); }; im.onerror = function () { finish(null); }; im.src = src; }
     else finish(null);
   }
@@ -1063,8 +1117,12 @@
     var g = App.g, en = (navigator.language || 'es').slice(0, 2) === 'en';
     App.lang = en ? 'en' : 'es';
 
-    var cv = h('canvas', { style: 'width:100%;aspect-ratio:1;display:block;border-radius:calc(var(--s)*1.2)' });
+    var cv = h('canvas', { style: 'width:100%;aspect-ratio:1;display:block;border-radius:calc(var(--s)*1.2);touch-action:none' });
     var cv2 = h('canvas', { style: 'width:100%;aspect-ratio:4/5;display:block;border-radius:calc(var(--s)*1.2)' });
+    var hint = h('div', {
+      style: 'font-family:var(--f-mono);font-size:calc(var(--s)*.9);color:var(--ink-faint);text-align:center;margin-top:calc(var(--s)*.6)',
+      text: en ? 'Drag to rotate · pinch to zoom' : 'Arrastra para girar · pellizca para acercar'
+    });
 
     var wrap = h('div', { class: 'mobile screen' }, [
       App.logo('md'),
@@ -1072,13 +1130,45 @@
         style: 'font-family:var(--f-display);font-weight:400;font-size:calc(var(--s)*6);margin:calc(var(--s)*.6) 0 calc(var(--s)*1.4);line-height:1.05',
         text: g.name || '—'
       }),
-      cv2, h('div', { style: 'height:calc(var(--s)*1.4)' }), cv
+      cv, hint, h('div', { style: 'height:calc(var(--s)*1.6)' }), cv2
     ]);
     app.appendChild(wrap);
 
+    /* La flor va en 3D real y manipulable, no con el trazador 2D.
+
+       Quien escanea el QR llega buscando SU variedad, y el dibujo plano la
+       reducía a una silueta genérica: la misma queja de "una flor blanca sin
+       gracia". El genoma completo viaja en el enlace, así que el teléfono
+       puede reconstruir la flor entera; sólo si no hay WebGL se recurre al
+       trazador. */
     App.defer(function () {
       T.fallbackScene(cv2, g, 'bouquet');
-      T.flower(cv, g, { scale: 0.44 });
+      var r = null;
+      try { r = new root.GL.Renderer(cv); } catch (e) { r = null; }
+      if (!r || !r.ok) {
+        if (r && r.dispose) { try { r.dispose(); } catch (e) {} }
+        hint.style.display = 'none';
+        T.flower(cv, g, { scale: 0.44 });
+        return;
+      }
+      App.sharedRenderer = r;
+      try {
+        /* buildSingleStem recibe la calidad como cadena, no como objeto:
+           pasarle {lod:'mid'} la degrada a la malla más basta. */
+        r.setMesh(M.buildSingleStem(g, 'mid'));
+        r.setEnv('studio', g.personality, g.pattern === 'iridescent');
+        r.reset();
+      } catch (e) { r.ok = false; }
+      if (!r.ok) { hint.style.display = 'none'; T.flower(cv, g, { scale: 0.44 }); return; }
+
+      var last = performance.now(), raf = 0;
+      (function loop(ts) {
+        raf = requestAnimationFrame(loop);
+        if (!cv.isConnected) { cancelAnimationFrame(raf); r.dispose(); App.sharedRenderer = null; return; }
+        var dt = Math.min(0.05, (ts - last) / 1000 || 0.016);
+        last = ts;
+        r.frame(dt);
+      })(last);
     });
 
     var card = App.buildPassport(false);
@@ -1101,7 +1191,7 @@
     if (!('serviceWorker' in navigator)) return;
     var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     if (location.protocol !== 'https:' && !local) return;
-    navigator.serviceWorker.register('sw.js?v=43').catch(function (e) {
+    navigator.serviceWorker.register('sw.js?v=45').catch(function (e) {
       if (window.console) console.warn('service worker:', e);
     });
   });

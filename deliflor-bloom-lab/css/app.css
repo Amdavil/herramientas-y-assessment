@@ -433,7 +433,12 @@ input[type=range]::-moz-range-thumb {
 }
 #lab .labnote {
   font-family: var(--f-mono); font-size: calc(var(--s)*.92); color: var(--ink-faint);
-  letter-spacing: .1em; margin-top: calc(var(--s)*1.6); max-width: 52ch; line-height: 1.6;
+  letter-spacing: .1em; max-width: 52ch; line-height: 1.6;
+  /* text-align:center del padre centra el TEXTO dentro de la caja, pero no
+     la caja: con max-width la nota se quedaba pegada a la izquierda del
+     bloque y descuadraba toda la pantalla. Los márgenes automáticos son los
+     que centran la caja en sí. */
+  margin: calc(var(--s)*1.6) auto 0;
 }
 #lab .labbar {
   width: calc(var(--s)*40); height: calc(var(--s)*.5); background: var(--surface-2);

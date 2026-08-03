@@ -156,6 +156,10 @@
   /* Clase oficial NCS de una familia. Va junto al nombre comercial en el
      pasaporte y en las descargas: es el dato que un floricultor reconoce. */
   App.ncs = function (fam) { var e = G.NCS[fam]; return e ? e.ncs : 'Chrysanthemum'; };
+  /* Sólo el código de clase ("NCS 4"), sin el nombre inglés. En una línea que
+     ya empieza por el nombre de la familia en español, añadir "Decorative"
+     detrás de "Decorativa" es repetir lo mismo dos veces. */
+  App.ncsShort = function (fam) { return App.ncs(fam).split('·')[0].trim(); };
   App.ncsRay = function (fam) { var e = G.NCS[fam]; return e ? e.ray : ''; };
   App.ncsDisc = function (fam) { var e = G.NCS[fam]; return e ? e.disc : ''; };
 
