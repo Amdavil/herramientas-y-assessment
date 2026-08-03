@@ -1118,7 +1118,7 @@
     App.lang = en ? 'en' : 'es';
 
     var cv = h('canvas', { style: 'width:100%;aspect-ratio:1;display:block;border-radius:calc(var(--s)*1.2);touch-action:none' });
-    var cv2 = h('canvas', { style: 'width:100%;aspect-ratio:4/5;display:block;border-radius:calc(var(--s)*1.2)' });
+    var bouq = h('div', { style: 'width:100%;aspect-ratio:1;border-radius:calc(var(--s)*1.2);overflow:hidden;background:var(--surface)' });
     var hint = h('div', {
       style: 'font-family:var(--f-mono);font-size:calc(var(--s)*.9);color:var(--ink-faint);text-align:center;margin-top:calc(var(--s)*.6)',
       text: en ? 'Drag to rotate · pinch to zoom' : 'Arrastra para girar · pellizca para acercar'
@@ -1130,37 +1130,90 @@
         style: 'font-family:var(--f-display);font-weight:400;font-size:calc(var(--s)*6);margin:calc(var(--s)*.6) 0 calc(var(--s)*1.4);line-height:1.05',
         text: g.name || '—'
       }),
-      cv, hint, h('div', { style: 'height:calc(var(--s)*1.6)' }), cv2
+      cv, hint, h('div', { style: 'height:calc(var(--s)*1.6)' }), bouq
     ]);
     app.appendChild(wrap);
 
-    /* La flor va en 3D real y manipulable, no con el trazador 2D.
+    var tail = h('p', {
+      style: 'font-family:var(--f-mono);font-size:calc(var(--s)*1.1);color:var(--ink-faint);line-height:1.6;margin-top:calc(var(--s)*2)',
+      text: en ? 'This variety travels entirely inside the link — nothing about it was stored on a server.'
+               : 'Esta variedad viaja completa dentro del enlace: nada de ella quedó guardado en un servidor.'
+    });
 
-       Quien escanea el QR llega buscando SU variedad, y el dibujo plano la
-       reducía a una silueta genérica: la misma queja de "una flor blanca sin
-       gracia". El genoma completo viaja en el enlace, así que el teléfono
-       puede reconstruir la flor entera; sólo si no hay WebGL se recurre al
-       trazador. */
+    function addCard() {
+      var card = App.buildPassport(false);
+      card.style.marginTop = 'calc(var(--s)*2)';
+      wrap.appendChild(card);
+      wrap.appendChild(tail);
+    }
+
+    /* Todo lo que se ve aquí sale del motor 3D, no del trazador 2D.
+
+       Quien escanea el QR llega buscando SU variedad, y los dibujos planos la
+       reducían a una silueta genérica. El genoma completo viaja en el enlace,
+       así que el teléfono puede reconstruir la flor y el ramo enteros.
+
+       Se usa UN solo contexto WebGL para las tres imágenes —flor, ramo y las
+       miniaturas del pasaporte— porque los móviles limitan cuántos contextos
+       simultáneos permiten y crear uno por lienzo es la forma más rápida de
+       quedarse sin ninguno. Se renderiza el ramo, se guarda, y el contexto se
+       queda con la flor para que el visitante pueda girarla. */
     App.defer(function () {
-      T.fallbackScene(cv2, g, 'bouquet');
       var r = null;
       try { r = new root.GL.Renderer(cv); } catch (e) { r = null; }
-      if (!r || !r.ok) {
-        if (r && r.dispose) { try { r.dispose(); } catch (e) {} }
+
+      function give2D() {
         hint.style.display = 'none';
         T.flower(cv, g, { scale: 0.44 });
+        var c2 = h('canvas');
+        bouq.appendChild(c2);
+        c2.style.width = '100%'; c2.style.height = '100%'; c2.style.display = 'block';
+        T.fallbackScene(c2, g, 'bouquet');
+        addCard();
+      }
+
+      if (!r || !r.ok) {
+        if (r && r.dispose) { try { r.dispose(); } catch (e) {} }
+        give2D();
         return;
       }
       App.sharedRenderer = r;
+
+      function shoot(mesh) {
+        r.setMesh(mesh);
+        r.grow = 1; r.targetGrow = 1; r.autoSpin = false;
+        r.dist = 0; r.dirty = true;
+        /* Varios fotogramas: la distancia de cámara se aproxima suavizada y
+           con uno solo el encuadre sale a medio camino. */
+        for (var i = 0; i < 24; i++) r.frame(0.12);
+        r.gl.finish();
+        try { return cv.toDataURL('image/png'); } catch (e) { return null; }
+      }
+
       try {
+        r.setEnv('studio', g.personality, g.pattern === 'iridescent');
         /* buildSingleStem recibe la calidad como cadena, no como objeto:
            pasarle {lod:'mid'} la degrada a la malla más basta. */
-        r.setMesh(M.buildSingleStem(g, 'mid'));
-        r.setEnv('studio', g.personality, g.pattern === 'iridescent');
-        r.reset();
-      } catch (e) { r.ok = false; }
-      if (!r.ok) { hint.style.display = 'none'; T.flower(cv, g, { scale: 0.44 }); return; }
+        App.shots.bouquet = shoot(M.buildBouquet(g, { lod: 'mid' }));
+        App.shots.flower = shoot(M.buildSingleStem(g, 'mid'));
+      } catch (e) {
+        try { r.dispose(); } catch (e2) {}
+        App.sharedRenderer = null;
+        give2D();
+        return;
+      }
 
+      if (App.shots.bouquet) {
+        bouq.appendChild(h('img', {
+          src: App.shots.bouquet, alt: en ? 'Bouquet' : 'Ramo',
+          style: 'width:100%;height:100%;object-fit:cover;display:block'
+        }));
+      }
+      /* La ficha se arma DESPUÉS de tener las capturas: buildPassport sólo
+         usa el 3D si App.shots ya está lleno, y si no cae al dibujo plano. */
+      addCard();
+
+      r.reset();
       var last = performance.now(), raf = 0;
       (function loop(ts) {
         raf = requestAnimationFrame(loop);
@@ -1170,15 +1223,6 @@
         r.frame(dt);
       })(last);
     });
-
-    var card = App.buildPassport(false);
-    card.style.marginTop = 'calc(var(--s)*2)';
-    wrap.appendChild(card);
-    wrap.appendChild(h('p', {
-      style: 'font-family:var(--f-mono);font-size:calc(var(--s)*1.1);color:var(--ink-faint);line-height:1.6;margin-top:calc(var(--s)*2)',
-      text: en ? 'This variety travels entirely inside the link — nothing about it was stored on a server.'
-               : 'Esta variedad viaja completa dentro del enlace: nada de ella quedó guardado en un servidor.'
-    }));
   };
 
   /* Registro del service worker.
@@ -1191,7 +1235,7 @@
     if (!('serviceWorker' in navigator)) return;
     var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     if (location.protocol !== 'https:' && !local) return;
-    navigator.serviceWorker.register('sw.js?v=45').catch(function (e) {
+    navigator.serviceWorker.register('sw.js?v=46').catch(function (e) {
       if (window.console) console.warn('service worker:', e);
     });
   });
