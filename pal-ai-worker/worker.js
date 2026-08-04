@@ -52,15 +52,24 @@ function geminiImage(j) {
   return null;
 }
 
-// Clave de caché de una lámina: el hash de lo que realmente determina la
-// imagen. Se envuelve en una Request GET porque la Cache API indexa por
-// petición y ésta llega por POST, que no es cacheable.
+// Sufijo de la caché de borde. Subirlo la invalida entera sin tocar el
+// almacén global, que se indexa sólo por el hash: útil si alguna vez hay que
+// forzar el regenerado sin perder lo ya guardado.
+const EDGE_SALT = "2";
+
+// Clave de una lámina: el hash de lo que realmente determina la imagen.
+// Devuelve las dos formas que hacen falta —la del almacén global es el hash
+// a secas; la del borde va envuelta en una Request GET porque la Cache API
+// indexa por petición y ésta llega por POST, que no es cacheable.
 async function bloomCacheKey(prompt, size, quality) {
   const data = new TextEncoder().encode(prompt + "|" + size + "|" + quality);
   const digest = await crypto.subtle.digest("SHA-256", data);
   const hex = Array.from(new Uint8Array(digest))
     .map(b => b.toString(16).padStart(2, "0")).join("");
-  return new Request("https://bloom-lab.cache/img/" + hex, { method: "GET" });
+  return {
+    kv: hex,
+    edge: new Request("https://bloom-lab.cache/img/" + EDGE_SALT + "/" + hex, { method: "GET" })
+  };
 }
 
 async function handleBloomRender(body, env, origin) {
@@ -85,20 +94,45 @@ async function handleBloomRender(body, env, origin) {
   // reenviador de peticiones a donde le digan (SSRF): allí manda sólo el env.
   const askedModel = /^[A-Za-z0-9._-]{1,64}$/.test(body.model || "") ? body.model : null;
 
-  // Caché de láminas.
+  // Caché de láminas, en dos niveles.
   //
   // La misma flor la piden dos aparatos distintos: el kiosco, que la genera
   // mientras el visitante espera, y su teléfono al abrir el QR segundos
   // después. Sin esto, la segunda petición vuelve a generar —y a cobrar— una
   // imagen que ya existe. El prompt no lleva el nombre de la variedad
   // justamente para que las dos peticiones coincidan.
+  //
+  //   1. Caché de borde: instantánea, pero vive en CADA centro de datos por
+  //      separado. Si el teléfono sale por otro distinto al del kiosco, no la
+  //      encuentra.
+  //   2. Almacén KV: global, así que cubre ese caso. Se consulta sólo cuando
+  //      falla el primero, y al acertar se rellena el borde para que la
+  //      siguiente petición de esa zona ni siquiera llegue aquí.
   const cache = caches.default;
   const key = await bloomCacheKey(prompt, size, quality);
-  const hit = await cache.match(key);
-  if (hit) {
+  const kvKey = key.kv;
+
+  const edgeHit = await cache.match(key.edge);
+  if (edgeHit) {
     const h = corsHeaders(origin);
-    h["X-Bloom-Cache"] = "hit";
-    return new Response(hit.body, { headers: h });
+    h["X-Bloom-Cache"] = "edge";
+    return new Response(edgeHit.body, { headers: h });
+  }
+
+  if (env.BLOOM_CACHE) {
+    let stored = null;
+    try { stored = await env.BLOOM_CACHE.get(kvKey); } catch (e) { stored = null; }
+    if (stored) {
+      // Se repuebla el borde sin hacer esperar a quien preguntó.
+      try {
+        await cache.put(key.edge, new Response(stored, {
+          headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=604800" }
+        }));
+      } catch (e) { /* el borde es un lujo, no un requisito */ }
+      const h = corsHeaders(origin);
+      h["X-Bloom-Cache"] = "kv";
+      return new Response(stored, { headers: h });
+    }
   }
 
   // El kiosco abandona a los 12 s; aquí cortamos antes para no dejar la
@@ -201,11 +235,21 @@ async function handleBloomRender(body, env, origin) {
     }
     const payload = JSON.stringify({ image: out });
     // Se guarda sin cabeceras de CORS: el origen que pregunta puede cambiar y
-    // esas cabeceras se ponen al salir, no al almacenar. Una semana basta —
-    // el uso real es un evento de unos días.
-    await cache.put(key, new Response(payload, {
-      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=604800" }
-    }));
+    // esas cabeceras se ponen al salir, no al almacenar.
+    try {
+      await cache.put(key.edge, new Response(payload, {
+        headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=604800" }
+      }));
+    } catch (e) { /* el borde es un lujo, no un requisito */ }
+    if (env.BLOOM_CACHE) {
+      // Treinta días: de sobra para un evento y para que quien reabra su
+      // enlace unos días después siga encontrando su flor. Con caducidad se
+      // evita además que el almacén crezca sin freno de un evento al
+      // siguiente: cada lámina ocupa algo más de 2 MB.
+      try {
+        await env.BLOOM_CACHE.put(kvKey, payload, { expirationTtl: 2592000 });
+      } catch (e) { /* si el almacén falla, la imagen ya va de camino */ }
+    }
     const h = corsHeaders(origin);
     h["X-Bloom-Cache"] = "miss";
     return new Response(payload, { headers: h });

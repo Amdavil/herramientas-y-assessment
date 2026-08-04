@@ -1,0 +1,22 @@
+{
+  "resultados": [
+    {
+      "title": "AI automation freelancer needed — build an agent for a startup",
+      "url": "https://www.upwork.com/jobs/example-ai-agent",
+      "content": "We are looking for a freelancer to build an AI automation agent in Python. Budget 800-1500 USD. Apply with portfolio.",
+      "query": "[simulado]"
+    },
+    {
+      "title": "Bounty: Python scraper + automated report",
+      "url": "https://example.com/bounty-python-scraper",
+      "content": "Open bounty: build a Python scraping script with an automated report. Reward 150-300 USD on merge.",
+      "query": "[simulado]"
+    },
+    {
+      "title": "Convocatoria de consultorías en economía circular para América Latina",
+      "url": "https://example.org/convocatoria-economia-circular",
+      "content": "Se buscan consultores en economía circular para proyectos en LATAM. Honorarios 3000-8000 USD. Cierre 2026-07-01.",
+      "query": "[simulado]"
+    }
+  ]
+}

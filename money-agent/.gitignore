@@ -1,0 +1,20 @@
+# Secretos — NUNCA subir a git
+.env
+
+# Datos generados (la cuenta y reportes pueden contener info personal)
+data/*.xlsx
+data/*.csv
+data/*.json
+logs/*.log
+output/*
+
+# Conservar carpetas vacías
+!data/.gitkeep
+!logs/.gitkeep
+!output/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

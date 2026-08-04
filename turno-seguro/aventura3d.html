@@ -1,0 +1,2435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Turno Seguro 3D — Modo Aventura</title>
+<style>
+  :root {
+    --ink: #1F262A; --muted: #5B6871; --line: #D5DCD3;
+    --green: #00795C; --green-hi: #009B76; --green-deep: #00503B; --green-soft: #DFF0E8;
+    --yellow: #F2B705; --yellow-ink: #8A6200;
+    --red: #B62233; --red-soft: #FADDE0;
+    --blue: #0A5CA8; --blue-soft: #E0EDF9;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: linear-gradient(165deg, #22282B 0%, #14181A 100%);
+    font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+    color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; overflow: hidden;
+  }
+  #stage {
+    position: relative; width: min(100vw, 178vh); aspect-ratio: 16/9;
+    max-width: 1180px; box-shadow: 0 30px 80px rgba(0,0,0,0.65);
+    border-radius: 12px; overflow: hidden; background: #BFDDE8;
+  }
+  /* ---------- Joystick táctil ---------- */
+  #joy {
+    position: absolute; bottom: 22px; left: 22px; z-index: 12;
+    width: 132px; height: 132px; border-radius: 50%;
+    background: rgba(255,255,255,0.22); border: 3px solid rgba(255,255,255,0.55);
+    backdrop-filter: blur(3px); touch-action: none; display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  #joy::after {
+    content: "";
+    position: absolute; inset: 0; margin: auto;
+    width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5);
+  }
+  #joyKnob {
+    position: absolute; left: 50%; top: 50%;
+    width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #cfd8d4);
+    border: 2px solid rgba(0,0,0,0.18);
+    box-shadow: 0 5px 14px rgba(0,0,0,0.4);
+    transition: transform 0.06s linear;
+  }
+  #joy.on { background: rgba(255,255,255,0.32); }
+  @media (max-width: 900px), (pointer: coarse) {
+    #joy { display: block; }
+  }
+  #joy.forzado { display: block; }
+  /* ---------- Botón de acción manual (decisión del jugador) ---------- */
+  #accionUI {
+    position: absolute; bottom: 108px; left: 50%; transform: translateX(-50%);
+    z-index: 12; display: none; border: none; cursor: pointer; font-family: inherit;
+    background: linear-gradient(180deg, #FFD34D, var(--yellow));
+    color: #23272B; font-weight: 900; font-size: 17px; padding: 14px 26px;
+    border-radius: 999px; letter-spacing: 0.01em;
+    box-shadow: 0 5px 0 #8A6200, 0 12px 28px rgba(0,0,0,0.4);
+    animation: pop 0.3s cubic-bezier(0.2,1.5,0.4,1) both, latidoAcc 1.3s ease-in-out 0.3s infinite;
+  }
+  #accionUI:active { transform: translate(-50%, 4px); box-shadow: 0 0 0 #8A6200; animation: none; }
+  @keyframes pop { from { opacity: 0; transform: translate(-50%, 14px) scale(0.7); } to { opacity: 1; transform: translate(-50%,0) scale(1); } }
+  @keyframes latidoAcc { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
+  #accionUI.bloq {
+    background: linear-gradient(180deg, #E4677A, var(--red)); color: #fff;
+    box-shadow: 0 5px 0 #7E1424, 0 12px 28px rgba(0,0,0,0.4); animation: none;
+  }
+  #stage canvas { display: block; width: 100% !important; height: 100% !important; }
+  #stage.frozen canvas { filter: grayscale(1) contrast(1.15); }
+  #stage.shake { animation: shake 0.5s both; }
+  @keyframes shake {
+    10%,90% { transform: translateX(-3px); } 20%,80% { transform: translateX(5px); }
+    30%,50%,70% { transform: translateX(-8px); } 40%,60% { transform: translateX(8px); }
+  }
+  #hud {
+    position: absolute; top: 10px; left: 10px; right: 10px;
+    display: flex; align-items: center; gap: 10px; z-index: 10;
+    background: rgba(255,255,255,0.9); backdrop-filter: blur(6px);
+    border-radius: 12px; padding: 7px 12px; font-size: 14px; font-weight: 700;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  }
+  #hud .pts { color: var(--green); font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #hud .bienwrap { flex: 1; }
+  #hud .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+  .bar { height: 11px; background: rgba(31,38,42,0.15); border-radius: 8px; overflow: hidden; }
+  .bar > div { height: 100%; border-radius: 8px; background: linear-gradient(180deg, var(--green-hi), var(--green)); transition: width 0.3s; }
+  .bar.warn > div { background: linear-gradient(180deg, #FFCB2E, var(--yellow)); }
+  .bar.low > div { background: linear-gradient(180deg, #D53A4C, var(--red)); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+  #hud button { background: none; border: none; font-size: 18px; cursor: pointer; padding: 2px; }
+  #vidas { font-size: 15px; letter-spacing: -1px; white-space: nowrap; }
+  #vidas.critico { animation: pulse 0.7s infinite; }
+  .reglas-tabla { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 6px 0 4px; }
+  .reglas-tabla td { padding: 5px 6px; border-bottom: 1px solid var(--line); }
+  .reglas-tabla td:last-child { text-align: right; font-weight: 800; white-space: nowrap; }
+  .gana { background: var(--green-soft); border-left: 4px solid var(--green); border-radius: 10px; padding: 10px 13px; margin: 8px 0; }
+  .pierde { background: #FFF4F5; border-left: 4px solid var(--red); border-radius: 10px; padding: 10px 13px; margin: 8px 0; }
+  .gana h3, .pierde h3 { margin: 0 0 5px; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+  .gana h3 { color: var(--green); } .pierde h3 { color: var(--red); }
+  .gana ul, .pierde ul { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.6; }
+  #objetivo {
+    position: absolute; top: 56px; left: 50%; transform: translateX(-50%);
+    z-index: 9; max-width: 92%;
+    background: rgba(31,38,42,0.85); color: #fff;
+    border-radius: 999px; padding: 7px 18px;
+    font-size: 13.5px; font-weight: 700; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  }
+  #objetivo .chip { color: #FFD54F; margin-right: 6px; }
+  #toast {
+    position: absolute; top: 96px; left: 50%; transform: translateX(-50%);
+    max-width: 88%; z-index: 10; display: none;
+    background: linear-gradient(180deg, #FFFFFF, var(--blue-soft));
+    border: 1px solid rgba(10,92,168,0.25); border-radius: 14px;
+    padding: 9px 16px; font-size: 14.5px; font-weight: 600;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    animation: toastIn 0.3s ease both;
+  }
+  #toast strong { color: var(--blue); }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%,-8px); } to { opacity: 1; transform: translate(-50%,0); } }
+  #ruidoFx {
+    position: absolute; inset: 0; pointer-events: none; z-index: 8; display: none;
+    box-shadow: inset 0 0 90px 30px rgba(182,34,51,0.55);
+    animation: pulse 0.8s infinite;
+  }
+  #overlay {
+    position: absolute; inset: 0; z-index: 20; display: none;
+    background: rgba(14,20,18,0.62); backdrop-filter: blur(3px);
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  #overlay.visible { display: flex; }
+  .panel {
+    background: #fff; border-radius: 20px; padding: 22px 24px;
+    max-width: 500px; width: 100%; max-height: 92%; overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    animation: panelIn 0.32s cubic-bezier(0.2,1.4,0.4,1) both;
+  }
+  @keyframes panelIn { from { opacity: 0; transform: scale(0.85) translateY(18px); } to { opacity: 1; transform: none; } }
+  .panel.bad { border-top: 8px solid var(--red); }
+  .panel.ok { border-top: 8px solid var(--green); }
+  .panel.info { border-top: 8px solid var(--blue); }
+  .panel h2 { margin: 0 0 8px; font-size: 22px; font-weight: 800; }
+  .panel h2.alerta { color: var(--red); }
+  .panel .exp {
+    background: var(--blue-soft); border-left: 4px solid var(--blue);
+    border-radius: 10px; padding: 10px 14px; font-size: 14.5px; margin: 12px 0;
+  }
+  .panel .exp strong { color: var(--blue); }
+  .panel .regla { font-size: 17px; font-weight: 800; text-align: center; padding: 8px; color: var(--yellow-ink); }
+  .btn {
+    display: block; width: 100%; border: none; cursor: pointer;
+    background: linear-gradient(180deg, var(--green-hi), var(--green));
+    color: #fff; font-weight: 800; font-size: 16.5px; padding: 13px 18px;
+    border-radius: 14px; font-family: inherit; margin: 9px 0;
+    box-shadow: 0 4px 0 var(--green-deep), 0 8px 18px rgba(0,0,0,0.2);
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--green-deep); }
+  .btn.sec { background: #fff; color: var(--ink); border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); }
+  .kit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+  .kit-item {
+    border: 2px solid var(--line); background: #fff; border-radius: 12px;
+    padding: 8px 4px; text-align: center; cursor: pointer; font-family: inherit;
+    font-size: 11px; font-weight: 600; color: var(--ink); box-shadow: 0 3px 0 var(--line);
+  }
+  .kit-item .ico { font-size: 24px; display: block; }
+  .kit-item.sel { border-color: var(--green); background: var(--green-soft); box-shadow: 0 3px 0 var(--green); }
+  .kit-item.errado { border-color: var(--red); background: var(--red-soft); }
+  .medallas { display: flex; gap: 10px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+  .medalla { text-align: center; font-size: 12px; font-weight: 700; width: 100px; }
+  .medalla .ico { font-size: 34px; display: block; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.25)); }
+  .medalla.off { opacity: 0.3; filter: grayscale(1); }
+  .res-pct {
+    font-size: 54px; font-weight: 900; text-align: center; line-height: 1.05;
+    background: linear-gradient(120deg, var(--green), var(--blue));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .nivel { display: block; text-align: center; font-size: 16px; font-weight: 800; margin: 6px 0; }
+  input[type=text] {
+    width: 100%; font-size: 17px; padding: 12px 14px; border-radius: 12px;
+    border: 2px solid var(--line); font-family: inherit; margin: 6px 0 12px;
+  }
+  .ctl-demo { display: flex; gap: 14px; justify-content: center; margin: 10px 0; }
+  .ctl-demo .k {
+    background: #fff; border: 2px solid var(--line); border-radius: 10px;
+    box-shadow: 0 3px 0 var(--line); padding: 8px 14px;
+    font-weight: 800; font-size: 15px; text-align: center;
+  }
+  .ctl-demo .k small { display: block; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+  #hud button.apagado { opacity: 0.35; }
+  .flash {
+    position: absolute; inset: 0; pointer-events: none; z-index: 15;
+    background: radial-gradient(ellipse at center, rgba(182,34,51,0) 35%, rgba(182,34,51,0.45) 100%);
+    animation: flashOut 0.8s ease-out forwards;
+  }
+  @keyframes flashOut { to { opacity: 0; } }
+  .confetti { position: absolute; inset: 0; pointer-events: none; z-index: 25; overflow: hidden; }
+  .confetti i { position: absolute; top: -16px; width: 9px; height: 14px; border-radius: 2px; animation: cf linear forwards; }
+  @keyframes cf { to { transform: translateY(110vh) rotate(680deg); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+  /* ---------- Celular: pantalla completa (al final: debe ganar la cascada) ---------- */
+  @media (max-width: 900px), (pointer: coarse) {
+    body { align-items: stretch; justify-content: stretch; }
+    #stage {
+      width: 100vw; height: 100vh; height: 100dvh;
+      max-width: none; aspect-ratio: auto; border-radius: 0; box-shadow: none;
+    }
+    #hud { top: 8px; left: 8px; right: 8px; padding: 6px 9px; font-size: 12px; gap: 6px; }
+    #hud .pts { font-size: 14.5px; }
+    #hud .lbl { font-size: 9px; }
+    #hud .avatar { font-size: 17px; }
+    #hud button { font-size: 16px; }
+    #objetivo { top: 48px; font-size: 11.5px; padding: 6px 13px; max-width: 95%; }
+    #toast { top: 82px; font-size: 12.5px; padding: 8px 12px; max-width: 95%; }
+    #joy { width: 118px; height: 118px; bottom: 18px; left: 18px; }
+    #joyKnob { width: 52px; height: 52px; margin: -26px 0 0 -26px; }
+    #accionUI { bottom: 96px; font-size: 15px; padding: 12px 20px; }
+    .panel { padding: 18px 16px; border-radius: 16px; max-height: 90%; }
+    .panel h2 { font-size: 19px; }
+    .panel .exp { font-size: 13px; padding: 9px 12px; }
+    .ctl-demo { gap: 8px; }
+    .ctl-demo .k { padding: 7px 9px; font-size: 13px; }
+    .ctl-demo .k small { font-size: 10px; }
+    .kit-grid { gap: 6px; }
+    .kit-item { font-size: 10px; padding: 7px 3px; }
+    .kit-item .ico { font-size: 21px; }
+    .btn { font-size: 15px; padding: 12px 14px; }
+    .res-pct { font-size: 44px; }
+    .medallas { gap: 6px; }
+    .medalla { width: 82px; font-size: 10.5px; }
+    .medalla .ico { font-size: 27px; }
+    input[type=text] { font-size: 16px; padding: 11px 13px; }
+  }
+  /* pantallas muy bajas (celular acostado) */
+  @media (max-height: 460px) and (pointer: coarse) {
+    #joy { width: 96px; height: 96px; bottom: 10px; left: 12px; }
+    #joyKnob { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+    #objetivo { top: 44px; }
+    #toast { top: 76px; }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="hud">
+    <span style="font-size:20px">👷</span>
+    <span class="pts" id="hudPts">0 pts</span>
+    <div class="bienwrap">
+      <div class="lbl" id="hudBienLbl">Bienestar 100%</div>
+      <div class="bar" id="hudBar"><div style="width:100%"></div></div>
+    </div>
+    <span id="vidas" title="Tu estado de salud">💚💚💚</span>
+    <button id="reglasBtn" aria-label="Reglas">📋</button>
+    <button id="musBtn" aria-label="Música">🎵</button>
+    <button id="muteBtn" aria-label="Silenciar">🔊</button>
+    <button onclick="location.href='index.html'" aria-label="Salir">🏠</button>
+  </div>
+  <div id="objetivo"><span class="chip">🎯</span><span id="objTxt">…</span></div>
+  <div id="toast"></div>
+  <div id="ruidoFx"></div>
+  <button id="accionUI">⚡ Usar</button>
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div id="overlay"></div>
+</div>
+
+<script type="importmap">{ "imports": { "three": "./three.module.min.js" } }</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "./GLTFLoader.js";
+import * as SkeletonUtils from "./SkeletonUtils.js";
+/* =====================================================================
+   TURNO SEGURO 3D — MODO AVENTURA (estilo bloques, tercera persona)
+   Toca el piso a donde quieras ir · WASD / flechas también sirven.
+   Al llegar a un punto verde ⚡ el personaje lo usa automáticamente.
+   ===================================================================== */
+
+const stage = document.getElementById("stage"), overlay = document.getElementById("overlay");
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ---------- Estado ---------- */
+const S = {
+  nombre: "", mundo: 1, etapa: 0,
+  x: 3, z: 0, yaw: Math.PI / 2, andando: false, animT: 0,
+  epp: false, oidos: false, careta: false, guantes: false, arnes: false, permiso: false,
+  subiendo: 0, subeT: 0, alturaY: 0, subidoOk: false, inv: 0,
+  puntos: 0, bien: 100, errores: 0, errs: {}, reportes: 0,
+  checkpoint: { x: 3, z: 0 }, pausado: true, fin: false, t: 0,
+  flags: { apilado: false, contacto: false, electrico: false,
+           cables: false, derrame: false, pausa: false,
+           archivo: false, ergo: false, cierre: false,
+           alarma: false, evacT0: 0, evacBonus: false,
+           kitIntentos: 0, avisos: {} },
+  limpio: { bodega: true, monta: true, ruido: true, carrito: true }
+};
+/* Dos mundos independientes: 1 = Planta (operativo), 2 = Oficina */
+const MUNDOS = {
+  1: { nombre: "Mundo 1 · Planta", ico: "🏭", spawn: { x: 3, z: 0 }, meta: 118, max: 270,
+       etapas: ["Vestier · EPP", "Bodega · caída de objetos", "Montacargas · tránsito",
+                "Trabajo en alturas", "Zona de ruido", "Riesgo eléctrico",
+                "Guantes · pieza caliente", "Soldadura · radiación", "Salida de planta"] },
+  2: { nombre: "Mundo 2 · Oficina", ico: "🏢", spawn: { x: 124, z: 0 }, meta: 250.5, max: 155,
+       etapas: ["Cables y orden", "Pasillo · carrito", "Derrame de café", "Pausa activa",
+                "Archivo y cargas", "Ergonomía", "Cierre y evacuación"] }
+};
+let MAX = 210;
+let target = null;     /* {x,z} destino del toque */
+/* Sin autopiloto: caminar es siempre del jugador (joystick o toque en el piso). */
+
+/* ---------- Audio: efectos, música y ambiente ---------- */
+let actx = null, muted = false, musicaOn = true, musTimer = null, ambInicio = false;
+function tone(seq, vol) {
+  if (muted) return;
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    let t = actx.currentTime;
+    seq.forEach(p => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = p.w || "sine"; o.frequency.value = p.f;
+      g.gain.setValueAtTime(vol || 0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + p.d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + p.d); t += p.d * 0.85;
+    });
+  } catch (e) {}
+}
+const sndOk = () => tone([{f:523,d:0.12},{f:784,d:0.2}]);
+const sndBad = () => tone([{f:330,d:0.15},{f:196,d:0.3}]);
+const sndAlerta = () => tone([{f:880,d:0.1,w:"square"},{f:880,d:0.1,w:"square"}]);
+const sndPick = () => tone([{f:660,d:0.08},{f:880,d:0.1}]);
+const sndBeep = () => tone([{f:740,d:0.09,w:"square"}]);
+const sndPaso = () => tone([{f:150,d:0.05,w:"triangle"}], 0.035);
+const sndThud = () => tone([{f:75,d:0.22,w:"sine"}], 0.14);
+const sndFanfarria = () => tone([{f:523,d:0.14},{f:659,d:0.14},{f:784,d:0.14},{f:1047,d:0.4}], 0.12);
+function nota(f, t0, dur, vol, tipo) {
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = tipo; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.09);
+  g.gain.setValueAtTime(vol, t0 + dur * 0.65);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function iniciarAudioFondo() {
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    /* zumbido ambiente de fábrica (una sola vez) */
+    if (!ambInicio) {
+      ambInicio = true;
+      const buf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = actx.createBufferSource(); src.buffer = buf; src.loop = true;
+      const fil = actx.createBiquadFilter(); fil.type = "lowpass"; fil.frequency.value = 170;
+      const g = actx.createGain(); g.gain.value = 0.016;
+      src.connect(fil); fil.connect(g); g.connect(actx.destination); src.start();
+      const hum = actx.createOscillator(); hum.frequency.value = 55;
+      const hg = actx.createGain(); hg.gain.value = 0.011;
+      hum.connect(hg); hg.connect(actx.destination); hum.start();
+    }
+    /* música de fondo: progresión C–Am–F–G suave */
+    if (musTimer) return;
+    let barra = 0;
+    const AC = [[261.6, 329.6, 392.0], [220.0, 261.6, 329.6], [174.6, 220.0, 261.6], [196.0, 246.9, 293.7]];
+    const compas = () => {
+      if (!musicaOn || muted) { barra++; return; }
+      try {
+        const t0 = actx.currentTime + 0.06, ch = AC[barra % 4];
+        ch.forEach(f => nota(f, t0, 1.9, 0.02, "triangle"));
+        nota(ch[0] / 2, t0, 1.85, 0.05, "sine");
+        for (let i = 0; i < 4; i++) nota(ch[(i * 2) % 3] * 2, t0 + i * 0.5, 0.26, 0.015, "sine");
+        barra++;
+      } catch (e) {}
+    };
+    compas();
+    musTimer = setInterval(compas, 2000);
+  } catch (e) {}
+}
+document.getElementById("muteBtn").onclick = function () {
+  muted = !muted; this.textContent = muted ? "🔇" : "🔊";
+};
+document.getElementById("musBtn").onclick = function () {
+  musicaOn = !musicaOn; this.classList.toggle("apagado", !musicaOn);
+};
+
+/* ---------- Three.js: escena base ---------- */
+const scene = new THREE.Scene();
+const colAmb = new THREE.Color(0xBFDDE8);
+scene.background = new THREE.Color(0xBFDDE8);
+scene.fog = new THREE.Fog(0xBFDDE8, 38, 92);
+const camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 300);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+stage.insertBefore(renderer.domElement, stage.firstChild);
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize); resize();
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8fa48f, 0.95));
+const sol = new THREE.DirectionalLight(0xfff3d6, 1.5);
+sol.castShadow = true;
+sol.shadow.mapSize.set(1024, 1024);
+sol.shadow.camera.left = -22; sol.shadow.camera.right = 22;
+sol.shadow.camera.top = 22; sol.shadow.camera.bottom = -22;
+sol.shadow.camera.near = 1; sol.shadow.camera.far = 90;
+scene.add(sol); scene.add(sol.target);
+
+/* ---------- Utilidades de construcción ---------- */
+const MAT = {};
+function mat(c) { if (!MAT[c]) MAT[c] = new THREE.MeshLambertMaterial({ color: c }); return MAT[c]; }
+function caja(w, h, d, c, sombra) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
+  if (sombra !== false) m.castShadow = true;
+  m.receiveShadow = true;
+  return m;
+}
+function letreroTex(texto, bg, fg, fs) {
+  const cv2 = document.createElement("canvas"); cv2.width = 512; cv2.height = 128;
+  const c2 = cv2.getContext("2d");
+  c2.fillStyle = bg; c2.fillRect(0, 0, 512, 128);
+  c2.strokeStyle = "rgba(0,0,0,0.25)"; c2.lineWidth = 8; c2.strokeRect(4, 4, 504, 120);
+  c2.fillStyle = fg; c2.font = "900 " + (fs || 56) + "px Segoe UI"; c2.textAlign = "center"; c2.textBaseline = "middle";
+  c2.fillText(texto, 256, 68);
+  return new THREE.CanvasTexture(cv2);
+}
+function letrero(texto, w, h, bg, fg, fs) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+    new THREE.MeshBasicMaterial({ map: letreroTex(texto, bg, fg, fs) }));
+  return m;
+}
+function spriteEmoji(emoji, escala) {
+  const cv2 = document.createElement("canvas"); cv2.width = 128; cv2.height = 128;
+  const c2 = cv2.getContext("2d");
+  c2.font = "96px Segoe UI Emoji, Segoe UI"; c2.textAlign = "center"; c2.textBaseline = "middle";
+  c2.fillText(emoji, 64, 70);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv2), transparent: true }));
+  sp.scale.set(escala, escala, 1);
+  return sp;
+}
+function anillo(rIn, rOut, color, op) {
+  const m = new THREE.Mesh(new THREE.RingGeometry(rIn, rOut, 40),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.04;
+  return m;
+}
+/* Silla de oficina COMPLETA: asiento, cojín, espaldar, brazos, columna,
+   base de estrella y ruedas. mirandoZ = +1 → espaldar hacia +z. */
+function sillaOficina(x, z, mirandoZ) {
+  const g = new THREE.Group();
+  const m = mirandoZ || 1;
+  const asiento = caja(0.62, 0.12, 0.6, 0x37474F); asiento.position.y = 0.52; g.add(asiento);
+  const cojin = caja(0.56, 0.06, 0.54, 0x455A64, false); cojin.position.y = 0.60; g.add(cojin);
+  const espaldar = caja(0.6, 0.66, 0.11, 0x37474F);
+  espaldar.position.set(0, 0.9, 0.28 * m); espaldar.rotation.x = -0.14 * m; g.add(espaldar);
+  [-0.34, 0.34].forEach(dx => {
+    const brazo = caja(0.08, 0.07, 0.42, 0x546E7A, false); brazo.position.set(dx, 0.74, 0.02); g.add(brazo);
+    const sop = caja(0.06, 0.18, 0.06, 0x546E7A, false); sop.position.set(dx, 0.62, 0.14 * m); g.add(sop);
+  });
+  const columna = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.36, 10), mat(0x9E9E9E));
+  columna.position.y = 0.3; columna.castShadow = true; g.add(columna);
+  const cubo = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.08, 10), mat(0x37474F));
+  cubo.position.y = 0.13; g.add(cubo);
+  for (let a = 0; a < 5; a++) {
+    const ang = a * (Math.PI * 2 / 5);
+    const brazoB = caja(0.46, 0.06, 0.08, 0x37474F, false);
+    brazoB.position.set(Math.cos(ang) * 0.23, 0.11, Math.sin(ang) * 0.23);
+    brazoB.rotation.y = -ang; g.add(brazoB);
+    const rueda = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.05, 8), mat(0x212121));
+    rueda.rotation.x = Math.PI / 2;
+    rueda.position.set(Math.cos(ang) * 0.45, 0.055, Math.sin(ang) * 0.45); g.add(rueda);
+  }
+  g.position.set(x, 0, z);
+  scene.add(g);
+  return g;
+}
+function plano(w, d, color, op) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.03;
+  return m;
+}
+
+/* ---------- Mundo ---------- */
+/* textura procedural de concreto industrial */
+function texConcreto() {
+  const c = document.createElement("canvas"); c.width = c.height = 256;
+  const g = c.getContext("2d");
+  g.fillStyle = "#A8B3A6"; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 2600; i++) {
+    const v = 150 + Math.random() * 70;
+    g.fillStyle = "rgba(" + v + "," + (v + 6) + "," + (v - 4) + ",0.5)";
+    g.fillRect(Math.random() * 256, Math.random() * 256, 2.5, 2.5);
+  }
+  for (let i = 0; i < 22; i++) {   /* manchas de aceite y desgaste */
+    g.fillStyle = "rgba(70,78,72," + (0.05 + Math.random() * 0.09) + ")";
+    g.beginPath(); g.ellipse(Math.random() * 256, Math.random() * 256,
+      8 + Math.random() * 26, 6 + Math.random() * 18, Math.random() * 3, 0, 7); g.fill();
+  }
+  g.strokeStyle = "rgba(90,98,92,0.28)"; g.lineWidth = 2;   /* juntas de losa */
+  g.strokeRect(0, 0, 256, 256);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(52, 10);
+  return t;
+}
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(420, 80),
+  new THREE.MeshLambertMaterial({ map: texConcreto() }));
+piso.rotation.x = -Math.PI / 2; piso.receiveShadow = true;
+piso.position.set(75, 0, 0);
+scene.add(piso);
+const grid = new THREE.GridHelper(420, 105, 0x7E967E, 0x8AA38A);
+grid.material.transparent = true; grid.material.opacity = 0.22;
+grid.position.set(75, 0.02, 0);
+scene.add(grid);
+/* pasillo peatonal */
+const senda = plano(260, 4.6, 0xC3CEB9, 0.85); senda.position.set(128, 0.025, 0); scene.add(senda);
+[-2.4, 2.4].forEach(z => {
+  const l = new THREE.Mesh(new THREE.BoxGeometry(260, 0.04, 0.16), new THREE.MeshBasicMaterial({ color: 0xF2B705 }));
+  l.position.set(128, 0.04, z); scene.add(l);
+});
+/* alfombra del mundo oficina */
+/* textura de alfombra de oficina */
+function texAlfombra() {
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d");
+  g.fillStyle = "#8496AE"; g.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 4200; i++) {
+    const v = 118 + Math.random() * 48;
+    g.fillStyle = "rgba(" + v + "," + (v + 12) + "," + (v + 28) + ",0.55)";
+    g.fillRect(Math.random() * 128, Math.random() * 128, 1.6, 1.6);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(34, 4);
+  return t;
+}
+const alfombra = new THREE.Mesh(new THREE.PlaneGeometry(136, 13.4),
+  new THREE.MeshLambertMaterial({ map: texAlfombra() }));
+alfombra.rotation.x = -Math.PI / 2; alfombra.position.set(190, 0.02, 0);
+alfombra.receiveShadow = true; scene.add(alfombra);
+/* pasillo central de la oficina, más claro que la alfombra */
+const pasilloOf = plano(136, 4.4, 0xC8D2DC, 0.95); pasilloOf.position.set(190, 0.028, 0); scene.add(pasilloOf);
+/* umbral de la puerta: se nota el cambio de mundo */
+const umbral = plano(2.4, 13.4, 0x9E9E9E, 0.9); umbral.position.set(121, 0.03, 0); scene.add(umbral);
+/* muro trasero con ventanas */
+/* muro del fondo: solo la nave industrial (la oficina tiene el suyo) */
+const muro = caja(134, 7, 0.6, 0xD8DEE2, false); muro.position.set(55, 3.5, -6.6); muro.receiveShadow = true; scene.add(muro);
+for (let x = 6; x < 116; x += 12) {
+  const v = new THREE.Mesh(new THREE.PlaneGeometry(5, 2.6), new THREE.MeshBasicMaterial({ color: 0xCBE8F5 }));
+  v.position.set(x, 4.4, -6.28); scene.add(v);
+  const marcoV = caja(5.4, 3.0, 0.08, 0xAEB9BF, false); marcoV.position.set(x, 4.4, -6.32); scene.add(marcoV);
+}
+/* portal entre mundos: jambas + dintel apoyados en el piso */
+const portal = new THREE.Group(); scene.add(portal);
+/* jambas solo del lado del fondo: el paso queda libre hacia la cámara */
+[-5.6, -2.4].forEach(dz => {
+  const jamba = caja(1.0, 5.6, 0.8, 0x607D8B); jamba.position.set(120.5, 2.8, dz); portal.add(jamba);
+});
+const dintel = caja(1.0, 0.8, 5.4, 0x546E7A); dintel.position.set(120.5, 6.0, -3.3); portal.add(dintel);
+const marcoSign = letrero("→ OFICINAS", 4.2, 1.1, "#0A5CA8", "#fff", 54);
+marcoSign.position.set(120.0, 6.0, -3.3); marcoSign.rotation.y = -Math.PI / 2; portal.add(marcoSign);
+const marcoSign2 = marcoSign.clone(); marcoSign2.position.x = 121.0; marcoSign2.rotation.y = Math.PI / 2; portal.add(marcoSign2);
+/* letreros de zona */
+[["VESTIER", 7, 0x0A5CA8], ["BODEGA", 30, 0x0A5CA8], ["MONTACARGAS", 57, 0x8A6200],
+ ["ZONA DE RUIDO · 95 dB", 86, 0x8A6200], ["RIESGO ELÉCTRICO", 106, 0xB62233],
+ ["OFICINAS", 132, 0x0A5CA8], ["CAFETERÍA", 170, 0x8A6200], ["ARCHIVO", 200, 0x0A5CA8],
+ ["CIERRE DE JORNADA", 226, 0x00795C], ["SALIDA →", 244, 0x00795C]
+].forEach(([t, x, c]) => {
+  const l = letrero(t, 7.5, 1.6, "#" + c.toString(16).padStart(6, "0"), "#fff", 52);
+  l.position.set(x, 2.6, -6.27); scene.add(l);
+});
+
+/* --- Vestier: casillero + barrera --- */
+const locker = caja(1.7, 2.3, 0.8, 0x78909C); locker.position.set(7, 1.15, -4.7); scene.add(locker);
+const lockerSign = letrero("EPP", 1.4, 0.6, "#0A5CA8", "#fff", 64); lockerSign.position.set(7, 2.8, -4.68); scene.add(lockerSign);
+const barreraPoste = caja(0.35, 1.4, 0.35, 0x455A64); barreraPoste.position.set(12.5, 0.7, 5); scene.add(barreraPoste);
+const barreraGrupo = new THREE.Group(); barreraGrupo.position.set(12.5, 1.15, 5); scene.add(barreraGrupo);
+const brazoGeo = new THREE.BoxGeometry(0.22, 0.22, 10);
+const brazoCv = document.createElement("canvas"); brazoCv.width = 256; brazoCv.height = 32;
+const bc = brazoCv.getContext("2d");
+for (let i = 0; i < 8; i++) { bc.fillStyle = i % 2 ? "#23272B" : "#F2B705"; bc.fillRect(i * 32, 0, 32, 32); }
+const brazo = new THREE.Mesh(brazoGeo, new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(brazoCv) }));
+brazo.position.z = -5; brazo.castShadow = true;
+barreraGrupo.add(brazo);
+
+/* --- Bodega: estantería + cajas que caen --- */
+for (let x = 18; x <= 40; x += 4.4) {
+  const p1 = caja(0.3, 4.6, 0.3, 0x616161); p1.position.set(x, 2.3, -5.4); scene.add(p1);
+}
+[1.9, 3.9].forEach(y => {
+  const tabla = caja(24, 0.18, 1.3, 0x757575); tabla.position.set(29, y, -5.4); scene.add(tabla);
+});
+for (let x = 19; x <= 39; x += 2.6) {
+  const b1 = caja(1.7, 1.4, 1.1, 0xBC8F5E); b1.position.set(x, 4.75, -5.4); scene.add(b1);
+  if (x < 37) { const b2 = caja(1.6, 1.3, 1.1, 0xC9A06E); b2.position.set(x + 0.5, 2.72, -5.4); scene.add(b2); }
+}
+const apiladoBox = caja(1.7, 1.5, 1.2, 0xBC8F5E);
+apiladoBox.position.set(40, 5, -5.2); apiladoBox.rotation.z = 0.3;
+scene.add(apiladoBox);
+const apiladoAlerta = spriteEmoji("⚠️", 1.4); apiladoAlerta.position.set(40, 6.4, -5); scene.add(apiladoAlerta);
+
+const CAJAS = [
+  { x: 22, z: 0 }, { x: 28, z: -1.7 }, { x: 34, z: 1.7 }
+].map((c, i) => {
+  const mesh = caja(1.3, 1.3, 1.3, 0xBC8F5E); mesh.visible = false; scene.add(mesh);
+  const ring = anillo(0.9, 1.7, 0xB62233, 0.55); ring.position.x = c.x; ring.position.z = c.z; ring.visible = false; scene.add(ring);
+  return { ...c, estado: "espera", t: i * 1.7, y: 9, mesh, ring };
+});
+const CICLO = { espera: 1.6, aviso: 1.4, cae: 0.55, suelo: 0.9 };
+
+/* --- Montacargas --- */
+const monta = { x: 48, dir: 1, vel: 3.1, pausa: 0, beepT: 0 };
+const montaG = new THREE.Group(); scene.add(montaG);
+(function () {
+  const cuerpo = caja(2.7, 1.3, 1.8, 0xF57F17); cuerpo.position.y = 1.05; montaG.add(cuerpo);
+  const techoP1 = caja(0.14, 1.3, 0.14, 0x455A64); techoP1.position.set(-0.9, 2.2, 0.7); montaG.add(techoP1);
+  const techoP2 = techoP1.clone(); techoP2.position.z = -0.7; montaG.add(techoP2);
+  const techoP3 = techoP1.clone(); techoP3.position.set(0.7, 2.2, 0.7); montaG.add(techoP3);
+  const techoP4 = techoP1.clone(); techoP4.position.set(0.7, 2.2, -0.7); montaG.add(techoP4);
+  const techo = caja(2.1, 0.14, 1.7, 0x455A64); techo.position.set(-0.1, 2.9, 0); montaG.add(techo);
+  const mastil = caja(0.18, 2.6, 1.4, 0x37474F); mastil.position.set(1.55, 1.5, 0); montaG.add(mastil);
+  const horq = caja(1.1, 0.12, 1.2, 0x37474F); horq.position.set(2.2, 0.35, 0); montaG.add(horq);
+  const carga = caja(1.3, 1.2, 1.3, 0xBC8F5E); carga.position.set(2.25, 1.05, 0); montaG.add(carga);
+  [[-0.85, 0.95], [0.85, 0.95], [-0.85, -0.95], [0.85, -0.95]].forEach(([wx, wz]) => {
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.3, 14), mat(0x212121));
+    r.rotation.x = Math.PI / 2; r.position.set(wx, 0.42, wz); r.castShadow = true; montaG.add(r);
+  });
+  const torsoOp = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.32, 4, 10), mat(0x455A64));
+  torsoOp.position.set(-0.6, 1.75, 0); torsoOp.castShadow = true; montaG.add(torsoOp);
+  const cabezaOp = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 10), mat(0xC68B59));
+  cabezaOp.position.set(-0.6, 2.14, 0); cabezaOp.castShadow = true; montaG.add(cabezaOp);
+  const cascoOp = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xF2B705));
+  cascoOp.position.set(-0.6, 2.18, 0); montaG.add(cascoOp);
+})();
+const montaZona = plano(5.4, 3.6, 0xB62233, 0.3); scene.add(montaZona);
+const montaCheck = spriteEmoji("✅", 1.6); montaCheck.visible = false; scene.add(montaCheck);
+
+/* --- Ruido: compresores --- */
+[78, 86, 94].forEach(x => {
+  const comp = caja(2.6, 2.6, 2.2, 0x78909C); comp.position.set(x, 1.3, -4.8); scene.add(comp);
+  const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.25, 18), mat(0x546E7A));
+  fan.rotation.x = Math.PI / 2; fan.position.set(x, 1.4, -3.6); scene.add(fan);
+});
+const ondas = [];
+[79, 87, 95].forEach((x, i) => {
+  const o = anillo(0.5, 0.72, 0xF57F17, 0.85);
+  o.rotation.x = 0; o.position.set(x, 2.5, -3.2);
+  scene.add(o); ondas.push({ o, f: i });
+});
+const protBox = caja(1.1, 1.5, 0.8, 0xF57F17); protBox.position.set(73, 0.75, -4.6); scene.add(protBox);
+const protIcon = spriteEmoji("🎧", 1.1); protIcon.position.set(73, 2.1, -4.4); scene.add(protIcon);
+
+/* --- Eléctrico: cable + chispas --- */
+const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 11, 10), mat(0x2B2B2B));
+cable.rotation.x = Math.PI / 2; cable.position.set(108, 0.1, 0); cable.castShadow = true; scene.add(cable);
+const cableZona = plano(3.4, 11, 0xB62233, 0.3); cableZona.position.set(108, 0.03, 0); scene.add(cableZona);
+const chispas = [];
+for (let i = 0; i < 5; i++) {
+  const ch = caja(0.16, 0.16, 0.16, 0xFFE24A, false);
+  ch.material = new THREE.MeshBasicMaterial({ color: 0xFFE24A });
+  ch.position.set(108, 0.3, -3 + i * 1.5); scene.add(ch); chispas.push(ch);
+}
+const cono = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.3, 14), mat(0xF57F17));
+cono.position.set(105.6, 0.65, 0); cono.castShadow = true; cono.visible = false; scene.add(cono);
+let tecnico = null, tecnicoLlega = 0, gruaPuente = null;
+
+/* --- TRABAJO EN ALTURAS: plataforma, arnés, permiso y supervisor (x 56–68, z +3.5) --- */
+const ALT = { x: 64, z: -3.8, h: 3.4 };
+const platBase = new THREE.Group(); scene.add(platBase);
+(function () {
+  /* estructura */
+  [[-1.3, -0.9], [1.3, -0.9], [-1.3, 0.9], [1.3, 0.9]].forEach(([dx, dz]) => {
+    const p = caja(0.18, ALT.h, 0.18, 0x546E7A); p.position.set(ALT.x + dx, ALT.h / 2, ALT.z + dz); platBase.add(p);
+  });
+  const tabla = caja(3.0, 0.16, 2.1, 0xA1887F); tabla.position.set(ALT.x, ALT.h, ALT.z); platBase.add(tabla);
+  /* barandas de la plataforma */
+  [[0, -1.0], [0, 1.0]].forEach(([dx, dz]) => {
+    const b1 = caja(3.0, 0.08, 0.08, 0xF2B705, false); b1.position.set(ALT.x + dx, ALT.h + 1.0, ALT.z + dz); platBase.add(b1);
+    const b2 = caja(3.0, 0.08, 0.08, 0xF2B705, false); b2.position.set(ALT.x + dx, ALT.h + 0.55, ALT.z + dz); platBase.add(b2);
+  });
+  [[-1.45], [1.45]].forEach(([dx]) => {
+    const pv = caja(0.09, 1.1, 0.09, 0xF2B705, false); pv.position.set(ALT.x + dx, ALT.h + 0.55, ALT.z); platBase.add(pv);
+  });
+  /* escalera */
+  const l1 = caja(0.1, ALT.h + 0.5, 0.1, 0xB71C1C); l1.position.set(ALT.x - 1.7, (ALT.h + 0.5) / 2, ALT.z - 0.35); platBase.add(l1);
+  const l2 = caja(0.1, ALT.h + 0.5, 0.1, 0xB71C1C); l2.position.set(ALT.x - 1.7, (ALT.h + 0.5) / 2, ALT.z + 0.35); platBase.add(l2);
+  for (let y = 0.45; y < ALT.h + 0.3; y += 0.45) {
+    const pel = caja(0.08, 0.06, 0.8, 0xB71C1C, false); pel.position.set(ALT.x - 1.7, y, ALT.z); platBase.add(pel);
+  }
+  /* luminaria dañada que hay que cambiar */
+  const lum = caja(1.1, 0.12, 0.35, 0x546E7A, false); lum.position.set(ALT.x, ALT.h + 1.9, ALT.z); platBase.add(lum);
+})();
+const lumLuz = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.25),
+  new THREE.MeshBasicMaterial({ color: 0xFFF3C4 }));
+lumLuz.position.set(ALT.x, ALT.h + 1.84, ALT.z); scene.add(lumLuz);
+const altZona = plano(3.2, 2.4, 0xB62233, 0.3); altZona.position.set(ALT.x - 1.7, 0.03, ALT.z); scene.add(altZona);
+const senalAlt = letrero("⚠ TRABAJO EN ALTURAS · ARNÉS + PERMISO", 8, 1.4, "#F2B705", "#1F262A", 34);
+senalAlt.position.set(ALT.x, 5.6, ALT.z - 2.4); scene.add(senalAlt);
+/* soporte del arnés */
+const soporteArnes = caja(0.9, 1.6, 0.6, 0x455A64); soporteArnes.position.set(59, 0.8, -4.4); scene.add(soporteArnes);
+const arnesColgado = new THREE.Group();
+[[0.14], [-0.14]].forEach(([dx]) => {
+  const c = caja(0.08, 0.8, 0.06, 0xF2B705, false); c.position.set(59 + dx, 1.9, -4.4); arnesColgado.add(c);
+});
+const arnesArgolla = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, 8, 12), mat(0x9E9E9E));
+arnesArgolla.position.set(59, 2.35, -4.4); arnesColgado.add(arnesArgolla);
+scene.add(arnesColgado);
+/* supervisor con el permiso de trabajo */
+const supervisor = humano({ camisa: 0xFFFFFF, pantalon: 0x263238, piel: 0xC68B59, pelo: 0x21150E });
+supervisor.g.position.set(56, 0, -4.4); supervisor.g.rotation.y = Math.PI / 2.4; scene.add(supervisor.g);
+const cascoSup = new THREE.Group();
+const domoS = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xFFFFFF));
+domoS.position.y = 0.05; cascoSup.add(domoS);
+const alaS = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.37, 0.05, 16), mat(0xFFFFFF)); cascoSup.add(alaS);
+cascoSup.position.y = 2.31; supervisor.g.add(cascoSup);
+const tablero = caja(0.5, 0.62, 0.05, 0xF5F0DC, false); tablero.position.set(0.42, 1.5, 0.28); tablero.rotation.z = -0.3; supervisor.g.add(tablero);
+const permisoSign = letrero("PERMISO DE TRABAJO", 3.4, 0.9, "#0A5CA8", "#fff", 44);
+permisoSign.position.set(56, 3.1, -5.0); scene.add(permisoSign);
+
+/* --- Guantes y pieza caliente (x 100 y mesa de soldadura) --- */
+const guantesBox = caja(1.0, 1.2, 0.7, 0xF57F17); guantesBox.position.set(100, 0.6, -4.4); scene.add(guantesBox);
+const guantesIcon = spriteEmoji("🧤", 1.1); guantesIcon.position.set(100, 1.9, -4.4); scene.add(guantesIcon);
+
+/* --- Soldadura: careta + arco con chispas (x 110–118) --- */
+const caretaBox = caja(1.0, 1.4, 0.7, 0xF57F17); caretaBox.position.set(110, 0.7, -4.6); scene.add(caretaBox);
+const caretaIcon = spriteEmoji("🥽", 1.1); caretaIcon.position.set(110, 2.0, -4.4); scene.add(caretaIcon);
+const mesaSold = caja(3.2, 0.2, 1.4, 0x546E7A); mesaSold.position.set(114.5, 1.0, -4.6); scene.add(mesaSold);
+[[-1.4], [1.4]].forEach(([dx]) => {
+  const p = caja(0.16, 1.0, 1.0, 0x37474F); p.position.set(114.5 + dx, 0.5, -4.6); scene.add(p);
+});
+const piezaSold = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.25, 0.8),
+  new THREE.MeshLambertMaterial({ color: 0xB03A1A, emissive: 0xC7361A, emissiveIntensity: 0.9 }));
+piezaSold.position.set(114.5, 1.22, -4.6); piezaSold.castShadow = true; scene.add(piezaSold);
+const calorSp = spriteEmoji("🔥", 1.2); calorSp.position.set(114.5, 2.1, -4.6); scene.add(calorSp);
+const calorZona = plano(3.4, 2.6, 0xB62233, 0.3); calorZona.position.set(114.5, 0.03, -3.9); scene.add(calorZona);
+const arco = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8),
+  new THREE.MeshBasicMaterial({ color: 0xEAF6FF }));
+arco.position.set(114.5, 1.4, -4.6); scene.add(arco);
+const luzArco = new THREE.PointLight(0x9FD8FF, 0, 12); luzArco.position.set(114.5, 1.8, -4.6); scene.add(luzArco);
+const chispasSold = [];
+for (let i = 0; i < 8; i++) {
+  const ch = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.09),
+    new THREE.MeshBasicMaterial({ color: 0xFFC246 }));
+  ch.position.set(114.5, 1.4, -4.6); scene.add(ch);
+  chispasSold.push({ m: ch, a: Math.random() * 7, v: 0.6 + Math.random() * 0.9, f: Math.random() });
+}
+const soldadorG = new THREE.Group(); soldadorG.position.set(114.5, 0, -5.6); scene.add(soldadorG);
+(function () {
+  const t = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.42, 4, 10), mat(0x455A64));
+  t.position.y = 1.35; t.castShadow = true; soldadorG.add(t);
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.38), mat(0x263238));
+  cab.position.set(0, 1.92, 0.06); soldadorG.add(cab);
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 0.04), new THREE.MeshBasicMaterial({ color: 0x0A5CA8 }));
+  visor.position.set(0, 1.95, 0.26); soldadorG.add(visor);
+})();
+const soldZona = plano(7.5, 4.2, 0xB62233, 0.28); soldZona.position.set(114.5, 0.03, -2.6); scene.add(soldZona);
+const senalSold = letrero("⚠ RADIACIÓN · USE CARETA", 5, 1.2, "#F2B705", "#1F262A", 40);
+senalSold.position.set(114.5, 2.9, -6.27); scene.add(senalSold);
+
+/* ================= MUNDO OFICINA (x 122–256) ================= */
+
+/* --- Cables sueltos cruzando el pasillo (x≈132) --- */
+const cablesOf = new THREE.Group();
+[-0.35, 0, 0.4].forEach((dx, i) => {
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 11, 8), mat(i === 1 ? 0x455A64 : 0x263238));
+  c.rotation.x = Math.PI / 2; c.rotation.z = 0.05 * (i - 1);
+  c.position.set(132 + dx, 0.06, 0); cablesOf.add(c);
+});
+scene.add(cablesOf);
+const cablesZonaOf = plano(3, 11, 0xB62233, 0.3); cablesZonaOf.position.set(132, 0.035, 0); scene.add(cablesZonaOf);
+const canaleta = caja(0.7, 0.12, 11, 0x78909C); canaleta.position.set(132, 0.06, 0); canaleta.visible = false; scene.add(canaleta);
+
+/* --- Carrito de correspondencia patrullando (x 140–160) --- */
+const carrito = { x: 142, dir: 1, vel: 2.2, z: 0 };
+const carritoG = new THREE.Group(); scene.add(carritoG);
+(function () {
+  const base = caja(1.5, 0.9, 1.0, 0x78909C); base.position.y = 0.75; carritoG.add(base);
+  const bandeja = caja(1.4, 0.1, 0.9, 0xB0BEC5); bandeja.position.y = 1.25; carritoG.add(bandeja);
+  const papeles = caja(1.0, 0.34, 0.7, 0xF5F0DC); papeles.position.y = 1.45; carritoG.add(papeles);
+  const asa = caja(0.08, 0.7, 1.0, 0x455A64); asa.position.set(-0.75, 1.35, 0); carritoG.add(asa);
+  [[-0.6, 0.42], [0.6, 0.42], [-0.6, -0.42], [0.6, -0.42]].forEach(([wx, wz]) => {
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.1, 10), mat(0x212121));
+    r.rotation.x = Math.PI / 2; r.position.set(wx, 0.16, wz); carritoG.add(r);
+  });
+})();
+const carritoZona = plano(4, 3, 0xB62233, 0.25); scene.add(carritoZona);
+
+/* --- Cafetería con derrame de café (x≈172) --- */
+const barra = caja(4, 1.1, 1.2, 0x8D6E63); barra.position.set(172, 0.55, -5); scene.add(barra);
+const cafetera = caja(0.6, 0.7, 0.5, 0x263238); cafetera.position.set(171, 1.45, -5); scene.add(cafetera);
+const tazas = caja(1.2, 0.25, 0.4, 0xF5F0DC); tazas.position.set(173, 1.25, -5); scene.add(tazas);
+const derrame = new THREE.Mesh(new THREE.CircleGeometry(1.15, 20),
+  new THREE.MeshBasicMaterial({ color: 0x6D4C41, transparent: true, opacity: 0.8, depthWrite: false }));
+derrame.rotation.x = -Math.PI / 2; derrame.position.set(172, 0.045, 0.5); scene.add(derrame);
+const derrameZona = plano(3.4, 3.4, 0xB62233, 0.3); derrameZona.position.set(172, 0.03, 0.5); scene.add(derrameZona);
+const conoDerrame = new THREE.Mesh(new THREE.ConeGeometry(0.45, 1.1, 14), mat(0xF2B705));
+conoDerrame.position.set(172, 0.55, 0.5); conoDerrame.castShadow = true; conoDerrame.visible = false; scene.add(conoDerrame);
+
+/* --- Escritorios, archivo y plantas --- */
+[178, 190, 212].forEach(x => {
+  const mesa = caja(2.6, 0.1, 1.2, 0xA1887F); mesa.position.set(x, 1.05, -4.9); scene.add(mesa);
+  [[-1.1], [1.1]].forEach(([dx]) => {
+    const pata = caja(0.12, 1.0, 1.0, 0x6D4C41); pata.position.set(x + dx, 0.5, -4.9); scene.add(pata);
+  });
+  const pantalla = caja(1.0, 0.65, 0.08, 0x263238); pantalla.position.set(x, 1.65, -5.1); scene.add(pantalla);
+  sillaOficina(x, -3.7, 1);   /* silla completa mirando al escritorio */
+});
+[199, 201, 203].forEach((x, i) => {
+  const arch = caja(1.4, 2.4 - i * 0.3, 0.9, 0x78909C); arch.position.set(x, (2.4 - i * 0.3) / 2, -5.2); scene.add(arch);
+});
+const cajasArchivo = caja(1.0, 0.8, 0.8, 0xBC8F5E); cajasArchivo.position.set(200, 0.4, -3.4); scene.add(cajasArchivo);
+const carroArchivo = caja(1.1, 0.5, 0.7, 0x00795C); carroArchivo.position.set(201.4, 0.35, -3.4); scene.add(carroArchivo);
+[126, 165, 220, 236].forEach(x => {
+  const pote = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.28, 0.5, 10), mat(0xA1887F));
+  pote.position.set(x, 0.25, -5.4); pote.castShadow = true; scene.add(pote);
+  const hojas = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), mat(0x2E7D52));
+  hojas.position.set(x, 0.95, -5.4); hojas.castShadow = true; scene.add(hojas);
+});
+
+/* --- Evacuación (final del turno, x 232–256) --- */
+const alarma = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 10),
+  new THREE.MeshBasicMaterial({ color: 0xB62233 }));
+alarma.position.set(233, 6.2, -6.1); scene.add(alarma);
+const flechas = [];
+for (let x = 235; x <= 247; x += 4) {
+  const f = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.5, 4), new THREE.MeshBasicMaterial({ color: 0x00A87E }));
+  f.rotation.z = -Math.PI / 2; f.rotation.y = Math.PI / 4;
+  f.position.set(x, 0.3, 0); f.visible = false; scene.add(f); flechas.push(f);
+}
+const puerta = caja(2.6, 3.6, 0.4, 0x8D6E63); puerta.position.set(248, 1.8, -6.1); scene.add(puerta);
+const salidaSign = letrero("SALIDA", 2.6, 0.9, "#00795C", "#fff", 62); salidaSign.position.set(248, 4.2, -6.05); scene.add(salidaSign);
+const encuentro = letrero("PUNTO DE ENCUENTRO", 4.6, 1.3, "#00795C", "#fff", 42);
+encuentro.position.set(252.5, 1.9, -4.5); encuentro.rotation.y = -0.4; scene.add(encuentro);
+const encPoste = caja(0.16, 2.2, 0.16, 0x455A64); encPoste.position.set(252.5, 1.1, -4.7); scene.add(encPoste);
+
+/* ================= AMBIENTACIÓN DE ESCENARIOS ================= */
+(function decorar() {
+  /* --- techo: vigas transversales y lámparas colgantes --- */
+  for (let x = 4; x < 120; x += 10) {
+    const viga = caja(0.5, 0.5, 8.6, 0x8A96A0, false); viga.position.set(x, 6.9, -2.4); scene.add(viga);
+  }
+  const vigaLarga = caja(120, 0.35, 0.35, 0x78909C, false); vigaLarga.position.set(60, 6.6, -5.4); scene.add(vigaLarga);
+  const vigaLarga2 = vigaLarga.clone(); vigaLarga2.position.z = -1.2; scene.add(vigaLarga2);
+  for (let x = 8; x < 120; x += 12) {
+    const cuelga = caja(0.06, 0.9, 0.06, 0x546E7A, false); cuelga.position.set(x, 6.2, -2.6); scene.add(cuelga);
+    const carcasa = caja(2.2, 0.14, 0.55, 0x455A64, false); carcasa.position.set(x, 5.75, -2.6); scene.add(carcasa);
+    const luz = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.06, 0.42), new THREE.MeshBasicMaterial({ color: 0xFFF6D8 }));
+    luz.position.set(x, 5.67, -2.6); scene.add(luz);
+  }
+  /* --- columnas estructurales con franja de seguridad --- */
+  for (let x = 14; x < 120; x += 24) {
+    const col = caja(0.7, 7, 0.7, 0xBEC8CD, false); col.position.set(x, 3.5, -6.0); scene.add(col);
+    const franja = caja(0.76, 0.55, 0.76, 0xF2B705, false); franja.position.set(x, 1.1, -6.0); scene.add(franja);
+  }
+  /* --- extintores y señal --- */
+  [15, 62, 110].forEach(x => {
+    const ext = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.6, 10), mat(0xC62828));
+    ext.position.set(x, 1.15, -6.15); scene.add(ext);
+    const sign = letrero("EXTINTOR", 1.1, 0.42, "#C62828", "#fff", 60);
+    sign.position.set(x, 1.85, -6.2); scene.add(sign);
+  });
+  /* --- borde frontal (lado cámara): barandas, estibas y tambores --- */
+  for (let x = 10; x < 116; x += 16) {
+    const bar = caja(3.4, 0.1, 0.1, 0xF2B705, false); bar.position.set(x, 0.95, 5.9); scene.add(bar);
+    const bar2 = bar.clone(); bar2.position.y = 0.55; scene.add(bar2);
+    [-1.6, 1.6].forEach(dx => {
+      const p = caja(0.12, 1.05, 0.12, 0x23272B, false); p.position.set(x + dx, 0.52, 5.9); scene.add(p);
+    });
+  }
+  [22, 52, 84].forEach(x => {
+    const tambor = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 1.3, 12), mat(0x1565C0));
+    tambor.position.set(x, 0.65, 5.7); tambor.castShadow = true; scene.add(tambor);
+    const tambor2 = tambor.clone(); tambor2.position.set(x + 1.1, 0.65, 5.85); scene.add(tambor2);
+  });
+  [30, 68, 100].forEach(x => {
+    const estiba = caja(1.8, 0.16, 1.4, 0x8D6E63, false); estiba.position.set(x, 0.1, 5.7); scene.add(estiba);
+    const cajaE = caja(1.3, 0.9, 1.1, 0xBC8F5E); cajaE.position.set(x, 0.65, 5.7); scene.add(cajaE);
+  });
+  /* --- vestier: banca, casillero extra y cartelera SST --- */
+  const banca = caja(2.4, 0.14, 0.6, 0x8D6E63, false); banca.position.set(11, 0.55, -5); scene.add(banca);
+  [[-0.9], [0.9]].forEach(([dx]) => {
+    const pata = caja(0.12, 0.55, 0.5, 0x5D4037, false); pata.position.set(11 + dx, 0.27, -5); scene.add(pata);
+  });
+  const locker2 = caja(1.7, 2.3, 0.8, 0x90A4AC); locker2.position.set(4.6, 1.15, -4.7); scene.add(locker2);
+  const cartelera = letrero("TU SEGURIDAD ES PRIMERO", 5.2, 1.4, "#00795C", "#fff", 40);
+  cartelera.position.set(13.5, 3.4, -6.27); scene.add(cartelera);
+  /* --- bodega: estibas con carga al fondo y gato hidráulico --- */
+  [24, 33].forEach(x => {
+    const est = caja(1.8, 0.16, 1.4, 0x8D6E63, false); est.position.set(x, 0.1, -4.9); scene.add(est);
+    const c1 = caja(1.2, 0.9, 1.1, 0xC9A06E); c1.position.set(x - 0.15, 0.65, -4.9); scene.add(c1);
+    const c2 = caja(0.9, 0.7, 0.9, 0xBC8F5E); c2.position.set(x + 0.35, 1.45, -4.9); scene.add(c2);
+  });
+  const gatoBase = caja(1.5, 0.18, 0.7, 0xC62828); gatoBase.position.set(37.5, 0.2, -4.4); scene.add(gatoBase);
+  const gatoMango = caja(0.1, 1.2, 0.1, 0x37474F, false); gatoMango.position.set(36.9, 0.85, -4.4); gatoMango.rotation.z = 0.5; scene.add(gatoMango);
+  /* --- montacargas: espejo convexo y conos --- */
+  const espejoPoste = caja(0.1, 3, 0.1, 0x546E7A, false); espejoPoste.position.set(46.5, 1.5, -5.9); scene.add(espejoPoste);
+  const espejo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.4),
+    new THREE.MeshLambertMaterial({ color: 0xCFD8DC, emissive: 0x445055 }));
+  espejo.position.set(46.5, 3.1, -5.85); espejo.rotation.x = Math.PI / 3.2; scene.add(espejo);
+  [49, 67].forEach(x => {
+    const conoT = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.8, 12), mat(0xF57F17));
+    conoT.position.set(x, 0.4, 3.6); conoT.castShadow = true; scene.add(conoT);
+  });
+  /* --- zona de ruido: tubería con válvulas y manómetro --- */
+  const tubo = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 30, 10), mat(0x90A4AC));
+  tubo.rotation.z = Math.PI / 2; tubo.position.set(87, 3.2, -6.1); scene.add(tubo);
+  [79, 87, 95].forEach(x => {
+    const bajada = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1.6, 8), mat(0x90A4AC));
+    bajada.position.set(x, 2.4, -6.1); scene.add(bajada);
+    const valvula = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.05, 8, 14), mat(0xC62828));
+    valvula.position.set(x, 3.2, -5.85); valvula.rotation.x = Math.PI / 2; scene.add(valvula);
+  });
+  /* --- eléctrico: transformador y cinta de precaución --- */
+  const trafo = caja(1.6, 1.9, 1.0, 0x607D8B); trafo.position.set(112.5, 0.95, -5.3); scene.add(trafo);
+  const rejilla = caja(1.3, 1.2, 0.06, 0x455A64, false); rejilla.position.set(112.5, 1.1, -4.77); scene.add(rejilla);
+  /* --- oficina: cubículos, impresora, cartelera, agua, TV, reloj, papeleras --- */
+  [176.6, 179.4, 188.6, 191.4, 210.6, 213.4].forEach(x => {
+    const panel = caja(0.1, 1.6, 1.6, 0x9FB2C0, false); panel.position.set(x, 0.8, -4.9); scene.add(panel);
+  });
+  const impresoraMueble = caja(1.4, 0.9, 0.9, 0xB0BEC5); impresoraMueble.position.set(150, 0.45, -5); scene.add(impresoraMueble);
+  const impresora = caja(1.0, 0.5, 0.7, 0x546E7A); impresora.position.set(150, 1.15, -5); scene.add(impresora);
+  const corcho = letrero("📌 CARTELERA SST", 3.4, 1.6, "#A1887F", "#3E2723", 44);
+  corcho.position.set(157, 3.1, -6.27); scene.add(corcho);
+  const dispensador = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 1.3, 12), mat(0xECEFF1));
+  dispensador.position.set(163, 0.65, -5.2); scene.add(dispensador);
+  const botellon = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 0.5, 12),
+    new THREE.MeshLambertMaterial({ color: 0x64B5F6, transparent: true, opacity: 0.75 }));
+  botellon.position.set(163, 1.55, -5.2); scene.add(botellon);
+  const tv = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2),
+    new THREE.MeshBasicMaterial({ map: letreroTex("SEGURIDAD ES EQUIPO 🤝", "#0A5CA8", "#fff", 40) }));
+  tv.position.set(194, 3.4, -6.2); scene.add(tv);
+  const marco2 = caja(3.9, 2.3, 0.09, 0x263238, false); marco2.position.set(194, 3.4, -6.25); scene.add(marco2);
+  const reloj = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.08, 20), mat(0xFFFFFF));
+  reloj.rotation.x = Math.PI / 2; reloj.position.set(222, 4, -6.25); scene.add(reloj);
+  const man1 = caja(0.06, 0.34, 0.03, 0x263238, false); man1.position.set(222, 4.13, -6.2); scene.add(man1);
+  const man2 = caja(0.05, 0.25, 0.03, 0x263238, false); man2.position.set(222.1, 4.05, -6.2); man2.rotation.z = -1.1; scene.add(man2);
+  [172.5, 218].forEach(x => {
+    const bote = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.22, 0.55, 10), mat(0x546E7A));
+    bote.position.set(x, 0.28, -4.2); scene.add(bote);
+  });
+  /* ===================== PLANTA: más vida industrial ===================== */
+  /* grúa puente recorriendo la nave */
+  const rielA = caja(112, 0.3, 0.3, 0x8A96A0, false); rielA.position.set(60, 6.3, -5.6); scene.add(rielA);
+  const rielB = rielA.clone(); rielB.position.z = -1.4; scene.add(rielB);
+  gruaPuente = new THREE.Group(); scene.add(gruaPuente);
+  (function () {
+    const viga = caja(1.1, 0.7, 5.2, 0xF2B705, false); viga.position.set(0, 5.9, -3.5); gruaPuente.add(viga);
+    const carro = caja(1.6, 0.7, 1.6, 0x455A64, false); carro.position.set(0, 5.4, -3.5); gruaPuente.add(carro);
+    const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.6, 6), mat(0x37474F));
+    cable.position.set(0, 3.9, -3.5); gruaPuente.add(cable);
+    const gancho = caja(0.5, 0.45, 0.5, 0xB0BEC5, false); gancho.position.set(0, 2.5, -3.5); gruaPuente.add(gancho);
+    const carga = caja(1.5, 1.1, 1.5, 0xBC8F5E); carga.position.set(0, 1.75, -3.5); gruaPuente.add(carga);
+  })();
+  /* señalización vertical ISO en postes */
+  const SENALES = [
+    [11, "⛑️ EPP OBLIGATORIO", "#0A5CA8"], [30, "⚠️ CARGA SUSPENDIDA", "#F2B705"],
+    [50, "🚜 TRÁNSITO DE MONTACARGAS", "#F2B705"], [70, "🎧 USO DE PROTECCIÓN AUDITIVA", "#0A5CA8"],
+    [98, "⚡ RIESGO ELÉCTRICO", "#B62233"], [112, "🥽 RADIACIÓN · USE CARETA", "#F2B705"]
+  ];
+  SENALES.forEach(([x, t, c]) => {
+    const poste = caja(0.12, 2.6, 0.12, 0xB0BEC5, false); poste.position.set(x, 1.3, 5.7); scene.add(poste);
+    const s = letrero(t, 3.6, 1.0, c, c === "#F2B705" ? "#1F262A" : "#fff", 30);
+    s.position.set(x, 2.75, 5.68); s.rotation.y = Math.PI; scene.add(s);
+    const s2 = s.clone(); s2.rotation.y = 0; s2.position.z = 5.72; scene.add(s2);
+  });
+  /* marcas viales del pasillo de montacargas */
+  for (let x = 46; x < 70; x += 6) {
+    /* flecha pintada en el piso: plana, sin hundirse */
+    const flechaP = new THREE.Mesh(new THREE.CircleGeometry(0.55, 3),
+      new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.55, depthWrite: false }));
+    flechaP.rotation.x = -Math.PI / 2; flechaP.rotation.z = -Math.PI / 2;
+    flechaP.position.set(x, 0.04, 0); scene.add(flechaP);
+    const colaP = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.34),
+      new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.5, depthWrite: false }));
+    colaP.rotation.x = -Math.PI / 2; colaP.position.set(x - 1.2, 0.04, 0); scene.add(colaP);
+  }
+  /* muelle de carga con camión al fondo */
+  const muelle = caja(9, 1.1, 5, 0xB0A99A); muelle.position.set(35, 0.55, -9.5); scene.add(muelle);
+  const camion = new THREE.Group(); camion.position.set(35, 0, -14.5); scene.add(camion);
+  (function () {
+    const furgon = caja(9, 3.2, 4.2, 0xECEFF1); furgon.position.y = 2.4; camion.add(furgon);
+    const franja = caja(9.05, 0.5, 4.25, 0x0A5CA8, false); franja.position.y = 1.5; camion.add(franja);
+    const cabina = caja(3, 2.6, 4, 0x1565C0); cabina.position.set(-6, 1.9, 0); camion.add(cabina);
+    const parab = caja(0.15, 1.2, 3.4, 0x9FD8F0, false); parab.position.set(-7.5, 2.5, 0); camion.add(parab);
+    [[-6, 2.2], [-6, -2.2], [2, 2.2], [2, -2.2], [4, 2.2], [4, -2.2]].forEach(([wx, wz]) => {
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.5, 14), mat(0x212121));
+      r.rotation.x = Math.PI / 2; r.position.set(wx, 0.75, wz); camion.add(r);
+    });
+  })();
+  /* charco de aceite señalizado (ambiente, no jugable) */
+  const charco = new THREE.Mesh(new THREE.CircleGeometry(1.5, 18),
+    new THREE.MeshBasicMaterial({ color: 0x3B3A33, transparent: true, opacity: 0.5, depthWrite: false }));
+  charco.rotation.x = -Math.PI / 2; charco.position.set(88, 0.04, 4.2); scene.add(charco);
+  const conoCharco = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.0, 14), mat(0xF57F17));
+  conoCharco.position.set(86.6, 0.5, 4.2); conoCharco.castShadow = true; scene.add(conoCharco);
+
+  /* ===================== OFICINA: ambiente propio ===================== */
+  /* Cielo raso: SOLO sobre la mitad del fondo. El lado de la cámara queda
+     abierto (corte tipo casa de muñecas) para que el techo nunca tape el juego. */
+  const rasoY = 4.5, rasoZ = -3.9, rasoD = 5.6;   /* cubre z −6.7 … −1.1 */
+  const raso = new THREE.Mesh(new THREE.BoxGeometry(136, 0.18, rasoD), mat(0xF2F4F6));
+  raso.position.set(190, rasoY, rasoZ); scene.add(raso);
+  /* moldura de remate en el borde abierto */
+  const moldura = caja(136, 0.34, 0.22, 0xDDE3E8, false);
+  moldura.position.set(190, rasoY - 0.08, rasoZ + rasoD / 2); scene.add(moldura);
+  for (let x = 124; x < 256; x += 3.4) {
+    const junta = caja(0.05, 0.04, rasoD, 0xD7DDE2, false); junta.position.set(x, rasoY - 0.11, rasoZ); scene.add(junta);
+  }
+  [-5.6, -3.9, -2.2].forEach(z => {
+    const junta = caja(136, 0.04, 0.05, 0xD7DDE2, false); junta.position.set(190, rasoY - 0.11, z); scene.add(junta);
+  });
+  for (let x = 127; x < 254; x += 9) {
+    [-5.4, -2.4].forEach(z => {
+      const marcoL = caja(2.6, 0.06, 0.9, 0xE8ECEF, false); marcoL.position.set(x, rasoY - 0.13, z); scene.add(marcoL);
+      const panelLuz = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.05, 0.75),
+        new THREE.MeshBasicMaterial({ color: 0xFFFDF2 }));
+      panelLuz.position.set(x, rasoY - 0.17, z); scene.add(panelLuz);
+    });
+    /* rejilla de aire acondicionado intercalada */
+    if ((x - 127) % 27 === 0) {
+      const rejilla = caja(1.2, 0.08, 1.2, 0xCFD6DB, false); rejilla.position.set(x + 4.5, rasoY - 0.14, -3.9); scene.add(rejilla);
+      for (let k = -0.45; k <= 0.45; k += 0.22) {
+        const aleta = caja(1.1, 0.03, 0.06, 0xAEB8BF, false); aleta.position.set(x + 4.5, rasoY - 0.2, -3.9 + k); scene.add(aleta);
+      }
+    }
+  }
+  /* luminarias lineales ancladas al borde del cielo raso: iluminan el pasillo
+     sin cruzar nunca la línea de visión de la cámara */
+  for (let x = 130; x < 254; x += 11) {
+    const tubo = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.1, 0.18),
+      new THREE.MeshBasicMaterial({ color: 0xFFFDF2 }));
+    tubo.position.set(x, 4.22, rasoZ + rasoD / 2); scene.add(tubo);
+    const soporte = caja(2.6, 0.12, 0.1, 0xC9D2D8, false);
+    soporte.position.set(x, 4.33, rasoZ + rasoD / 2 - 0.06); scene.add(soporte);
+  }
+  /* pared de oficina: arranca donde termina el muro industrial, sin superponerse */
+  const paredOf = caja(137, 5.2, 0.6, 0xE9EEF2, false); paredOf.position.set(189.5, 2.6, -6.6); scene.add(paredOf);
+  const zocalo = caja(137, 0.35, 0.14, 0xCBD4DA, false); zocalo.position.set(189.5, 0.17, -6.24); scene.add(zocalo);
+  const guarda = caja(137, 0.12, 0.12, 0xB9C4CB, false); guarda.position.set(189.5, 1.15, -6.25); scene.add(guarda);
+  /* ventanas con persianas */
+  [140, 162, 208, 232].forEach(x => {
+    const vidrio = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 2.4),
+      new THREE.MeshBasicMaterial({ color: 0xD6EEF8 }));
+    vidrio.position.set(x, 2.9, -6.2); scene.add(vidrio);
+    const marcoV = caja(5.9, 2.9, 0.1, 0xFFFFFF, false); marcoV.position.set(x, 2.9, -6.26); scene.add(marcoV);
+    for (let y = 1.85; y < 4.05; y += 0.26) {
+      const lama = caja(5.3, 0.16, 0.05, 0xEFF3F5, false); lama.position.set(x, y, -6.17); lama.rotation.x = 0.32; scene.add(lama);
+    }
+  });
+  /* cuadros corporativos y señal de evacuación */
+  [[150, "NUESTRA GENTE", "#0A5CA8"], [186, "CALIDAD Y SERVICIO", "#00795C"], [222, "TRABAJO EN EQUIPO", "#8A6200"]]
+    .forEach(([x, t, c]) => {
+      const marcoC = caja(3.3, 1.6, 0.09, 0xFFFFFF, false); marcoC.position.set(x, 2.6, -6.26); scene.add(marcoC);
+      const cuadro = letrero(t, 2.9, 1.2, c, "#fff", 38); cuadro.position.set(x, 2.6, -6.2); scene.add(cuadro);
+    });
+  [168, 226].forEach(x => {
+    const salidaEmg = letrero("🚪 SALIDA DE EMERGENCIA", 2.6, 0.8, "#00795C", "#fff", 30);
+    salidaEmg.position.set(x, 4.05, -6.24); scene.add(salidaEmg);
+    const extOf = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5, 10), mat(0xC62828));
+    extOf.position.set(x + 3, 0.9, -6.1); scene.add(extOf);
+  });
+  /* mamparas de cubículo con vidrio esmerilado */
+  [[134, 3.2], [146, -3.2], [158, 3.2], [196, -3.2], [206, 3.2], [222, -3.2]].forEach(([x, z]) => {
+    const mamp = caja(0.12, 1.5, 3.4, 0xDCE3E8); mamp.position.set(x, 0.78, z); scene.add(mamp);
+    const pieM = caja(0.42, 0.06, 3.4, 0xAEB9C0, false); pieM.position.set(x, 0.03, z); scene.add(pieM);
+    [-1.5, 1.5].forEach(dz => {
+      const patin = caja(0.34, 0.12, 0.14, 0x90A4AC, false); patin.position.set(x, 0.06, z + dz); scene.add(patin);
+    });
+    const vidrioM = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 3.4),
+      new THREE.MeshLambertMaterial({ color: 0xCFE6F2, transparent: true, opacity: 0.55 }));
+    vidrioM.position.set(x, 1.85, z); scene.add(vidrioM);
+  });
+  /* sillas sueltas del área común (completas, ligeramente giradas) */
+  [[152, -3.4, 0.5], [196, -3.2, -0.6], [232, -3.5, 0.3]].forEach(([x, z, rot]) => {
+    const s = sillaOficina(x, z, 1); s.rotation.y = rot;
+  });
+  /* helechos altos en materas de oficina */
+  [138, 176, 218, 244].forEach(x => {
+    const potM = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.7, 10), mat(0xECEFF1));
+    potM.position.set(x, 0.35, -5.5); potM.castShadow = true; scene.add(potM);
+    for (let k = 0; k < 5; k++) {
+      const hoja = caja(0.12, 1.2, 0.5, 0x2E7D52, false);
+      hoja.position.set(x + Math.cos(k * 1.25) * 0.22, 1.25, -5.5 + Math.sin(k * 1.25) * 0.22);
+      hoja.rotation.z = Math.cos(k * 1.25) * 0.4; hoja.rotation.x = Math.sin(k * 1.25) * 0.4;
+      scene.add(hoja);
+    }
+  });
+
+  /* recepción al entrar a la oficina */
+  const mostrador = caja(5, 1.15, 1.6, 0xEFEFE7); mostrador.position.set(128, 0.58, -4.4); scene.add(mostrador);
+  const tapaMost = caja(5.4, 0.12, 1.9, 0xC9B79A, false); tapaMost.position.set(128, 1.2, -4.4); scene.add(tapaMost);
+  const logoRec = letrero("RECEPCIÓN", 3.4, 0.9, "#0A5CA8", "#fff", 46);
+  logoRec.position.set(128, 2.6, -6.24); scene.add(logoRec);
+  sillaOficina(128, -5.5, -1);   /* recepcionista mirando al mostrador */
+  const pcRec = caja(0.8, 0.5, 0.07, 0x263238, false); pcRec.position.set(129.4, 1.55, -4.4); scene.add(pcRec);
+  /* sala de juntas con vidrio */
+  const juntasG = new THREE.Group(); scene.add(juntasG);
+  (function () {
+    /* centro de la sala más cerca de la cámara: ningún asiento llega al muro del fondo (z=-6.3) */
+    const centroZ = -3.4, radioSillas = 1.9;
+    const mesaJ = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.12, 20), mat(0xA1887F));
+    mesaJ.position.set(166, 1.05, centroZ); juntasG.add(mesaJ);
+    const pieJ = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.6, 1.0, 12), mat(0x546E7A));
+    pieJ.position.set(166, 0.5, centroZ); juntasG.add(pieJ);
+    /* sillas completas alrededor de la mesa, mirando al centro */
+    for (let a = 0; a < 6; a++) {
+      const ang = a * 1.047;
+      const sx = 166 + Math.cos(ang) * 3.0, sz = centroZ + Math.sin(ang) * radioSillas;
+      const s = sillaOficina(sx, sz, 1);
+      s.rotation.y = -ang + Math.PI / 2;   /* el espaldar queda hacia afuera */
+    }
+    /* mamparas laterales de vidrio: dejan la sala abierta hacia la cámara */
+    [-4.4, 4.4].forEach(dx => {
+      const vidrioJ = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.4, 4.4),
+        new THREE.MeshLambertMaterial({ color: 0xD7ECF6, transparent: true, opacity: 0.4 }));
+      vidrioJ.position.set(166 + dx, 1.2, centroZ); juntasG.add(vidrioJ);
+      const marcoJ = caja(0.14, 0.1, 4.4, 0xB0BEC5, false); marcoJ.position.set(166 + dx, 2.42, centroZ); juntasG.add(marcoJ);
+    });
+    const tvJ = caja(2.6, 1.5, 0.1, 0x1A1A1A, false); tvJ.position.set(166, 2.4, -6.2); juntasG.add(tvJ);
+  })();
+  const salaSign = letrero("SALA DE JUNTAS", 3.2, 0.8, "#455A64", "#fff", 40);
+  salaSign.position.set(166, 3.55, -6.24); scene.add(salaSign);
+  /* monitores encendidos en los puestos */
+  [178, 190, 212].forEach((x, i) => {
+    const pantallaOn = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.52),
+      new THREE.MeshBasicMaterial({ map: letreroTex(["INFORME", "REPORTE SST", "AGENDA"][i], "#0A2E52", "#7FD4FF", 44) }));
+    pantallaOn.position.set(x, 1.65, -5.04); scene.add(pantallaOn);
+    const tecl = caja(0.8, 0.05, 0.3, 0x37474F, false); tecl.position.set(x, 1.13, -4.5); scene.add(tecl);
+    const tazaOf = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.16, 10), mat(0xFFFFFF));
+    tazaOf.position.set(x + 0.7, 1.18, -4.6); scene.add(tazaOf);
+  });
+
+  /* compañeros de trabajo sentados en sus puestos (dan vida a la oficina) */
+  [[178, 0x8E6BB0], [190, 0x2E7D52], [212, 0xB0603A]].forEach(([x, color], i) => {
+    const c = humano({ camisa: color, piel: [0xD9A066, 0xC68B59, 0xE0AC7E][i],
+                       pantalon: 0x37474F, pelo: [0x3E2723, 0x21150E, 0x5D4037][i] });
+    /* pose sentada: caderas y rodillas dobladas sobre la silla */
+    c.musloL.rotation.x = -Math.PI / 2; c.musloR.rotation.x = -Math.PI / 2;
+    c.espinillaL.rotation.x = Math.PI / 2; c.espinillaR.rotation.x = Math.PI / 2;
+    c.hombroL.rotation.x = -0.75; c.hombroR.rotation.x = -0.75;
+    c.codoL.rotation.x = -0.55; c.codoR.rotation.x = -0.55;
+    /* la cadera del rig (muslo) ya vive en y=1.14 dentro del grupo: para que
+       quede a la altura del asiento (≈0.5) hay que RESTAR ese offset, no sumarlo */
+    c.g.position.set(x, 0.5 - 1.14, -3.7);
+    c.g.rotation.y = Math.PI;          /* mirando al escritorio del fondo */
+    scene.add(c.g);
+  });
+  /* operario supervisando en la planta */
+  (function () {
+    const op = humano({ camisa: 0x1565C0, piel: 0xC68B59, pantalon: 0x37474F });
+    op.g.position.set(31, 0, -4.4); op.g.rotation.y = -Math.PI / 2.6;
+    const cascoOp2 = new THREE.Group();
+    const d2 = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xF2B705));
+    d2.position.y = 0.05; cascoOp2.add(d2);
+    const a2 = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.37, 0.05, 16), mat(0xF2B705)); cascoOp2.add(a2);
+    cascoOp2.position.y = 2.31; op.g.add(cascoOp2);
+    const chal2 = new THREE.Mesh(new THREE.CylinderGeometry(0.355, 0.40, 0.50, 14, 1, true),
+      new THREE.MeshLambertMaterial({ color: 0xF57F17, side: THREE.DoubleSide }));
+    chal2.scale.z = 0.72; chal2.position.y = 1.56; op.g.add(chal2);
+    const tabla2 = caja(0.45, 0.56, 0.05, 0xF5F0DC, false);
+    tabla2.position.set(0.4, 1.45, 0.26); tabla2.rotation.z = -0.3; op.g.add(tabla2);
+    scene.add(op.g);
+  })();
+
+  /* --- borde frontal de la oficina: materas y archivadores bajos --- */
+  [132, 158, 186, 214, 240].forEach(x => {
+    const potef = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.32, 0.6, 10), mat(0xA1887F));
+    potef.position.set(x, 0.3, 5.7); scene.add(potef);
+    const hojasf = new THREE.Mesh(new THREE.SphereGeometry(0.62, 10, 8), mat(0x2E7D52));
+    hojasf.position.set(x, 1.1, 5.7); hojasf.castShadow = true; scene.add(hojasf);
+  });
+  [146, 200, 228].forEach(x => {
+    const archB = caja(1.6, 1.0, 0.7, 0x90A4AC); archB.position.set(x, 0.5, 5.75); scene.add(archB);
+  });
+})();
+
+/* ---------- Personaje humano estilizado (low-poly realista) ---------- */
+function humano(op) {
+  op = Object.assign({ piel: 0xD9A066, camisa: 0x1565C0, pantalon: 0x37474F, pelo: 0x3E2723 }, op);
+  const g = new THREE.Group();
+  const p = { g };
+  const capsula = (r, len, c) => {
+    const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 10), mat(c));
+    m.castShadow = true; return m;
+  };
+  /* piernas articuladas: muslo → rodilla → espinilla → zapato */
+  ["L", "R"].forEach((lado, i) => {
+    const sx = i === 0 ? -0.15 : 0.15;
+    const muslo = new THREE.Group(); muslo.position.set(sx, 1.14, 0); g.add(muslo);
+    const mM = capsula(0.115, 0.30, op.pantalon); mM.position.y = -0.25; muslo.add(mM);
+    const espinilla = new THREE.Group(); espinilla.position.y = -0.52; muslo.add(espinilla);
+    const mE = capsula(0.095, 0.28, op.pantalon); mE.position.y = -0.22; espinilla.add(mE);
+    const zapato = caja(0.19, 0.12, 0.34, 0x212121); zapato.position.set(0, -0.50, 0.07); espinilla.add(zapato);
+    p["muslo" + lado] = muslo; p["espinilla" + lado] = espinilla;
+  });
+  /* cadera y torso redondeado */
+  const cadera = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.29, 0.22, 12), mat(op.pantalon));
+  cadera.position.y = 1.18; cadera.castShadow = true; g.add(cadera);
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.30, 0.42, 6, 12), mat(op.camisa));
+  torso.scale.z = 0.68; torso.position.y = 1.55; torso.castShadow = true; g.add(torso);
+  /* brazos articulados: hombro → codo → antebrazo → mano */
+  ["L", "R"].forEach((lado, i) => {
+    const sx = i === 0 ? -0.40 : 0.40;
+    const hombro = new THREE.Group(); hombro.position.set(sx, 1.80, 0); g.add(hombro);
+    const bola = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), mat(op.camisa));
+    bola.castShadow = true; hombro.add(bola);
+    const mB = capsula(0.085, 0.24, op.camisa); mB.position.y = -0.20; hombro.add(mB);
+    const codo = new THREE.Group(); codo.position.y = -0.38; hombro.add(codo);
+    const mA = capsula(0.075, 0.22, op.piel); mA.position.y = -0.17; codo.add(mA);
+    const mano = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 8), mat(op.piel));
+    mano.position.y = -0.34; mano.castShadow = true; codo.add(mano);
+    p["hombro" + lado] = hombro; p["codo" + lado] = codo;
+  });
+  /* cuello y cabeza con rostro */
+  const cuello = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.10, 0.14, 10), mat(op.piel));
+  cuello.position.y = 1.96; g.add(cuello);
+  const cabeza = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 14), mat(op.piel));
+  cabeza.scale.set(0.95, 1.1, 0.98); cabeza.position.y = 2.2; cabeza.castShadow = true; g.add(cabeza);
+  const pelo = new THREE.Mesh(new THREE.SphereGeometry(0.275, 16, 10, 0, Math.PI * 2, 0, Math.PI / 1.75), mat(op.pelo));
+  pelo.position.y = 2.23; pelo.rotation.x = -0.3; pelo.scale.set(1, 0.95, 1.05); g.add(pelo);
+  [-0.09, 0.09].forEach(x => {
+    const blanco = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), mat(0xFFFFFF));
+    blanco.position.set(x, 2.23, 0.215); g.add(blanco);
+    const pupila = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), mat(0x21150E));
+    pupila.position.set(x, 2.23, 0.253); g.add(pupila);
+    const ceja = caja(0.09, 0.022, 0.024, 0x3E2723, false); ceja.position.set(x, 2.32, 0.235); g.add(ceja);
+  });
+  const boca = caja(0.09, 0.024, 0.02, 0x8C5A42, false); boca.position.set(0, 2.09, 0.245); g.add(boca);
+  p.cabeza = cabeza;
+  return p;
+}
+const jugador = humano({ camisa: 0x1565C0, pantalon: 0x37474F });
+jugador.g.position.set(S.x, 0, S.z);
+scene.add(jugador.g);
+/* EPP visual (oculto hasta equipar) */
+const cascoJ = new THREE.Group();
+const domo = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xF2B705));
+domo.position.y = 0.05; cascoJ.add(domo);
+const ala = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.37, 0.05, 16), mat(0xF2B705));
+cascoJ.add(ala);
+cascoJ.position.y = 2.31; cascoJ.visible = false; jugador.g.add(cascoJ);
+const chalecoJ = new THREE.Group();
+const chalecoTela = new THREE.Mesh(new THREE.CylinderGeometry(0.355, 0.40, 0.50, 14, 1, true),
+  new THREE.MeshLambertMaterial({ color: 0xF57F17, side: THREE.DoubleSide }));
+chalecoTela.scale.z = 0.72; chalecoJ.add(chalecoTela);
+const cinta = new THREE.Mesh(new THREE.CylinderGeometry(0.375, 0.385, 0.08, 14, 1, true),
+  new THREE.MeshBasicMaterial({ color: 0xFFF59D, side: THREE.DoubleSide }));
+cinta.scale.z = 0.72; cinta.position.y = 0.02; chalecoJ.add(cinta);
+chalecoJ.position.y = 1.56; chalecoJ.visible = false; jugador.g.add(chalecoJ);
+const gafasJ = caja(0.38, 0.09, 0.08, 0x263238, false);
+gafasJ.position.set(0, 2.25, 0.24); gafasJ.visible = false; jugador.g.add(gafasJ);
+const caretaJ = new THREE.Group();
+const caretaCara = caja(0.42, 0.52, 0.36, 0x263238, false); caretaCara.position.y = 2.24; caretaJ.add(caretaCara);
+const caretaVisor = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.13, 0.04), new THREE.MeshBasicMaterial({ color: 0x0A5CA8 }));
+caretaVisor.position.set(0, 2.28, 0.2); caretaJ.add(caretaVisor);
+caretaJ.visible = false; jugador.g.add(caretaJ);
+const orejasJ = new THREE.Group();
+[-0.27, 0.27].forEach(x => {
+  const oj = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.07, 10), mat(0xF57F17));
+  oj.rotation.z = Math.PI / 2; oj.position.set(x, 2.18, 0); orejasJ.add(oj);
+});
+const banda = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.032, 8, 14, Math.PI), mat(0xF57F17));
+banda.position.y = 2.19; orejasJ.add(banda);
+orejasJ.visible = false; jugador.g.add(orejasJ);
+/* guantes y arnés (equipables) */
+const guantesJ = new THREE.Group();
+[-0.42, 0.42].forEach(x => {
+  const gt = new THREE.Mesh(new THREE.SphereGeometry(0.115, 10, 8), mat(0xF57F17));
+  gt.position.set(x, 1.06, 0); guantesJ.add(gt);
+});
+guantesJ.visible = false; jugador.g.add(guantesJ);
+const arnesJ = new THREE.Group();
+[[0.16], [-0.16]].forEach(([dx]) => {
+  const correa = caja(0.09, 0.72, 0.06, 0xF2B705, false); correa.position.set(dx, 1.62, 0.2); arnesJ.add(correa);
+  const correaAt = caja(0.09, 0.72, 0.06, 0xF2B705, false); correaAt.position.set(dx, 1.62, -0.2); arnesJ.add(correaAt);
+});
+const cinturon = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.38, 0.14, 12, 1, true),
+  new THREE.MeshLambertMaterial({ color: 0xF2B705, side: THREE.DoubleSide }));
+cinturon.scale.z = 0.72; cinturon.position.y = 1.3; arnesJ.add(cinturon);
+const argolla = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.028, 8, 12), mat(0x9E9E9E));
+argolla.position.set(0, 1.68, -0.26); argolla.rotation.y = Math.PI / 2; arnesJ.add(argolla);
+arnesJ.visible = false; jugador.g.add(arnesJ);
+
+/* ---------- Personaje REALISTA: modelo rigged con animaciones de mocap.
+   Si el GLB no carga (p. ej. sin conexión), queda el humano procedural. ---------- */
+let real = null, yawVis = Math.PI / 2;
+const V1 = new THREE.Vector3();
+new GLTFLoader().load("Soldier.glb", (gltf) => {
+  try {
+    const model = gltf.scene;
+    model.scale.setScalar(1.15);
+    model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    const mixer = new THREE.AnimationMixer(model);
+    const acc = {};
+    gltf.animations.forEach(cl => { acc[cl.name] = mixer.clipAction(cl); });
+    if (!acc.Idle || !acc.Walk) return;
+    acc.Idle.play();
+    acc.Walk.play(); acc.Walk.setEffectiveWeight(0); acc.Walk.timeScale = 2.0;
+    let head = null, spine = null;
+    model.traverse(o => {
+      if (o.isBone) {
+        if (/Head$/i.test(o.name)) head = o;
+        if (/Spine2$/i.test(o.name)) spine = o;
+      }
+    });
+    if (!head || !spine) return;
+    scene.add(model);
+    real = { model, mixer, acc, head, spine, clips: gltf.animations, w: { Idle: 1, Walk: 0 } };
+    jugador.g.visible = false;
+    /* el EPP pasa a seguir los huesos del modelo real */
+    [cascoJ, chalecoJ, gafasJ, orejasJ, caretaJ, guantesJ, arnesJ].forEach(m => {
+      jugador.g.remove(m); scene.add(m); m.scale.setScalar(0.6);
+    });
+  } catch (e) { /* respaldo procedural */ }
+}, undefined, () => { /* sin GLB: respaldo procedural */ });
+
+/* PREVI: casco volador */
+const previ = new THREE.Group();
+const pDomo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xF2B705));
+previ.add(pDomo);
+const pAla = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.64, 0.1, 16), mat(0xF2B705)); previ.add(pAla);
+[-0.2, 0.2].forEach(x => {
+  const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), mat(0x212121));
+  ojo.position.set(x, 0.22, 0.42); previ.add(ojo);
+});
+const helice = new THREE.Group();
+[0, Math.PI / 2].forEach(r => {
+  const asp = caja(1.1, 0.05, 0.12, 0x78909C, false); asp.rotation.y = r; helice.add(asp);
+});
+helice.position.y = 0.75; previ.add(helice);
+previ.position.set(1, 3.2, 1.5); scene.add(previ);
+
+/* ---------- Marcadores de interacción y guía ---------- */
+const INTER = [
+  { id: "locker", x: 7, z: -3.6, label: "🧰 Abrir casillero de EPP", activo: () => !S.epp, usar: abrirKit },
+  { id: "apilado", x: 40, z: -3.6, label: "📣 Reportar arrume inestable", activo: () => S.epp && !S.flags.apilado, usar: () => {
+      S.flags.apilado = true; S.reportes++; S.puntos += 20; sndOk();
+      scene.remove(apiladoBox); scene.remove(apiladoAlerta);
+      toast("¡Reporte enviado! Esa pila inestable ya no sorprenderá a nadie. <strong>+20</strong>");
+    } },
+  { id: "contacto", x: 45, z: -3.6, label: "👀 Hacer contacto visual", activo: () => S.epp && !S.flags.contacto, usar: () => {
+      S.flags.contacto = true; monta.pausa = 6; S.puntos += 20; sndOk();
+      toast("El operador te vio y se detuvo (✅). ¡Cruza ahora! <strong>+20</strong>");
+    } },
+  /* --- trabajo en alturas: permiso, arnés y subida --- */
+  { id: "permiso", x: 56, z: -3.5, label: "📋 Pedir permiso de trabajo en alturas",
+    activo: () => S.epp && !S.permiso, usar: () => {
+      S.permiso = true; S.puntos += 15; sndOk();
+      toast("Permiso de trabajo autorizado por el supervisor. Ahora el <strong>arnés</strong>. <strong>+15</strong>");
+    } },
+  { id: "arnes", x: 59, z: -3.3, label: "🦺 Ponerse el arnés y línea de vida",
+    activo: () => S.epp && !S.arnes, usar: () => {
+      S.arnes = true; S.puntos += 10; sndPick(); arnesJ.visible = true;
+      scene.remove(arnesColgado);
+      toast("Arnés puesto y línea de vida lista. <strong>+10</strong>");
+    } },
+  { id: "subir", x: ALT.x - 1.7, z: ALT.z, label: "🪜 Subir a la plataforma",
+    peligro: true, activo: () => S.epp && !S.subidoOk, usar: () => {
+      if (S.subiendo !== 0 || S.subidoOk) return;   /* nunca dos subidas a la vez */
+      S.subeT = 0; S.flags.tambaleo = false;
+      if (S.permiso && S.arnes) { S.subiendo = 1; sndPick(); }
+      else { S.subiendo = -1; sndAlerta(); }
+    } },
+  { id: "protector", x: 73, z: -3.6, label: "🎧 Tomar protectores auditivos", activo: () => S.epp && !S.oidos, usar: () => {
+      S.oidos = true; S.puntos += 10; sndPick(); orejasJ.visible = true;
+      toast("Protectores puestos. Ahora sí, a la zona de ruido. <strong>+10</strong>");
+    } },
+  { id: "guantes", x: 100, z: -3.5, label: "🧤 Tomar guantes de carnaza",
+    activo: () => S.epp && !S.guantes, usar: () => {
+      S.guantes = true; S.puntos += 10; sndPick(); guantesJ.visible = true;
+      toast("Guantes puestos. Ahora puedes manipular piezas calientes. <strong>+10</strong>");
+    } },
+  { id: "electrico", x: 103, z: -3.6, label: "🚧 Señalizar y reportar el cable", activo: () => S.epp && !S.flags.electrico, usar: () => {
+      S.flags.electrico = true; S.reportes++; S.puntos += 20; sndOk();
+      cono.visible = true; tecnicoLlega = S.t + 1.4;
+      toast("Zona señalizada y reporte enviado: viene el personal autorizado. <strong>+20</strong>");
+    } },
+  { id: "careta", x: 110, z: -3.6, label: "🥽 Tomar la careta de soldadura", activo: () => S.epp && !S.careta, usar: () => {
+      S.careta = true; S.puntos += 10; sndPick(); caretaJ.visible = true;
+      toast("Careta de soldadura puesta. El arco eléctrico ya no daña tu vista. <strong>+10</strong>");
+    } },
+  { id: "pieza", x: 114.5, z: -3.4, label: "🔥 Retirar la pieza recién soldada",
+    peligro: true, activo: () => S.epp && !S.flags.pieza, usar: () => {
+      if (!S.guantes) { leccion("quemadura"); return; }
+      S.flags.pieza = true; S.puntos += 20; sndOk();
+      piezaSold.material.color.set(0x78909C);
+      piezaSold.material.emissive.set(0x000000);
+      calorSp.visible = false; calorZona.visible = false;
+      toast("Pieza retirada con guantes de carnaza, sin una sola quemadura. <strong>+20</strong>");
+    } },
+  { id: "cables", x: 128, z: -3.6, label: "🔌 Organizar cables en canaleta y reportar", activo: () => S.epp && !S.flags.cables, usar: () => {
+      S.flags.cables = true; S.reportes++; S.puntos += 20; sndOk();
+      cablesOf.visible = false; canaleta.visible = true;
+      toast("Cables en canaleta y condición reportada. El pasillo quedó libre. <strong>+20</strong>");
+    } },
+  { id: "derrame", x: 168, z: -3.6, label: "🚧 Señalizar el derrame de café", activo: () => S.epp && !S.flags.derrame, usar: () => {
+      S.flags.derrame = true; S.reportes++; S.puntos += 20; sndOk();
+      conoDerrame.visible = true; derrame.material.opacity = 0.25;
+      toast("Derrame señalizado y limpieza en camino. Nadie se resbala hoy. <strong>+20</strong>");
+    } },
+  { id: "pausa", x: 185, z: -3.6, label: "🤸 Hacer la pausa activa", activo: () => S.epp && !S.flags.pausa, usar: () => {
+      S.flags.pausa = true; S.puntos += 15; S.bien = clamp(S.bien + 25, 0, 100); sndPick();
+      toast("🤸 Pausa activa: cuello, espalda y hombros. Mira cómo sube tu bienestar. <strong>+15</strong>");
+    } },
+  { id: "archivo", x: 200, z: -3.6, label: "📦 Mover el archivo con el carro", activo: () => S.epp && !S.flags.archivo, usar: () => {
+      S.flags.archivo = true; S.puntos += 15; sndOk();
+      cajasArchivo.position.set(201.4, 0.95, -3.4);
+      toast("Cajas al carro: la espalda carga rodando, no doblada. <strong>+15</strong>");
+    } },
+  { id: "ergo", x: 215, z: -3.6, label: "💺 Ajustar silla, pantalla y teclado", activo: () => S.epp && !S.flags.ergo, usar: () => {
+      S.flags.ergo = true; S.puntos += 15; sndOk();
+      toast("💺 Silla, pantalla y teclado ajustados: tu cuerpo trabaja contigo. <strong>+15</strong>");
+    } },
+  { id: "cierre", x: 228, z: -3.6, label: "🔌 Apagar equipos y ordenar el puesto", activo: () => S.epp && !S.flags.cierre, usar: () => {
+      S.flags.cierre = true; S.puntos += 20; sndOk();
+      toast("🔌 Equipos apagados, cajones cerrados, puesto ordenado. Así se termina un turno. <strong>+20</strong>");
+    } }
+];
+INTER.forEach(it => {
+  const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.08, 22),
+    new THREE.MeshBasicMaterial({ color: 0x00A87E, transparent: true, opacity: 0.75 }));
+  pad.position.set(it.x, 0.04, it.z); scene.add(pad);
+  const sp = spriteEmoji("⚡", 1.2); sp.position.set(it.x, 1.7, it.z); scene.add(sp);
+  it.pad = pad; it.sp = sp;
+});
+const accionUI = document.getElementById("accionUI");
+let interActivo = null;
+function accionar() {
+  /* revalidar: el punto debe seguir activo, en rango y sin acción en curso */
+  if (!interActivo || S.pausado || S.fin || S.subiendo !== 0) return;
+  if (!interActivo.activo()) { interActivo = null; accionUI.style.display = "none"; return; }
+  if (Math.hypot(S.x - interActivo.x, S.z - interActivo.z) > 2.6) return;
+  interActivo.usar();
+}
+accionUI.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); accionar(); });
+addEventListener("keydown", e => {
+  if ((e.key === "e" || e.key === "E" || e.key === " ") && !e.repeat) accionar();
+});
+function interCercano() {
+  let mejor = null, dist = 2.4;
+  INTER.forEach(it => {
+    if (!it.activo()) return;
+    const d = Math.hypot(S.x - it.x, S.z - it.z);
+    if (d < dist) { dist = d; mejor = it; }
+  });
+  return mejor;
+}
+/* flecha de objetivo */
+const objFlecha = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.2, 4), new THREE.MeshBasicMaterial({ color: 0xF2B705 }));
+objFlecha.rotation.x = Math.PI; scene.add(objFlecha);
+/* marcador del toque */
+const tapRing = anillo(0.4, 0.7, 0x0A5CA8, 0.9); tapRing.visible = false; scene.add(tapRing);
+/* mano tutorial */
+const mano = spriteEmoji("👆", 1.6); scene.add(mano);
+/* camino de huellas hacia el objetivo (siempre sabes por dónde ir) */
+const MIGAS = [];
+for (let i = 0; i < 9; i++) {
+  const m = new THREE.Mesh(new THREE.CircleGeometry(0.17, 12),
+    new THREE.MeshBasicMaterial({ color: 0xFFD54F, transparent: true, opacity: 0.85, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.055; m.visible = false;
+  scene.add(m); MIGAS.push(m);
+}
+/* señal de espera ante peligro (guía automática) */
+const esperaSp = spriteEmoji("✋", 1.4); esperaSp.visible = false; scene.add(esperaSp);
+
+/* Por qué importa cada nivel (se muestra al entrar) */
+const PORQUE = {
+  1: ["Sin EPP no entras: cada elemento cubre una parte que no se repone.",
+      "Bajo cargas suspendidas nunca hay tiempo de reaccionar: se rodea, no se atraviesa.",
+      "El montacargas cargado tiene puntos ciegos enormes: si no te ve, no existes.",
+      "Aquí se decide con papeles antes que con valentía: permiso y arnés, siempre.",
+      "El ruido no duele hoy, pero la audición perdida no vuelve.",
+      "Lo eléctrico no se improvisa: se señaliza, se reporta y se deja a los autorizados.",
+      "El metal caliente se ve igual que el frío. Los guantes son la única forma de saberlo.",
+      "El arco de soldadura quema la vista aunque no lo mires de frente.",
+      "Terminar el turno completo y sano: eso es ganar aquí."],
+  2: ["Lo que hace tropezar es lo que nadie levanta: ordénalo o repórtalo.",
+      "En pasillos se cede el paso: el que va cargado no puede frenar.",
+      "Un piso mojado sin señal es una caída esperando turno.",
+      "Tu cuerpo no aguanta ocho horas quieto: la pausa activa no es pereza, es mantenimiento.",
+      "La espalda no es un montacargas: usa el carro y las piernas.",
+      "La silla y la pantalla mal puestas no duelen hoy, duelen en cinco años.",
+      "El turno se cierra bien: equipos apagados y salida despejada para todos."]
+};
+
+/* ---------- Objetivos ---------- */
+function objetivoActual() {
+  if (S.mundo === 1) {
+    /* ---- MUNDO 1 · PLANTA ---- */
+    if (!S.epp) return { e: 0, x: 7, z: -3.6, txt: "Toca el casillero y arma tu EPP" };
+    if (S.x < 42) return { e: 1, x: 43, z: 0, txt: "Cruza la bodega — no pises los círculos rojos" };
+    if (!S.flags.contacto && S.x < 52) return { e: 2, x: 45, z: -3.6, txt: "Activa el contacto visual 👀 y cruza el montacargas" };
+    /* --- trabajo en alturas: permiso → arnés → subir --- */
+    if (!S.subidoOk) {
+      if (!S.permiso) return { e: 3, x: 56, z: -3.5, txt: "Pide el permiso de trabajo al supervisor 📋" };
+      if (!S.arnes) return { e: 3, x: 59, z: -3.3, txt: "Ponte el arnés y la línea de vida 🦺" };
+      return { e: 3, x: ALT.x - 1.7, z: ALT.z, txt: "Sube a cambiar la luminaria 🪜" };
+    }
+    if (S.x < 70) return { e: 3, x: 71, z: 0, txt: "Cruza la zona del montacargas" };
+    if (!S.oidos && S.x < 98) return { e: 4, x: 73, z: -3.6, txt: "Toma los protectores auditivos 🎧" };
+    if (S.x < 99) return { e: 4, x: 100, z: 0, txt: "Cruza la sala de compresores" };
+    if (!S.guantes) return { e: 6, x: 100, z: -3.5, txt: "Toma los guantes de carnaza 🧤" };
+    if (!S.flags.electrico && S.x < 107) return { e: 5, x: 103, z: -3.6, txt: "Señaliza y reporta el cable eléctrico" };
+    if (!S.careta && S.x < 112) return { e: 7, x: 110, z: -3.6, txt: "Toma la careta de soldadura 🥽" };
+    if (!S.flags.pieza) return { e: 7, x: 114.5, z: -3.4, txt: "Retira la pieza recién soldada 🔥" };
+    if (S.x < 118) return { e: 7, x: 119, z: 0, txt: "Cruza la zona de soldadura" };
+    return { e: 8, x: 119.5, z: 0, txt: "🏁 ¡Fin del turno en planta! Sal por la puerta" };
+  }
+  /* ---- MUNDO 2 · OFICINA ---- */
+  if (!S.flags.cables && S.x < 131) return { e: 0, x: 128, z: -3.6, txt: "Organiza y reporta los cables del pasillo" };
+  if (S.x < 136) return { e: 1, x: 137, z: 3.6, txt: "Hazte a un lado: deja libre el carril del carrito" };
+  if (S.x < 163) return { e: 1, x: 164, z: 3.6, txt: "Cede el carril: pasa por el lado del carrito 📬" };
+  if (!S.flags.derrame && S.x < 171) return { e: 2, x: 168, z: -3.6, txt: "Señaliza el derrame de café ☕" };
+  if (!S.flags.pausa) return { e: 3, x: 185, z: -3.6, txt: "Haz tu pausa activa 🤸" };
+  if (!S.flags.archivo) return { e: 4, x: 200, z: -3.6, txt: "Mueve el archivo con el carro 📦" };
+  if (!S.flags.ergo) return { e: 5, x: 215, z: -3.6, txt: "Ajusta tu puesto de trabajo 💺" };
+  if (!S.flags.cierre) return { e: 6, x: 228, z: -3.6, txt: "Cierra tu jornada: apaga y ordena 🔌" };
+  if (!S.flags.alarma) return { e: 6, x: 233, z: 0, txt: "Avanza hacia la salida →" };
+  return { e: 6, x: 252, z: 0, txt: "🚨 ¡Evacúa! Ve al punto de encuentro" };
+}
+
+/* ---------- HUD / toast / paneles ---------- */
+function hud() {
+  document.getElementById("hudPts").textContent = S.puntos + " pts";
+  document.getElementById("hudBienLbl").textContent = "Salud " + Math.round(S.bien) + "%";
+  const bar = document.getElementById("hudBar");
+  bar.className = "bar" + (S.bien < 30 ? " low" : S.bien < 60 ? " warn" : "");
+  bar.firstElementChild.style.width = clamp(S.bien, 0, 100) + "%";
+  const v = document.getElementById("vidas");
+  const n = S.bien > 66 ? 3 : S.bien > 33 ? 2 : S.bien > 0 ? 1 : 0;
+  v.textContent = "💚".repeat(n) + "🖤".repeat(3 - n);
+  v.classList.toggle("critico", n <= 1);
+}
+
+/* ---------- Reglas del juego: cómo se gana y cómo se pierde ---------- */
+function panelReglas(desdeBriefing) {
+  const M = MUNDOS[S.mundo];
+  panel(
+    '<h2 style="text-align:center">📋 Reglas del turno</h2>' +
+    '<div class="gana"><h3>✅ Ganas si…</h3><ul>' +
+    '<li>Llegas al <strong>final del recorrido</strong> (' + (S.mundo === 1 ? "la puerta de salida de planta" : "el punto de encuentro") + ')</li>' +
+    '<li>Llegas <strong>con salud</strong>: si te quedas en 0 💚 el turno termina mal</li>' +
+    '<li>Tu calificación sale del puntaje sobre <strong>' + M.max + '</strong> puntos:</li></ul>' +
+    '<table class="reglas-tabla">' +
+    '<tr><td>🔵 Líder SST</td><td>90% o más</td></tr>' +
+    '<tr><td>🟢 Nivel Seguro</td><td>70% – 89%</td></tr>' +
+    '<tr><td>🟡 Nivel Preventivo</td><td>50% – 69%</td></tr>' +
+    '<tr><td>🔴 Nivel Básico</td><td>menos de 50%</td></tr></table></div>' +
+    '<div class="pierde"><h3>❌ Pierdes el turno si…</h3><ul>' +
+    '<li>Tu salud llega a <strong>0 💚</strong> por acumular accidentes</li>' +
+    '<li>Son <strong>3 accidentes graves</strong> (o 5 leves) los que te dejan fuera</li>' +
+    '<li>Cada accidente te devuelve al inicio de la zona para intentarlo bien</li></ul></div>' +
+    '<div style="font-size:11.5px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px">Puntos</div>' +
+    '<table class="reglas-tabla">' +
+    '<tr><td>🧰 Tomar el EPP que exige la zona</td><td style="color:var(--green)">+10</td></tr>' +
+    '<tr><td>📋 Pedir permiso de trabajo</td><td style="color:var(--green)">+15</td></tr>' +
+    '<tr><td>📣 Reportar una condición insegura</td><td style="color:var(--green)">+20</td></tr>' +
+    '<tr><td>✅ Hacer la tarea con lo que exige</td><td style="color:var(--green)">+20 a +25</td></tr>' +
+    '<tr><td>🛡️ Cruzar una zona sin incidentes</td><td style="color:var(--green)">+15</td></tr>' +
+    '<tr><td>🏁 Terminar el recorrido</td><td style="color:var(--green)">+25</td></tr>' +
+    '<tr><td>⚠️ Accidente leve (golpe, tropiezo)</td><td style="color:var(--red)">−10 · −20 salud</td></tr>' +
+    '<tr><td>🚨 Accidente grave (caída, quemadura)</td><td style="color:var(--red)">−25 · −40 salud</td></tr>' +
+    '</table>' +
+    '<div style="font-size:11.5px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px">Controles</div>' +
+    '<div class="ctl-demo">' +
+    '<div class="k" style="border-color:var(--green)">🕹️<small><strong>Joystick</strong><br>o toca el piso</small></div>' +
+    '<div class="k" style="border-color:var(--yellow)">⚡<small><strong>Amarillo</strong><br>actuar</small></div>' +
+    '<div class="k">🎯<small><strong>Arriba</strong><br>tu objetivo</small></div>' +
+    '</div>' +
+    '<p style="font-size:12.5px;text-align:center;color:var(--muted);margin:6px 0 10px">🔴 rojo en el piso = peligro activo · 🟢 verde = ya es seguro pasar</p>' +
+    '<button class="btn" id="btnCerrarReglas">' + (desdeBriefing ? "▶ Empezar el turno" : "Seguir jugando") + '</button>');
+  document.getElementById("btnCerrarReglas").onclick = () => {
+    cerrarPanel();
+    if (desdeBriefing) toast("Recuerda: <strong>nadie decide por ti</strong>. Si algo se ve peligroso, prepárate antes de actuar.", 5200);
+  };
+}
+document.getElementById("reglasBtn").onclick = () => { if (!S.fin) panelReglas(false); };
+let toastTimer = null;
+function toast(msg, dur) {
+  const t = document.getElementById("toast");
+  t.innerHTML = "<strong>PREVI:</strong> " + msg;
+  t.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.display = "none"; }, dur || 4500);
+}
+function avisoUnaVez(id, msg, dur) {
+  if (S.flags.avisos[id]) return;
+  S.flags.avisos[id] = true;
+  toast(msg, dur);
+}
+function panel(html, tipo) {
+  overlay.innerHTML = '<div class="panel ' + (tipo || "info") + '">' + html + '</div>';
+  overlay.classList.add("visible");
+  S.pausado = true;
+}
+function cerrarPanel() {
+  overlay.classList.remove("visible");
+  overlay.innerHTML = "";
+  stage.classList.remove("frozen");
+  S.pausado = false;
+}
+function flashRojo() {
+  const f = document.createElement("div");
+  f.className = "flash"; stage.appendChild(f);
+  setTimeout(() => f.remove(), 850);
+}
+
+/* ---------- Lecciones ---------- */
+const LECCIONES = {
+  caida: { t: "Golpe por caída de objeto", exp: "Pisaste el círculo rojo justo cuando caía la caja. Ese círculo es tu aviso: rodéalo o espera a que caiga.", regla: "Bajo carga suspendida, nunca te pares." },
+  monta: { t: "Casi-accidente con montacargas", exp: "El operador con carga tiene puntos ciegos enormes. Activa el contacto visual 👀: se detiene con un ✅ y cruzas seguro.", regla: "Cruce peatonal + mirada al operador." },
+  electrico: { t: "Descarga eléctrica evitada en la simulación", exp: "Nunca te acerques a un cable energizado. Ve al punto de reporte 🚧 para que venga personal autorizado.", regla: "Cable suelto: señaliza, aléjate, reporta." },
+  cables: { t: "Tropiezo con cables sueltos", exp: "Los cables atravesados son la caída más común en oficinas. Organízalos con canaleta y repórtalos en el punto ⚡ antes de pasar.", regla: "Piso libre, oficina segura." },
+  carrito: { t: "Choque en el pasillo", exp: "En pasillos y esquinas se camina atento y se cede el paso. Dale espacio al carrito: espera a que pase o rodéalo.", regla: "Camina atento y cede el paso." },
+  derrame: { t: "Resbalón por piso húmedo", exp: "Un derrame sin señalizar es una caída esperando turno. Señalízalo y límpialo (o repórtalo) en el punto ⚡ antes de pasar.", regla: "Piso húmedo: señaliza antes de pasar." },
+  altura: { t: "CAÍDA DE ALTURA · evitada en la simulación",
+    exp: "Subiste sin arnés o sin permiso de trabajo. Una caída desde 3 metros basta para dejar a una persona en silla de ruedas — o algo peor. La caída de altura es la primera causa de muerte laboral en Colombia.",
+    regla: "Sin arnés y sin permiso, NO se sube.", grave: true },
+  quemadura: { t: "Quemadura en la mano",
+    exp: "Tomaste una pieza recién soldada sin guantes: el metal queda a cientos de grados y no se ve caliente. Una quemadura de tercer grado en la mano puede costar meses de incapacidad y movilidad para siempre.",
+    regla: "El metal caliente no se ve: usa guantes.", grave: true }
+};
+function leccion(id) {
+  const l = LECCIONES[id];
+  S.errores++; S.errs[id] = (S.errs[id] || 0) + 1;
+  S.puntos = Math.max(0, S.puntos - (l.grave ? 25 : 10));
+  S.bien = clamp(S.bien - (l.grave ? 40 : 20), 0, 100);
+  if (id === "caida") S.limpio.bodega = false;
+  if (id === "monta") S.limpio.monta = false;
+  if (id === "carrito") S.limpio.carrito = false;
+  stage.classList.add("frozen", "shake");
+  setTimeout(() => stage.classList.remove("shake"), 550);
+  flashRojo(); sndAlerta(); setTimeout(sndBad, 250);
+  hud();
+  if (S.bien <= 0) { derrota(l); return; }
+  panel(
+    (l.grave ? '<div style="text-align:center;font-size:44px">🚨</div>' : '') +
+    '<h2 class="alerta">⚠️ ' + l.t + '</h2>' +
+    '<div style="font-size:26px;font-weight:900;color:var(--red)">−' + (l.grave ? 25 : 10) +
+      ' pts · salud −' + (l.grave ? 40 : 20) + '%</div>' +
+    '<div style="font-size:15px;font-weight:800;margin:4px 0 2px">Salud restante: ' +
+      "💚".repeat(S.bien > 66 ? 3 : S.bien > 33 ? 2 : 1) + "🖤".repeat(3 - (S.bien > 66 ? 3 : S.bien > 33 ? 2 : 1)) +
+      ' <span style="font-weight:600;color:var(--muted);font-size:13px">(si llega a 0, pierdes el turno)</span></div>' +
+    '<div class="exp"><strong>PREVI:</strong> ' + l.exp + '</div>' +
+    '<p class="regla">📌 “' + l.regla + '”</p>' +
+    '<button class="btn" id="btnReint">Reintentar desde la zona</button>', "bad");
+  document.getElementById("btnReint").onclick = reintentar;
+}
+/* Perdiste el turno: la salud llegó a 0 */
+function derrota(l) {
+  S.fin = true; S.pausado = true;
+  document.getElementById("joy").style.display = "none";
+  accionUI.style.display = "none";
+  const M = MUNDOS[S.mundo];
+  try {
+    const arr = JSON.parse(localStorage.getItem("ts_sesiones") || "[]");
+    arr.unshift({ nombre: S.nombre, fecha: new Date().toLocaleString("es-CO"), modo: M.nombre,
+                  puntos: S.puntos, pct: 0, nivel: "Turno perdido", errores: S.errores, errs: S.errs });
+    localStorage.setItem("ts_sesiones", JSON.stringify(arr.slice(0, 100)));
+  } catch (e) {}
+  panel(
+    '<div style="text-align:center;font-size:46px">🏥</div>' +
+    '<h2 class="alerta" style="text-align:center">Turno terminado por accidente</h2>' +
+    '<p style="text-align:center;font-size:14.5px;margin:2px 0 10px">' + escHtml(S.nombre) +
+      ', acumulaste <strong>' + S.errores + ' accidentes</strong> y tu salud llegó a <strong>0 🖤🖤🖤</strong>.</p>' +
+    '<div class="pierde"><h3>Lo que pasó</h3>' +
+    '<div style="font-size:13.5px"><strong>Último accidente:</strong> ' + l.t + '.<br>' + l.exp + '</div></div>' +
+    '<div class="exp"><strong>PREVI:</strong> En el juego reinicias y vuelves a empezar. ' +
+      '<strong>En el trabajo real no hay botón de reinicio.</strong> Por eso el EPP, el permiso y el reporte no son trámites: son lo que te devuelve a casa.</div>' +
+    '<p class="regla">📌 “' + l.regla + '”</p>' +
+    '<button class="btn" id="btnRe">🔄 Repetir el turno</button>' +
+    '<button class="btn sec" id="btnMenuD">Elegir mundo</button>', "bad");
+  document.getElementById("btnRe").onclick = () => { location.href = "aventura3d.html?mundo=" + S.mundo; };
+  document.getElementById("btnMenuD").onclick = () => location.href = "index.html";
+  sndBad(); setTimeout(sndBad, 300);
+}
+function reintentar() {
+  S.x = S.checkpoint.x; S.z = S.checkpoint.z;
+  S.subiendo = 0; S.subeT = 0; S.alturaY = 0; S.flags.tambaleo = false;
+  jugador.g.position.set(S.x, 0, S.z);
+  jugador.g.rotation.z = 0;
+  if (real) real.model.rotation.z = 0;
+  target = null;
+  S.inv = 2.2;
+  cerrarPanel();
+}
+
+/* ---------- Kit EPP ---------- */
+const KIT = [
+  { n: "Casco", ico: "⛑️", ok: true }, { n: "Gafas", ico: "🥽", ok: true },
+  { n: "Chaleco", ico: "🦺", ok: true }, { n: "Botas", ico: "🥾", ok: true },
+  { n: "Auditiva", ico: "🎧", ok: true }, { n: "Gorra", ico: "🧢", ok: false },
+  { n: "Música", ico: "🎵", ok: false }, { n: "Sandalias", ico: "🩴", ok: false }
+];
+let kitSel = [];
+function abrirKit() {
+  kitSel = [];
+  panel(
+    '<h2>🧰 Arma tu kit de EPP</h2>' +
+    '<p style="margin:4px 0 0;font-size:14.5px">La señal exige <strong>5 elementos</strong> para entrar a planta. La barrera no abre sin ellos.</p>' +
+    '<div class="kit-grid">' +
+    KIT.map((k, i) => '<button class="kit-item" id="ki' + i + '" data-i="' + i + '"><span class="ico">' + k.ico + '</span>' + k.n + '</button>').join("") +
+    '</div>' +
+    '<button class="btn" id="kconf">Confirmar (<span id="kn">0</span>/5)</button>');
+  KIT.forEach((k, i) => { document.getElementById("ki" + i).onclick = () => togKit(i); });
+  document.getElementById("kconf").onclick = confKit;
+}
+function togKit(i) {
+  const p = kitSel.indexOf(i);
+  if (p >= 0) kitSel.splice(p, 1); else kitSel.push(i);
+  document.getElementById("ki" + i).classList.toggle("sel", p < 0);
+  document.getElementById("kn").textContent = kitSel.length;
+}
+function confKit() {
+  S.flags.kitIntentos++;
+  const correctos = KIT.map((k, i) => k.ok ? i : -1).filter(i => i >= 0);
+  const perfecto = kitSel.length === 5 && correctos.every(i => kitSel.includes(i));
+  if (!perfecto) {
+    KIT.forEach((k, i) => {
+      const el = document.getElementById("ki" + i);
+      el.classList.remove("sel", "errado");
+      if (kitSel.includes(i) && !k.ok) el.classList.add("errado");
+    });
+    kitSel = kitSel.filter(i => KIT[i].ok);
+    kitSel.forEach(i => document.getElementById("ki" + i).classList.add("sel"));
+    document.getElementById("kn").textContent = kitSel.length;
+    sndBad();
+    toast("Ojo: hay señuelos. Los audífonos de música NO son protección auditiva.", 3500);
+    return;
+  }
+  S.epp = true;
+  cascoJ.visible = true; chalecoJ.visible = true; gafasJ.visible = true;
+  const pts = S.flags.kitIntentos === 1 ? 25 : 10;
+  S.puntos += pts; sndOk(); hud();
+  cerrarPanel();
+  toast("¡EPP completo! La barrera está abierta. <strong>+" + pts + "</strong> " + (S.flags.kitIntentos === 1 ? "(kit perfecto 🦅)" : ""));
+}
+
+/* ---------- Entrada: joystick + tocar a dónde ir + teclado ---------- */
+const keys = {};
+addEventListener("keydown", e => {
+  if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(e.key)) e.preventDefault();
+  keys[e.key.toLowerCase()] = true;
+});
+addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+
+/* joystick virtual: devuelve {x,z} normalizado */
+const joy = { x: 0, z: 0, activo: false, id: null };
+(function initJoystick() {
+  const base = document.getElementById("joy"), knob = document.getElementById("joyKnob");
+  const R = 46;
+  function mover(e) {
+    const r = base.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let dx = e.clientX - cx, dy = e.clientY - cy;
+    const d = Math.hypot(dx, dy);
+    if (d > R) { dx = dx / d * R; dy = dy / d * R; }
+    knob.style.transform = "translate(" + dx + "px," + dy + "px)";
+    const m = Math.max(Math.hypot(dx, dy) / R, 0);
+    joy.x = (dx / R); joy.z = (dy / R);
+    if (m < 0.18) { joy.x = 0; joy.z = 0; }
+  }
+  base.addEventListener("pointerdown", e => {
+    e.preventDefault(); e.stopPropagation();
+    joy.activo = true; joy.id = e.pointerId;
+    base.classList.add("on");
+    mover(e);
+    /* capturar al final: si falla, el joystick ya quedó operativo */
+    try { base.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  base.addEventListener("pointermove", e => {
+    if (!joy.activo || e.pointerId !== joy.id) return;
+    e.preventDefault(); e.stopPropagation();
+    mover(e);
+  });
+  const soltar = e => {
+    if (e.pointerId !== joy.id) return;
+    joy.activo = false; joy.x = 0; joy.z = 0;
+    base.classList.remove("on");
+    knob.style.transform = "translate(0,0)";
+  };
+  /* sin pointerleave: con captura el dedo puede salirse del círculo sin soltar el control */
+  base.addEventListener("pointerup", soltar);
+  base.addEventListener("pointercancel", soltar);
+})();
+const ray = new THREE.Raycaster();
+const planoPiso = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+const vTmp = new THREE.Vector3();
+renderer.domElement.addEventListener("pointerdown", e => {
+  if (S.pausado || S.fin) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
+  const ny = -((e.clientY - r.top) / r.height) * 2 + 1;
+  ray.setFromCamera({ x: nx, y: ny }, camera);
+  if (ray.ray.intersectPlane(planoPiso, vTmp)) {
+    target = { x: clamp(vTmp.x, 2, 255), z: clamp(vTmp.z, -3.9, 4.2) };
+    S.flags.avisos.primerTap = true;
+    tapRing.position.set(target.x, 0.05, target.z);
+    tapRing.visible = true;
+    sndPick();
+  }
+});
+
+/* ---------- Actualización ---------- */
+function update(dt) {
+  S.t += dt;
+  if (S.inv > 0) S.inv -= dt;
+
+  /* --- subida a la plataforma: el momento de verdad de las alturas --- */
+  if (S.subiendo !== 0) {
+    S.subeT += dt;
+    S.x = ALT.x - 1.7; S.z = ALT.z;
+    if (S.subiendo === 1) {
+      /* con arnés y permiso: sube, cambia la luminaria y baja */
+      S.alturaY = Math.min(ALT.h, (S.subeT / 1.5) * ALT.h);
+      if (S.subeT > 1.5 && !S.flags.lumOk) {
+        S.flags.lumOk = true;
+        lumLuz.material.color.set(0xFFFFFF);
+        toast("💡 Luminaria cambiada con arnés y línea de vida anclada. Así se trabaja en alturas.", 4500);
+      }
+      if (S.subeT > 3.0) {
+        S.subiendo = 0; S.subeT = 0; S.alturaY = 0; S.subidoOk = true;
+        S.puntos += 25; sndOk(); hud();
+        toast("✅ Trabajo en alturas ejecutado con permiso, arnés y línea de vida. <strong>+25</strong>", 5000);
+      }
+    } else {
+      /* sin equipo: sube, se tambalea y la escena se congela antes del impacto */
+      S.alturaY = Math.min(ALT.h * 0.85, (S.subeT / 1.0) * ALT.h * 0.85);
+      if (S.subeT > 1.0 && !S.flags.tambaleo) {
+        S.flags.tambaleo = true;
+        toast("😰 Se te va el equilibrio y no tienes nada que te sostenga…", 1600);
+      }
+      if (S.subeT > 1.7) {
+        S.subiendo = 0; S.subeT = 0; S.alturaY = 0;
+        leccion("altura");
+      }
+    }
+    hud();
+    return; /* durante la subida no hay movimiento libre */
+  }
+
+  /* movimiento */
+  let vx = 0, vz = 0;
+  if (keys["arrowleft"] || keys["a"]) vx -= 1;
+  if (keys["arrowright"] || keys["d"]) vx += 1;
+  if (keys["arrowup"] || keys["w"]) vz -= 1;
+  if (keys["arrowdown"] || keys["s"]) vz += 1;
+  if (!vx && !vz && (joy.x || joy.z)) { vx = joy.x; vz = joy.z; }
+  if (vx || vz) {
+    target = null; tapRing.visible = false;
+  } else if (target) {
+    const dx = target.x - S.x, dz = target.z - S.z;
+    const d = Math.hypot(dx, dz);
+    if (d > 0.25) { vx = dx / d; vz = dz / d; }
+    else { target = null; tapRing.visible = false; }
+  }
+  const mag = Math.hypot(vx, vz);
+  let esperando = false;
+  if (mag > 0) {
+    vx /= mag; vz /= mag;
+    if (!esperando) {
+      S.x = clamp(S.x + vx * 4.6 * dt, 2, 255);
+      S.z = clamp(S.z + vz * 4.6 * dt, -3.9, 4.2);
+      S.yaw = Math.atan2(vx, vz);
+      S.animT += dt * 10;
+      S.pasoT = (S.pasoT || 0) + dt;
+      if (S.pasoT > 0.34) { S.pasoT = 0; sndPaso(); }
+    }
+  }
+  S.andando = mag > 0 && !esperando;
+  S.esperando = esperando;
+  /* barrera EPP */
+  if (!S.epp && S.x > 12) {
+    S.x = 12;
+    if (target && target.x > 12) { target = null; tapRing.visible = false; }
+    avisoUnaVez("gate", "La barrera no abre sin tu EPP completo. Toca el casillero azul.", 4500);
+  }
+
+  /* interacción MANUAL: la decisión es del jugador */
+  const it = interCercano();
+  interActivo = it;
+  if (it) {
+    accionUI.textContent = it.label || "⚡ Usar";
+    accionUI.classList.toggle("bloq", !!it.peligro);
+    accionUI.style.display = "block";
+  } else {
+    accionUI.style.display = "none";
+  }
+
+  /* checkpoints monotónicos */
+  [[14, 15], [42, 43], [69, 70.5], [99, 100], [110, 111.5],
+   [121, 122.5], [135, 136], [163, 164.5], [175, 176.5], [230, 231]].forEach(([lim, cp]) => {
+    if (S.x > lim && S.checkpoint.x < cp) S.checkpoint = { x: cp, z: 0 };
+  });
+
+  /* avisos de zona */
+  if (S.x > 15 && S.x < 20) avisoUnaVez("bodega", "Zona de carga suspendida: los <strong>círculos rojos</strong> marcan dónde caen las cajas. ¡Rodéalos!");
+  if (S.x > 42 && S.x < 46) avisoUnaVez("monta", "Montacargas en circulación. Pasa por el punto <strong>👀 contacto visual</strong> y cruza con el ✅.");
+  if (S.x > 69 && S.x < 74) avisoUnaVez("ruido", "Adelante hay 95 dB. Toma tus <strong>protectores 🎧</strong> de la caja naranja.");
+  if (S.x > 99 && S.x < 103) avisoUnaVez("electrico", "¡Cable energizado cruza el piso! No te acerques: usa el punto de <strong>reporte</strong>.");
+  if (S.x > 119 && S.x < 124) avisoUnaVez("oficina", "🏢 <strong>Bienvenido al mundo oficina.</strong> Aquí los riesgos son más silenciosos: cables, pisos húmedos, malas posturas…");
+  if (S.x > 124 && S.x < 127) avisoUnaVez("cablesAv", "Cables atravesados en el pasillo: organízalos en el punto ⚡ antes de pasar.");
+  if (S.x > 137 && S.x < 141) avisoUnaVez("carritoAv", "📬 Pasillo concurrido: dale espacio al carrito de correspondencia.");
+  if (S.x > 164 && S.x < 167) avisoUnaVez("derrameAv", "☕ Derrame de café adelante: señalízalo en el punto ⚡ antes de pasar.");
+  if (S.x > 177 && S.x < 181) avisoUnaVez("pausaAv", "Llevas medio turno sin parar: una <strong>pausa activa 🤸</strong> recupera tu bienestar.");
+
+  /* cajas que caen */
+  CAJAS.forEach(c => {
+    c.t += dt;
+    const dur = CICLO[c.estado];
+    if (c.t >= dur) {
+      c.t = 0;
+      c.estado = c.estado === "espera" ? "aviso" : c.estado === "aviso" ? "cae" : c.estado === "cae" ? "suelo" : "espera";
+      if (c.estado === "cae") c.y = 9;
+      if (c.estado === "suelo" && Math.abs(S.x - c.x) < 25) sndThud();
+    }
+    c.ring.visible = c.estado === "aviso" || c.estado === "cae";
+    if (c.ring.visible) {
+      const k = 1 + Math.sin(S.t * 8) * 0.15;
+      c.ring.scale.set(k, k, 1);
+    }
+    if (c.estado === "cae") {
+      c.y = 9 - (c.t / CICLO.cae) * 8.35;
+      c.mesh.visible = true;
+      c.mesh.position.set(c.x, Math.max(0.65, c.y), c.z);
+      if (S.inv <= 0 && c.y < 2.6 && Math.hypot(S.x - c.x, S.z - c.z) < 1.5) leccion("caida");
+    } else if (c.estado === "suelo") {
+      c.mesh.visible = true;
+      c.mesh.position.set(c.x, 0.65, c.z);
+    } else {
+      c.mesh.visible = false;
+    }
+  });
+
+  /* montacargas */
+  if (monta.pausa > 0) monta.pausa -= dt;
+  else {
+    monta.x += monta.dir * monta.vel * dt;
+    if (monta.x > 68) { monta.x = 68; monta.dir = -1; }
+    if (monta.x < 48) { monta.x = 48; monta.dir = 1; }
+    if (Math.hypot(S.x - monta.x, S.z) < 190 / 32 && S.t - monta.beepT > 0.9 && Math.abs(S.x - monta.x) < 12) { monta.beepT = S.t; sndBeep(); }
+    if (S.inv <= 0 && Math.abs(S.x - monta.x) < 2.4 && Math.abs(S.z) < 1.9 && S.x > 44 && S.x < 70) leccion("monta");
+  }
+  montaG.position.set(monta.x, 0, 0);
+  montaG.rotation.y = monta.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+  montaZona.position.set(monta.x, 0.03, 0);
+  montaZona.material.color.set(monta.pausa > 0 ? 0x00795C : 0xB62233);
+  montaZona.material.opacity = monta.pausa > 0 ? 0.3 : 0.22 + Math.abs(Math.sin(S.t * 5)) * 0.15;
+  montaCheck.visible = monta.pausa > 0;
+  montaCheck.position.set(monta.x, 4, 0);
+
+  /* ruido */
+  const enRuido = S.x > 76 && S.x < 98;
+  document.getElementById("ruidoFx").style.display = (enRuido && !S.oidos) ? "block" : "none";
+  if (enRuido && !S.oidos) {
+    S.bien = clamp(S.bien - 3 * dt, 0, 100);
+    avisoUnaVez("ruidoDolor", "¡Ese ruido daña tu audición! Devuélvete por los protectores 🎧.", 5000);
+  }
+
+  /* cable eléctrico */
+  if (S.inv <= 0 && !S.flags.electrico && Math.abs(S.x - 108) < 1.5) leccion("electrico");
+  chispas.forEach((ch, i) => { ch.visible = !S.flags.electrico && Math.sin(S.t * 16 + i * 2) > 0.2; });
+  cableZona.material.color.set(S.flags.electrico ? 0x00795C : 0xB62233);
+  cableZona.material.opacity = S.flags.electrico ? 0.3 : 0.2 + Math.abs(Math.sin(S.t * 5)) * 0.15;
+  if (S.flags.electrico && !tecnico && S.t > tecnicoLlega) {
+    if (real) {
+      const m = SkeletonUtils.clone(real.model);
+      m.traverse(o => {
+        if (o.isMesh) { o.castShadow = true; o.material = o.material.clone(); o.material.color.set(0x9FB7E6); }
+      });
+      m.position.set(111, 0, -1.6); m.rotation.y = Math.PI / 2;
+      scene.add(m);
+      const mixT = new THREE.AnimationMixer(m);
+      const idle = real.clips.find(c => c.name === "Idle");
+      if (idle) mixT.clipAction(idle).play();
+      const cascoT = cascoJ.clone(); cascoT.visible = true; cascoT.scale.setScalar(0.6);
+      cascoT.position.set(111, 1.86, -1.6); scene.add(cascoT);
+      tecnico = { g: m, mixer: mixT };
+    } else {
+      tecnico = humano({ camisa: 0x0A5CA8, piel: 0xE0AC7E, pelo: 0x21150E });
+      tecnico.g.position.set(111, 0, -1.6); tecnico.g.rotation.y = -Math.PI / 2;
+      const cascoT = cascoJ.clone(); cascoT.visible = true; tecnico.g.add(cascoT);
+      scene.add(tecnico.g);
+    }
+  }
+
+  /* --- alturas y pieza caliente: color del piso según tu equipo --- */
+  const listoAlt = S.permiso && S.arnes;
+  altZona.material.color.set(S.subidoOk ? 0x00795C : listoAlt ? 0x00795C : 0xB62233);
+  altZona.material.opacity = (S.subidoOk || listoAlt) ? 0.26 : 0.2 + Math.abs(Math.sin(S.t * 5)) * 0.15;
+  calorZona.material.color.set(S.guantes ? 0x00795C : 0xB62233);
+  calorZona.material.opacity = S.guantes ? 0.22 : 0.2 + Math.abs(Math.sin(S.t * 5)) * 0.15;
+  if (S.x > 50 && S.x < 57 && !S.subidoOk) {
+    avisoUnaVez("altAv", "🪜 <strong>Trabajo en alturas.</strong> Sin <strong>permiso</strong> del supervisor y <strong>arnés</strong>, no se sube. Nunca.");
+  }
+  if (S.x > 96 && S.x < 101 && !S.guantes) {
+    avisoUnaVez("guantesAv", "🧤 Más adelante hay una pieza recién soldada. El metal caliente <strong>no se ve</strong>: lleva guantes.");
+  }
+
+  /* --- soldadura: radiación del arco --- */
+  const enSold = S.x > 111 && S.x < 118.5 && S.z > -5 && S.z < 0;
+  soldZona.material.color.set(S.careta ? 0x00795C : 0xB62233);
+  soldZona.material.opacity = S.careta ? 0.22 : 0.2 + Math.abs(Math.sin(S.t * 5)) * 0.14;
+  if (enSold && !S.careta) {
+    S.bien = clamp(S.bien - 3.4 * dt, 0, 100);
+    avisoUnaVez("soldDolor", "🥽 ¡El destello del arco te está lastimando la vista! Vuelve por la <strong>careta</strong>.", 5000);
+  }
+  if (S.x > 105 && S.x < 110 && !S.careta) {
+    avisoUnaVez("soldAv", "Adelante hay <strong>soldadura en proceso</strong>: la radiación del arco quema la vista. Toma la careta 🥽 de la caja naranja.");
+  }
+  if (S.mundo === 1 && S.x > 118 && !S.flags.avisos.pSold) {
+    S.flags.avisos.pSold = true;
+    if (S.careta) { S.puntos += 15; sndOk(); toast("Zona de soldadura cruzada con protección visual. <strong>+15</strong>"); }
+  }
+
+  /* --- mundo oficina --- */
+  /* cables sueltos */
+  if (S.inv <= 0 && !S.flags.cables && Math.abs(S.x - 132) < 1.3) leccion("cables");
+  cablesZonaOf.material.color.set(S.flags.cables ? 0x00795C : 0xB62233);
+  cablesZonaOf.material.opacity = S.flags.cables ? 0.3 : 0.2 + Math.abs(Math.sin(S.t * 5)) * 0.15;
+  /* carrito de correspondencia */
+  carrito.x += carrito.dir * carrito.vel * dt;
+  if (carrito.x > 160) { carrito.x = 160; carrito.dir = -1; }
+  if (carrito.x < 140) { carrito.x = 140; carrito.dir = 1; }
+  if (S.inv <= 0 && S.x > 136 && S.x < 164 && Math.abs(S.x - carrito.x) < 1.7 && Math.abs(S.z - carrito.z) < 1.3) leccion("carrito");
+  carritoG.position.set(carrito.x, 0, carrito.z);
+  carritoG.rotation.y = carrito.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+  carritoZona.position.set(carrito.x, 0.03, carrito.z);
+  carritoZona.material.opacity = 0.18 + Math.abs(Math.sin(S.t * 5)) * 0.12;
+  /* derrame de café */
+  if (S.inv <= 0 && !S.flags.derrame && Math.hypot(S.x - 172, S.z - 0.5) < 1.35) leccion("derrame");
+  derrameZona.material.color.set(S.flags.derrame ? 0x00795C : 0xB62233);
+  derrameZona.material.opacity = S.flags.derrame ? 0.25 : 0.2 + Math.abs(Math.sin(S.t * 5)) * 0.15;
+
+  /* premios de zona limpia */
+  if (S.x > 164 && !S.flags.avisos.pCarrito) {
+    S.flags.avisos.pCarrito = true;
+    if (S.limpio.carrito) { S.puntos += 15; sndOk(); toast("Pasillo cruzado sin un solo choque. <strong>+15</strong>"); }
+  }
+  if (S.mundo === 1 && S.x > 42 && !S.flags.avisos.pBodega) {
+    S.flags.avisos.pBodega = true;
+    if (S.limpio.bodega) { S.puntos += 15; sndOk(); toast("Cruzaste la bodega sin un solo golpe. <strong>+15</strong>"); }
+  }
+  if (S.mundo === 1 && S.x > 70 && !S.flags.avisos.pMonta) {
+    S.flags.avisos.pMonta = true;
+    if (S.limpio.monta) { S.puntos += 15; sndOk(); toast("Zona de montacargas superada sin incidentes. <strong>+15</strong>"); }
+  }
+  if (S.mundo === 1 && S.x > 99 && !S.flags.avisos.pRuido) {
+    S.flags.avisos.pRuido = true;
+    if (S.oidos) { S.puntos += 15; sndOk(); toast("Zona de ruido cruzada con protección. <strong>+15</strong>"); }
+  }
+
+  /* meta del Mundo 1: salir de planta */
+  if (S.mundo === 1 && S.x > MUNDOS[1].meta && !S.fin) { terminar(); return; }
+
+  /* evacuación (final del Mundo 2) */
+  if (S.mundo === 2 && S.x > 232 && S.flags.cierre && !S.flags.alarma) {
+    S.flags.alarma = true; S.flags.evacT0 = S.t;
+    flechas.forEach(f => f.visible = true);
+    toast("🚨 ¡Alarma de evacuación! Sigue las flechas verdes hasta el <strong>punto de encuentro</strong>. Paso firme, sin correr.", 5000);
+    sndAlerta();
+  }
+  if (S.flags.alarma && !S.fin && Math.floor(S.t * 1.2) !== Math.floor((S.t - dt) * 1.2)) sndAlerta();
+  if (S.flags.alarma && S.x > 250.5 && !S.fin) terminar();
+
+  /* salud agotada por exposición continua (ruido o radiación sin protección) */
+  if (S.bien <= 0 && !S.fin) {
+    derrota({ t: "Daño por exposición sostenida",
+      exp: "Te quedaste en una zona de riesgo sin la protección que exigía. El daño por ruido o por radiación no llega de golpe: se acumula hasta que ya no hay vuelta atrás.",
+      regla: "La exposición sin protección se paga, siempre." });
+    return;
+  }
+
+  const objN = objetivoActual();
+  const et = MUNDOS[S.mundo].etapas;
+  if (typeof objN.e === "number" && objN.e > S.etapa) {
+    S.etapa = objN.e;
+    const porque = PORQUE[S.mundo] && PORQUE[S.mundo][S.etapa];
+    if (porque) toast("🎯 <strong>Nivel " + (S.etapa + 1) + ": " + et[S.etapa] + ".</strong> " + porque, 5200);
+  }
+  document.getElementById("objTxt").textContent =
+    "Nivel " + (S.etapa + 1) + "/" + et.length + " · " + objN.txt;
+  hud();
+}
+
+/* ---------- Animación visual (cada frame) ---------- */
+function animarVisual(dt) {
+  /* jugador: giro suavizado común */
+  let dy = S.yaw - yawVis;
+  while (dy > Math.PI) dy -= Math.PI * 2;
+  while (dy < -Math.PI) dy += Math.PI * 2;
+  yawVis += dy * Math.min(1, dt * 12);
+  const parpadeo = S.inv > 0 && Math.sin(S.t * 18) > 0;
+
+  /* tambaleo antes de la caída (subida insegura) */
+  const tambaleo = S.subiendo === -1 && S.flags.tambaleo ? Math.sin(S.t * 22) * 0.30 : 0;
+  if (real) {
+    /* modelo realista con animaciones de mocap */
+    real.model.position.set(S.x, S.alturaY, S.z);
+    real.model.rotation.y = yawVis + Math.PI; /* el modelo mira hacia −Z */
+    real.model.rotation.z = tambaleo;
+    const objAnim = S.andando ? "Walk" : "Idle";
+    ["Idle", "Walk"].forEach(n => {
+      real.w[n] += ((n === objAnim ? 1 : 0) - real.w[n]) * Math.min(1, dt * 8);
+      real.acc[n].setEffectiveWeight(real.w[n]);
+    });
+    real.mixer.update(dt);
+    real.model.visible = !parpadeo;
+    /* EPP anclado a los huesos */
+    const fx = Math.sin(yawVis), fz = Math.cos(yawVis);
+    real.head.getWorldPosition(V1);
+    cascoJ.position.set(V1.x, V1.y + 0.10, V1.z); cascoJ.rotation.y = yawVis;
+    gafasJ.position.set(V1.x + fx * 0.135, V1.y + 0.045, V1.z + fz * 0.135); gafasJ.rotation.y = yawVis;
+    orejasJ.position.set(V1.x, V1.y - 1.28, V1.z); orejasJ.rotation.y = yawVis;
+    caretaJ.position.set(V1.x + fx * 0.06, V1.y - 1.32, V1.z + fz * 0.06); caretaJ.rotation.y = yawVis;
+    guantesJ.position.set(V1.x, V1.y - 1.36, V1.z); guantesJ.rotation.y = yawVis;
+    arnesJ.position.set(V1.x, V1.y - 1.32, V1.z); arnesJ.rotation.y = yawVis;
+    real.spine.getWorldPosition(V1);
+    chalecoJ.position.set(V1.x, V1.y - 0.12, V1.z); chalecoJ.rotation.y = yawVis;
+  } else {
+    jugador.g.position.set(S.x, S.alturaY, S.z);
+    jugador.g.rotation.y = yawVis;
+    jugador.g.rotation.z = tambaleo;
+    /* marcha articulada procedural */
+    const tA = S.animT, on = S.andando ? 1 : 0;
+    jugador.musloL.rotation.x = -Math.sin(tA) * 0.62 * on;
+    jugador.musloR.rotation.x = Math.sin(tA) * 0.62 * on;
+    jugador.espinillaL.rotation.x = Math.max(0, Math.sin(tA - 2.1)) * 0.95 * on;
+    jugador.espinillaR.rotation.x = Math.max(0, -Math.sin(tA - 2.1)) * 0.95 * on;
+    jugador.hombroL.rotation.x = Math.sin(tA) * 0.48 * on;
+    jugador.hombroR.rotation.x = -Math.sin(tA) * 0.48 * on;
+    jugador.codoL.rotation.x = -0.28 - Math.max(0, Math.sin(tA)) * 0.3 * on;
+    jugador.codoR.rotation.x = -0.28 - Math.max(0, -Math.sin(tA)) * 0.3 * on;
+    jugador.g.position.y = on ? Math.abs(Math.sin(tA)) * 0.05 : 0;
+    jugador.g.visible = !parpadeo;
+  }
+  if (tecnico && tecnico.mixer) tecnico.mixer.update(dt);
+  /* barrera: el brazo pivota en el poste (z=5); el signo debe ser positivo
+     para que se LEVANTE al abrir — con signo negativo el extremo se hundía
+     bajo el piso en vez de subir */
+  const objRot = S.epp ? 1.25 : 0;
+  barreraGrupo.rotation.x += (objRot - barreraGrupo.rotation.x) * Math.min(1, dt * 4);
+  /* PREVI sigue al jugador */
+  const px = S.x - Math.sin(S.yaw) * 1.6, pz = S.z - Math.cos(S.yaw) * 1.6 + 1.2;
+  previ.position.x += (px - previ.position.x) * Math.min(1, dt * 3);
+  previ.position.z += (pz - previ.position.z) * Math.min(1, dt * 3);
+  previ.position.y = 3.1 + Math.sin(S.t * 2.4) * 0.25;
+  previ.lookAt(S.x, 2, S.z);
+  helice.rotation.y += dt * 18;
+  /* marcadores ⚡ */
+  INTER.forEach(it => {
+    const on = it.activo();
+    it.pad.visible = on; it.sp.visible = on;
+    if (on) {
+      it.sp.position.y = 1.7 + Math.sin(S.t * 4) * 0.18;
+      const k = 1 + Math.sin(S.t * 4) * 0.12;
+      it.pad.scale.set(k, 1, k);
+    }
+  });
+  /* flecha de objetivo + mano tutorial */
+  const obj = objetivoActual();
+  const lejos = Math.hypot(obj.x - S.x, obj.z - S.z) > 3.5;
+  objFlecha.visible = lejos;
+  objFlecha.position.set(obj.x, 2.6 + Math.sin(S.t * 4) * 0.25, obj.z);
+  mano.visible = !S.flags.avisos.primerTap && !S.pausado;
+  mano.position.set(obj.x, 3.8 + Math.sin(S.t * 4) * 0.3, obj.z);
+  /* huellas amarillas que marchan hacia el objetivo */
+  const dxo = obj.x - S.x, dzo = obj.z - S.z, dObj = Math.hypot(dxo, dzo);
+  if (dObj > 2.6 && !S.pausado) {
+    const ux = dxo / dObj, uz = dzo / dObj;
+    const pasoM = 1.5, off = (S.t * 2.4) % pasoM;
+    MIGAS.forEach((m, i) => {
+      const dd = off + 1.0 + i * pasoM;
+      if (dd < dObj - 0.5) {
+        m.visible = true;
+        m.position.x = S.x + ux * dd;
+        m.position.z = S.z + uz * dd;
+        m.material.opacity = 0.85 - i * 0.07;
+      } else m.visible = false;
+    });
+  } else MIGAS.forEach(m => { m.visible = false; });
+  /* mano de alto cuando la guía espera un peligro */
+  esperaSp.visible = !!S.esperando && !S.pausado;
+  if (esperaSp.visible) esperaSp.position.set(S.x, 3.4 + Math.sin(S.t * 6) * 0.12, S.z);
+  /* anillo del toque */
+  if (tapRing.visible) {
+    const k = 1 + Math.sin(S.t * 6) * 0.2;
+    tapRing.scale.set(k, k, 1);
+  }
+  /* soldadura: arco parpadeante y chispas saltando */
+  const kArco = 0.55 + Math.abs(Math.sin(S.t * 22)) * 0.45;
+  arco.scale.setScalar(0.7 + kArco * 0.6);
+  arco.material.color.setRGB(kArco, kArco * 0.98, 1);
+  luzArco.intensity = kArco * 2.6;
+  chispasSold.forEach(c => {
+    c.f += dt * c.v * 1.9;
+    if (c.f > 1) { c.f = 0; c.a = Math.random() * 7; c.v = 0.6 + Math.random() * 0.9; }
+    const r = c.f * 2.1;
+    c.m.position.set(114.5 + Math.cos(c.a) * r, 1.4 + Math.sin(c.f * 3.1) * 0.9 - c.f * c.f * 1.5, -4.6 + Math.sin(c.a) * r * 0.6);
+    c.m.visible = c.m.position.y > 0.05;
+  });
+  /* grúa puente recorriendo la nave */
+  if (gruaPuente) gruaPuente.position.x = 60 + Math.sin(S.t * 0.16) * 44;
+  /* ondas de ruido */
+  ondas.forEach(({ o, f }) => {
+    const k = ((S.t * 0.8 + f * 0.33) % 1);
+    o.scale.set(1 + k * 2.2, 1 + k * 2.2, 1);
+    o.material.opacity = 0.85 * (1 - k);
+  });
+  /* alarma */
+  alarma.material.color.set(S.flags.alarma && Math.sin(S.t * 8) > 0 ? 0xFF5252 : 0x7E1424);
+  if (S.flags.alarma) alarma.scale.setScalar(1 + Math.abs(Math.sin(S.t * 8)) * 0.35);
+  /* flechas evac */
+  flechas.forEach((f, i) => { if (f.visible) f.position.y = 0.3 + Math.abs(Math.sin(S.t * 3 + i)) * 0.25; });
+  /* cámara persigue */
+  const cx = S.x, cz = S.z + 11.2, cy = 8.4 + S.alturaY * 0.75;
+  camera.position.x += (cx - camera.position.x) * Math.min(1, dt * 4);
+  camera.position.y += (cy - camera.position.y) * Math.min(1, dt * 4);
+  camera.position.z += (cz - camera.position.z) * Math.min(1, dt * 4);
+  camera.lookAt(S.x, 1.6 + S.alturaY, S.z);
+  /* luz sigue para sombras */
+  sol.position.set(S.x + 14, 26, 12);
+  sol.target.position.set(S.x, 0, 0);
+  /* el ambiente cambia al pasar a oficina: aire interior, más claro y neutro */
+  const kOf = clamp((S.x - 112) / 14, 0, 1);
+  colAmb.setRGB(
+    0.749 + (0.918 - 0.749) * kOf,
+    0.867 + (0.937 - 0.867) * kOf,
+    0.910 + (0.957 - 0.910) * kOf);
+  scene.background.copy(colAmb);
+  scene.fog.color.copy(colAmb);
+  scene.fog.near = 38 + kOf * 10;
+  sol.intensity = 1.5 - kOf * 0.55;
+}
+
+/* ---------- Final ---------- */
+function terminar() {
+  S.fin = true; S.pausado = true;
+  document.getElementById("joy").style.display = "none";
+  sndFanfarria();
+  const m1 = S.mundo === 1;
+  S.puntos += 25;
+  if (!m1) {
+    const evacT = S.t - S.flags.evacT0;
+    if (evacT < 30) { S.puntos += 10; S.flags.evacBonus = true; }
+  }
+  const pct = clamp(Math.round((S.puntos / MAX) * 100), 0, 100);
+  const niv = pct >= 90 ? "Líder SST" : pct >= 70 ? "Nivel Seguro" : pct >= 50 ? "Nivel Preventivo" : "Nivel Básico";
+  const medallas = m1
+    ? [{ n: "Cero golpes", ico: "🛡️", ok: S.errores === 0 },
+       { n: "Reportero en acción", ico: "📣", ok: S.reportes >= 2 },
+       { n: "EPP completo", ico: "🦺", ok: S.epp && S.oidos && S.careta }]
+    : [{ n: "Cero golpes", ico: "🛡️", ok: S.errores === 0 },
+       { n: "Reportero en acción", ico: "📣", ok: S.reportes >= 2 },
+       { n: "Evacuación ejemplar", ico: "🏃", ok: S.flags.evacBonus }];
+  try {
+    const arr = JSON.parse(localStorage.getItem("ts_sesiones") || "[]");
+    arr.unshift({ nombre: S.nombre, fecha: new Date().toLocaleString("es-CO"),
+                  modo: MUNDOS[S.mundo].nombre,
+                  puntos: S.puntos, pct: pct, nivel: niv, errores: S.errores, errs: S.errs });
+    localStorage.setItem("ts_sesiones", JSON.stringify(arr.slice(0, 100)));
+    if (m1 && pct >= 50) localStorage.setItem("ts_mundo1_ok", "1");
+  } catch (e) {}
+  panel(
+    '<div style="text-align:center;font-size:40px">' + (m1 ? "🏭" : "🏁") + '</div>' +
+    '<h2 style="text-align:center">' + escHtml(S.nombre) + ', ' +
+      (m1 ? "¡terminaste el turno en planta!" : "¡llegaste al punto de encuentro!") + '</h2>' +
+    '<div class="res-pct">' + pct + '%</div>' +
+    '<span class="nivel">' + S.puntos + ' / ' + MAX + ' pts · ' + niv + ' · Salud ' + Math.round(S.bien) + '%</span>' +
+    '<div class="medallas">' +
+    medallas.map(m => '<div class="medalla ' + (m.ok ? "" : "off") + '"><span class="ico">' + m.ico + '</span>' + m.n + '</div>').join("") +
+    '</div>' +
+    (S.errores ? '<div class="exp"><strong>PREVI:</strong> Tuviste ' + S.errores + ' incidente(s). Repite el mundo para dominar esos riesgos.</div>'
+               : '<div class="exp"><strong>PREVI:</strong> ¡Impecable: ni un solo incidente! Así se ve la cultura preventiva en acción. 🏆</div>') +
+    (m1 ? '<button class="btn" id="btnSig">🏢 Continuar al Mundo 2 · Oficina</button>' : '') +
+    '<button class="btn' + (m1 ? ' sec' : '') + '" id="btnOtra">Repetir este mundo</button>' +
+    '<button class="btn sec" id="btnMenu">Elegir mundo</button>', "ok");
+  if (m1) document.getElementById("btnSig").onclick = () => { location.href = "aventura3d.html?mundo=2"; };
+  document.getElementById("btnOtra").onclick = () => { location.href = "aventura3d.html?mundo=" + S.mundo; };
+  document.getElementById("btnMenu").onclick = () => location.href = "index.html";
+  if (pct >= 70) confeti();
+  sndOk();
+}
+function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function confeti() {
+  const c = document.createElement("div"); c.className = "confetti";
+  const cols = ["#00795C","#F2B705","#0A5CA8","#E57373","#FFD54F"];
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement("i");
+    p.style.left = Math.random() * 100 + "%";
+    p.style.background = cols[i % cols.length];
+    p.style.animationDuration = (2.2 + Math.random() * 2) + "s";
+    p.style.animationDelay = (Math.random() * 0.8) + "s";
+    c.appendChild(p);
+  }
+  stage.appendChild(c);
+  setTimeout(() => c.remove(), 5500);
+}
+
+/* ---------- Bucle ---------- */
+let tPrev = performance.now();
+function loop(t) {
+  const dt = clamp((t - tPrev) / 1000, 0, 0.05);
+  tPrev = t;
+  if (!S.pausado && !S.fin) update(dt);
+  animarVisual(dt);
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+/* ---------- Intro con selección de mundo ---------- */
+function aplicarMundo(n) {
+  S.mundo = n; S.etapa = 0;
+  const M = MUNDOS[n];
+  MAX = M.max;
+  S.x = M.spawn.x; S.z = M.spawn.z;
+  S.checkpoint = { x: M.spawn.x, z: M.spawn.z };
+  jugador.g.position.set(S.x, 0, S.z);
+  camera.position.set(S.x, 8.4, S.z + 11.2);
+  if (n === 2) {
+    /* en oficina se llega ya equipado desde planta: sin EPP de planta a la vista */
+    S.epp = true; S.oidos = true; S.careta = true;
+    cascoJ.visible = false; chalecoJ.visible = false; gafasJ.visible = false;
+    orejasJ.visible = false; caretaJ.visible = false;
+  }
+}
+function intro() {
+  const m1ok = (() => { try { return localStorage.getItem("ts_mundo1_ok") === "1"; } catch (e) { return false; } })();
+  panel(
+    '<div style="text-align:center;font-size:42px">👷</div>' +
+    '<h2 style="text-align:center;margin-bottom:4px">Turno Seguro 3D</h2>' +
+    '<p style="font-size:14px;text-align:center;margin:0 0 12px;color:var(--muted)">Elige tu mundo. <strong>Las decisiones son tuyas:</strong> el equipo que no tomes, lo pagas.</p>' +
+    '<input type="text" id="nombre" maxlength="40" placeholder="Tu nombre" autocomplete="off">' +
+    '<button class="btn" id="btnM1">🏭 Mundo 1 · Planta<br><small style="font-weight:600;font-size:12px;opacity:0.9">EPP · cajas · montacargas · <strong>alturas</strong> · ruido · eléctrico · <strong>quemaduras</strong> · soldadura</small></button>' +
+    '<button class="btn blue" id="btnM2" style="background:linear-gradient(180deg,#1272C6,#0A5CA8);box-shadow:0 4px 0 #063E70,0 8px 18px rgba(0,0,0,0.2)">🏢 Mundo 2 · Oficina' +
+      (m1ok ? ' ✅' : '') + '<br><small style="font-weight:600;font-size:12px;opacity:0.9">cables · carrito · derrames · pausas · ergonomía</small></button>' +
+    '<div class="ctl-demo" style="margin-top:12px">' +
+    '<div class="k" style="border-color:var(--green)">🕹️<small><strong>Joystick</strong><br>para caminar</small></div>' +
+    '<div class="k">👣<small><strong>Guía</strong><br>te lleva, no decide</small></div>' +
+    '<div class="k" style="border-color:var(--yellow)">⚡<small><strong>Botón amarillo</strong><br>tú actúas</small></div>' +
+    '</div>' +
+    '<p style="font-size:12.5px;text-align:center;color:var(--muted);margin:8px 0 0">Rojo en el piso = peligro · verde = seguro · <strong>si el botón sale en rojo, piénsalo dos veces</strong></p>');
+  document.getElementById("btnM1").onclick = () => empezar(1);
+  document.getElementById("btnM2").onclick = () => empezar(2);
+}
+/* Briefing: qué tienes que hacer y por qué importa */
+const BRIEF = {
+  1: { mision: "Cruza toda la planta y sal por la puerta del fondo <strong>sin un solo accidente</strong>.",
+       tareas: ["Equípate con el EPP que exige cada zona antes de entrar",
+                "Reporta las condiciones inseguras que encuentres",
+                "No subas, no toques y no cruces sin lo que la tarea exige"],
+       porque: "Las caídas de altura, los golpes por objetos y los atrapamientos son las causas que más matan y mutilan en la industria. Ninguna de esas personas salió de casa pensando que no volvería. <strong>El EPP y el permiso de trabajo son lo único que separa un turno normal de una tragedia.</strong>" },
+  2: { mision: "Recorre la oficina, deja cada riesgo controlado y <strong>evacúa al punto de encuentro</strong>.",
+       tareas: ["Controla y reporta lo que puede hacer caer a alguien",
+                "Cuida tu cuerpo: pausas activas, postura y cargas",
+                "Cierra bien tu puesto y evacúa con calma"],
+       porque: "Los riesgos de oficina no dan sustos: cobran despacio. Cables sueltos, pisos mojados, sillas mal ajustadas y jornadas sin pausa terminan en <strong>incapacidades largas y dolores que no se van</strong>. Aquí la prevención se ve aburrida… hasta que falta." }
+};
+function empezar(mundo, nombreDirecto) {
+  const campo = document.getElementById("nombre");
+  const n = nombreDirecto || (campo ? campo.value.trim() : "");
+  S.nombre = n || "Jugador(a)";
+  try { localStorage.setItem("ts_nombre", S.nombre); } catch (e) {}
+  aplicarMundo(mundo || 1);
+  iniciarAudioFondo();
+  briefing();
+}
+function briefing() {
+  const M = MUNDOS[S.mundo], B = BRIEF[S.mundo];
+  panel(
+    '<div style="text-align:center;font-size:38px">' + M.ico + '</div>' +
+    '<h2 style="text-align:center;margin-bottom:2px">' + M.nombre + '</h2>' +
+    '<p style="text-align:center;font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px">' +
+      M.etapas.length + ' niveles · ' + M.max + ' puntos</p>' +
+    '<div style="background:var(--green-soft);border-left:4px solid var(--green);border-radius:10px;padding:11px 14px;margin-bottom:12px">' +
+    '<div style="font-size:11.5px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);margin-bottom:4px">🎯 Tu misión</div>' +
+    '<div style="font-size:14.5px">' + B.mision + '</div></div>' +
+    '<div style="font-size:11.5px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px">Para lograrlo</div>' +
+    '<ul style="margin:0 0 14px;padding-left:20px;font-size:13.5px;line-height:1.7">' +
+      B.tareas.map(t => '<li>' + t + '</li>').join("") + '</ul>' +
+    '<div style="background:#FFF4F5;border-left:4px solid var(--red);border-radius:10px;padding:11px 14px;margin-bottom:14px">' +
+    '<div style="font-size:11.5px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:4px">⚠️ Por qué importa</div>' +
+    '<div style="font-size:13.5px">' + B.porque + '</div></div>' +
+    '<div class="gana" style="margin-bottom:6px"><h3>✅ Ganas si…</h3>' +
+    '<div style="font-size:13.5px">Llegas al final <strong>con salud</strong> 💚. Tu nivel sale del puntaje: <strong>90%+ = Líder SST</strong>.</div></div>' +
+    '<div class="pierde" style="margin-top:0"><h3>❌ Pierdes si…</h3>' +
+    '<div style="font-size:13.5px">Tu salud llega a <strong>0</strong>: son <strong>3 accidentes graves</strong> (o 5 leves) y el turno termina en la enfermería.</div></div>' +
+    '<div class="ctl-demo">' +
+    '<div class="k" style="border-color:var(--green)">🕹️<small><strong>Joystick</strong><br>o toca el piso<br>para caminar</small></div>' +
+    '<div class="k" style="border-color:var(--yellow)">⚡<small><strong>Botón amarillo</strong><br>solo aparece si<br>hay algo que hacer</small></div>' +
+    '</div>' +
+    '<p style="font-size:12.5px;text-align:center;color:var(--muted);margin:6px 0 10px">Sigue las <strong>huellas amarillas</strong> hacia tu objetivo · 🔴 rojo en el piso = peligro · 🟢 verde = seguro</p>' +
+    '<button class="btn" id="btnVamos">▶ Empezar el turno</button>' +
+    '<button class="btn sec" id="btnVerReglas">📋 Ver todas las reglas y puntos</button>', "info");
+  document.getElementById("btnVamos").onclick = () => {
+    cerrarPanel();
+    toast("Recuerda: <strong>nadie decide por ti</strong>. Si algo se ve peligroso, prepárate antes de actuar.", 5200);
+  };
+  document.getElementById("btnVerReglas").onclick = () => panelReglas(true);
+}
+
+window.AV = { S, update, monta, CAJAS, leccion, terminar, objetivoActual,
+              renderOnce: () => renderer.render(scene, camera),
+              animar: (dt) => animarVisual(dt),
+              getTarget: () => target, setTarget: (x, z) => { target = { x, z }; },
+              getReal: () => real,
+              getJoy: () => joy, MUNDOS, aplicarMundo,
+              accionar, getInter: () => interActivo, INTER, ALT, scene, camera, THREE,
+              empezar, togKit, confKit, abrirKit };
+
+/* si viene ?mundo=N desde "continuar"/"repetir", arrancar directo en ese mundo */
+(function () {
+  const p = new URLSearchParams(location.search).get("mundo");
+  let guardado = null;
+  try { guardado = localStorage.getItem("ts_nombre"); } catch (e) {}
+  if ((p === "1" || p === "2") && guardado) {
+    empezar(parseInt(p, 10), guardado);
+  } else {
+    if (p === "1" || p === "2") aplicarMundo(parseInt(p, 10));
+    intro();
+  }
+})();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

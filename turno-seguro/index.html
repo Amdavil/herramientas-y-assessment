@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Turno Seguro — Juego 3D de Seguridad y Salud en el Trabajo</title>
+<style>
+  :root {
+    --bg: #ECEFEA; --surface: #FFFFFF; --ink: #1F262A; --muted: #5B6871; --line: #D5DCD3;
+    --green: #00795C; --green-hi: #009B76; --green-deep: #00503B; --green-soft: #DFF0E8;
+    --yellow: #F2B705; --yellow-ink: #8A6200;
+    --red: #B62233; --blue: #0A5CA8; --blue-hi: #1272C6; --blue-deep: #063E70; --blue-soft: #E0EDF9;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    background:
+      radial-gradient(900px 420px at 50% -140px, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%),
+      linear-gradient(165deg, #F1F5EF 0%, #DCE4DB 55%, #D3DCD3 100%);
+    background-attachment: fixed; min-height: 100vh;
+    color: var(--ink); font-family: "Segoe UI", -apple-system, Roboto, sans-serif; line-height: 1.5;
+  }
+  .hazard { height: 10px; background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, #23272B 14px 28px); }
+  main { max-width: 520px; margin: 0 auto; padding: 22px 16px 44px; }
+
+  header { text-align: center; position: relative; padding-top: 12px; }
+  .epp-flota { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+  .epp-flota span { position: absolute; font-size: 24px; opacity: 0.32; animation: flota 5s ease-in-out infinite; }
+  .epp-flota span:nth-child(1) { top: 4px; left: 4%; }
+  .epp-flota span:nth-child(2) { top: 62px; right: 5%; animation-delay: 1s; }
+  .epp-flota span:nth-child(3) { top: 118px; left: 7%; animation-delay: 2s; }
+  .epp-flota span:nth-child(4) { top: 12px; right: 16%; animation-delay: 3s; }
+  @keyframes flota { 0%,100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-11px) rotate(6deg); } }
+  h1 { font-size: clamp(34px, 10vw, 46px); font-weight: 900; letter-spacing: -0.03em; margin: 6px 0 2px; position: relative; }
+  h1 .dot { color: var(--green); }
+  .mini-hazard { width: 120px; height: 7px; margin: 10px auto 12px; border-radius: 4px;
+    background: repeating-linear-gradient(-45deg, var(--yellow) 0 9px, #23272B 9px 18px); }
+  .tagline { color: var(--muted); margin: 0 0 22px; font-size: 15.5px; }
+
+  .mundo {
+    display: block; width: 100%; border: none; cursor: pointer; text-align: left;
+    border-radius: 18px; padding: 18px 20px; margin: 14px 0; font-family: inherit; color: #fff;
+    position: relative; overflow: hidden;
+  }
+  .mundo.m1 { background: linear-gradient(145deg, var(--green-hi), var(--green-deep));
+    box-shadow: 0 6px 0 #003D2D, 0 14px 30px rgba(0,0,0,0.22); }
+  .mundo.m2 { background: linear-gradient(145deg, var(--blue-hi), var(--blue-deep));
+    box-shadow: 0 6px 0 #04294A, 0 14px 30px rgba(0,0,0,0.22); }
+  .mundo:active { transform: translateY(5px); }
+  .mundo.m1:active { box-shadow: 0 1px 0 #003D2D; }
+  .mundo.m2:active { box-shadow: 0 1px 0 #04294A; }
+  .mundo .ico { font-size: 40px; line-height: 1; float: right; margin-left: 12px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); }
+  .mundo .eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85; }
+  .mundo h2 { font-size: 23px; font-weight: 900; margin: 2px 0 6px; letter-spacing: -0.01em; }
+  .mundo p { font-size: 13.5px; margin: 0; opacity: 0.92; }
+  .mundo .niveles { display: inline-block; margin-top: 10px; font-size: 12px; font-weight: 800;
+    background: rgba(255,255,255,0.22); padding: 4px 12px; border-radius: 999px; }
+  .mundo .hecho { position: absolute; top: 14px; right: 68px; font-size: 12px; font-weight: 800;
+    background: rgba(255,255,255,0.95); color: var(--green); padding: 3px 10px; border-radius: 999px; }
+
+  .btn {
+    display: block; width: 100%; border: none; cursor: pointer; font-family: inherit;
+    background: var(--surface); color: var(--ink); border: 2px solid var(--line);
+    font-weight: 700; font-size: 15.5px; padding: 13px 16px; border-radius: 14px; margin: 10px 0;
+    box-shadow: 0 3px 0 var(--line), 0 6px 14px rgba(31,38,42,0.07);
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
+
+  .card { background: var(--surface); border: 1px solid rgba(31,38,42,0.07); border-radius: 16px;
+    padding: 16px 18px; margin: 16px 0; box-shadow: 0 10px 26px rgba(31,38,42,0.09); }
+  .card h3 { margin: 0 0 10px; font-size: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); padding: 6px 6px; border-bottom: 2px solid var(--line); }
+  td { padding: 7px 6px; border-bottom: 1px solid var(--line); }
+  .tag { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 5px; }
+  .tag.g { background: var(--green-soft); color: var(--green); }
+  .tag.b { background: var(--blue-soft); color: var(--blue); }
+  .tag.y { background: #FBF0D0; color: var(--yellow-ink); }
+  .tag.r { background: #FADDE0; color: var(--red); }
+  footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 22px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="hazard"></div>
+<main>
+  <header>
+    <div class="epp-flota" aria-hidden="true"><span>⛑️</span><span>🦺</span><span>🥽</span><span>🎧</span></div>
+    <div style="font-size:52px;line-height:1;filter:drop-shadow(0 10px 20px rgba(0,121,92,0.3))">👷</div>
+    <h1>Turno Seguro<span class="dot">.</span></h1>
+    <div class="mini-hazard" aria-hidden="true"></div>
+    <p class="tagline">Misión: cero accidentes. Dos mundos, 16 niveles. Tú decides: el equipo que no tomes, lo pagas.</p>
+  </header>
+
+  <button class="mundo m1" onclick="ir(1)">
+    <span class="ico">🏭</span>
+    <span class="eyebrow">Mundo 1</span>
+    <h2>Planta</h2>
+    <p>EPP · caída de objetos · montacargas · <b>trabajo en alturas</b> · ruido · riesgo eléctrico · <b>quemaduras</b> · soldadura</p>
+    <span class="niveles">9 niveles</span>
+    <span class="hecho" id="ok1" style="display:none">✅ Superado</span>
+  </button>
+
+  <button class="mundo m2" onclick="ir(2)">
+    <span class="ico">🏢</span>
+    <span class="eyebrow">Mundo 2</span>
+    <h2>Oficina</h2>
+    <p>cables y orden · pasillos · derrames · pausas activas · cargas · ergonomía · evacuación</p>
+    <span class="niveles">7 niveles</span>
+    <span class="hecho" id="ok2" style="display:none">✅ Superado</span>
+  </button>
+
+  <div class="card">
+    <h3>📋 Cómo se gana y cómo se pierde</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px;background:var(--green-soft);border-left:4px solid var(--green);border-radius:10px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);margin-bottom:4px">✅ Ganas</div>
+        <div style="font-size:13px">Llegas al final del recorrido <strong>con salud</strong> 💚.<br>
+        Tu nivel sale del puntaje:<br>
+        <span class="tag b">Líder SST</span> 90%+ · <span class="tag g">Seguro</span> 70-89%<br>
+        <span class="tag y">Preventivo</span> 50-69% · <span class="tag r">Básico</span> &lt;50%</div>
+      </div>
+      <div style="flex:1;min-width:180px;background:#FFF4F5;border-left:4px solid var(--red);border-radius:10px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:4px">❌ Pierdes</div>
+        <div style="font-size:13px">Tu salud llega a <strong>0</strong> 🖤🖤🖤.<br>
+        Te quedan fuera <strong>3 accidentes graves</strong> (caída, quemadura) o <strong>5 leves</strong>.<br>
+        Cada accidente te devuelve al inicio de la zona.</div>
+      </div>
+    </div>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:10px">
+      🕹️ Joystick o toca el piso para caminar · ⚡ botón amarillo para actuar · 🎯 tu objetivo siempre arriba ·
+      🔴 rojo en el piso = peligro · 🟢 verde = seguro
+    </div>
+  </div>
+
+  <div class="card" id="histCard" style="display:none">
+    <h3>📊 Tus resultados</h3>
+    <div style="overflow-x:auto"><table id="histTabla"></table></div>
+    <button class="btn" style="margin-top:12px" onclick="borrar()">🗑 Borrar resultados</button>
+  </div>
+
+  <footer>Juego formativo de Seguridad y Salud en el Trabajo · Se juega en celular y computador</footer>
+</main>
+
+<script>
+function ir(n) { location.href = "aventura3d.html?mundo=" + n; }
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function nivelTag(n) {
+  const c = n === "Líder SST" ? "b" : n === "Nivel Seguro" ? "g" : n === "Nivel Preventivo" ? "y" : "r";
+  return '<span class="tag ' + c + '">' + esc(n) + '</span>';
+}
+function pintar() {
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem("ts_sesiones") || "[]"); } catch (e) {}
+  const mundos = new Set(arr.filter(s => s.pct >= 50).map(s => s.modo));
+  if ([...mundos].some(m => /Planta/.test(m))) document.getElementById("ok1").style.display = "inline-block";
+  if ([...mundos].some(m => /Oficina/.test(m))) document.getElementById("ok2").style.display = "inline-block";
+  if (!arr.length) return;
+  document.getElementById("histCard").style.display = "block";
+  document.getElementById("histTabla").innerHTML =
+    "<tr><th>Jugador</th><th>Mundo</th><th>%</th><th>Nivel</th></tr>" +
+    arr.slice(0, 12).map(s =>
+      "<tr><td>" + esc(s.nombre) + "</td><td>" + esc((s.modo || "").replace(/Mundo \d+ · /, "")) +
+      "</td><td><strong>" + s.pct + "%</strong></td><td>" + nivelTag(s.nivel || "") + "</td></tr>").join("");
+}
+function borrar() {
+  if (!confirm("¿Borrar todos los resultados guardados en este dispositivo?")) return;
+  try { localStorage.removeItem("ts_sesiones"); localStorage.removeItem("ts_mundo1_ok"); } catch (e) {}
+  location.reload();
+}
+pintar();
+</script>
+</body>
+</html>
