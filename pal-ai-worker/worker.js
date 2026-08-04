@@ -12,7 +12,8 @@ const ALLOWED_ORIGINS = [
   "http://localhost:7799", // pruebas locales — Diagnóstico de Circularidad
   "http://localhost:7802", // pruebas locales — Estudio de Materialidad Exprés
   "http://localhost:7803", // pruebas locales — Inventario GEI Exprés
-  "http://localhost:7805"  // pruebas locales — Deliflor Bloom Lab
+  "http://localhost:7805", // pruebas locales — Deliflor Bloom Lab
+  "http://localhost:7810"  // pruebas locales — Deliflor Bloom Lab (repo propio)
 ];
 
 /**
@@ -51,6 +52,17 @@ function geminiImage(j) {
   return null;
 }
 
+// Clave de caché de una lámina: el hash de lo que realmente determina la
+// imagen. Se envuelve en una Request GET porque la Cache API indexa por
+// petición y ésta llega por POST, que no es cacheable.
+async function bloomCacheKey(prompt, size, quality) {
+  const data = new TextEncoder().encode(prompt + "|" + size + "|" + quality);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const hex = Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, "0")).join("");
+  return new Request("https://bloom-lab.cache/img/" + hex, { method: "GET" });
+}
+
 async function handleBloomRender(body, env, origin) {
   if (!env.IMAGE_API_KEY) {
     return new Response(JSON.stringify({ error: "Image service not configured" }),
@@ -72,6 +84,22 @@ async function handleBloomRender(body, env, origin) {
   // "modelo" es una URL, y aceptarla desde fuera convertiría este worker en un
   // reenviador de peticiones a donde le digan (SSRF): allí manda sólo el env.
   const askedModel = /^[A-Za-z0-9._-]{1,64}$/.test(body.model || "") ? body.model : null;
+
+  // Caché de láminas.
+  //
+  // La misma flor la piden dos aparatos distintos: el kiosco, que la genera
+  // mientras el visitante espera, y su teléfono al abrir el QR segundos
+  // después. Sin esto, la segunda petición vuelve a generar —y a cobrar— una
+  // imagen que ya existe. El prompt no lleva el nombre de la variedad
+  // justamente para que las dos peticiones coincidan.
+  const cache = caches.default;
+  const key = await bloomCacheKey(prompt, size, quality);
+  const hit = await cache.match(key);
+  if (hit) {
+    const h = corsHeaders(origin);
+    h["X-Bloom-Cache"] = "hit";
+    return new Response(hit.body, { headers: h });
+  }
 
   // El kiosco abandona a los 12 s; aquí cortamos antes para no dejar la
   // petición colgando ni pagar por una imagen que ya nadie va a ver.
@@ -171,7 +199,16 @@ async function handleBloomRender(body, env, origin) {
       return new Response(JSON.stringify({ error: "No image returned", detail: debugInfo }),
         { status: 502, headers: corsHeaders(origin) });
     }
-    return new Response(JSON.stringify({ image: out }), { headers: corsHeaders(origin) });
+    const payload = JSON.stringify({ image: out });
+    // Se guarda sin cabeceras de CORS: el origen que pregunta puede cambiar y
+    // esas cabeceras se ponen al salir, no al almacenar. Una semana basta —
+    // el uso real es un evento de unos días.
+    await cache.put(key, new Response(payload, {
+      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=604800" }
+    }));
+    const h = corsHeaders(origin);
+    h["X-Bloom-Cache"] = "miss";
+    return new Response(payload, { headers: h });
   } catch (e) {
     clearTimeout(cut);
     const aborted = e && e.name === "AbortError";
