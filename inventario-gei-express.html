@@ -151,6 +151,8 @@
   <div id="stepContainer"></div>
 </div>
 
+<script src="assets/lead-capture.js"></script>
+<script src="assets/pal-analytics.js"></script>
 <script>
 (function(){
 
@@ -242,6 +244,7 @@ async function tryAccessCode(raw, feedbackEl, onSuccess){
   if (!code) return;
   const h = await sha256(code);
   if (ACCESS_HASHES.has(h)) {
+    if (window.PALAnalytics) PALAnalytics.canje("Inventario GEI Express");
     grantAccess();
     feedbackEl.style.color = "var(--green)";
     feedbackEl.textContent = "✓ Código válido. Desbloqueando…";
@@ -273,13 +276,15 @@ function mountPayPal(onApprove){
   holder.innerHTML = "";
   paypal.Buttons({
     style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
+    onClick: ()=>{ if (window.PALAnalytics) PALAnalytics.iniciarPago("Inventario GEI Express", 29.99); },
     createOrder: (data, actions) => actions.order.create({
       purchase_units: [{
         description: "Inventario GEI Exprés — Informe completo con IA",
         amount: { value: PAY.price, currency_code: PAY.currency }
       }]
     }),
-    onApprove: (data, actions) => actions.order.capture().then(()=>{
+    onApprove: (data, actions) => actions.order.capture().then(det=>{
+      if (window.PALAnalytics) PALAnalytics.compra("Inventario GEI Express", 29.99, det && det.id);
       grantAccess();
       onApprove();
     }),
@@ -292,6 +297,7 @@ function mountPayPal(onApprove){
 
 // Inserta un bloque de pago/código de acceso dentro de `container`. `onUnlock` se llama al desbloquear.
 function renderGate(container, mensaje, onUnlock){
+  if (window.PALAnalytics) PALAnalytics.verPaywall("Inventario GEI Express", 29.99);
   const div = document.createElement("div");
   div.className = "panel no-print";
   div.innerHTML = `
@@ -1482,6 +1488,7 @@ function exportarExcel(o, resultados, totales, totalOrg, calidad, factoresUsados
 }
 
 /* ============================== INIT ============================== */
+if (window.PALAnalytics) PALAnalytics.inicio("Inventario GEI Express");
 render();
 
 })();

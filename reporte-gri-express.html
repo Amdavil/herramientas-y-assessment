@@ -427,6 +427,7 @@
   </div>
 
   <script src="assets/lead-capture.js"></script>
+  <script src="assets/pal-analytics.js"></script>
   <script>
     // ═══════════════ CATÁLOGO DE TEMAS MATERIALES (Estándares temáticos GRI) ═══════════════
     const TOPICS = {
@@ -755,6 +756,7 @@
       if (!code) return;
       const h = await sha256(code);
       if (ACCESS_HASHES.has(h)) {
+        if (window.PALAnalytics) PALAnalytics.canje("Reporte GRI Express");
         grantAccess();
         feedbackEl.style.color = "var(--teal)";
         feedbackEl.textContent = "✓ Código válido. Generando su reporte completo...";
@@ -1465,6 +1467,7 @@
       if (!state.leadSent && window.PALLeadCapture) {
         state.leadSent = true;
         save();
+        if (window.PALAnalytics) PALAnalytics.lead("Reporte GRI Express");
         PALLeadCapture.send({
           herramienta: "Reporte GRI Express",
           nombre: state.answers["gob_responsable"] || "",
@@ -1505,6 +1508,7 @@
 
     // ═══════════════ PAYWALL ═══════════════
     function openPaywall() {
+      if (window.PALAnalytics) PALAnalytics.verPaywall("Reporte GRI Express", 25);
       dock.style.display = "block";
       dockInner.innerHTML = `
         <div style="max-width:560px;margin:0 auto">
@@ -1539,13 +1543,15 @@
       const render = () => {
         window.paypal.Buttons({
           style: { layout: "horizontal", color: "blue", label: "pay", height: 42, tagline: false },
+          onClick: () => { if (window.PALAnalytics) PALAnalytics.iniciarPago("Reporte GRI Express", 25); },
           createOrder: (data, actions) => actions.order.create({
             purchase_units: [{
               description: "Reporte GRI Express — Projectability",
               amount: { value: PAY.price, currency_code: PAY.currency }
             }]
           }),
-          onApprove: (data, actions) => actions.order.capture().then(() => {
+          onApprove: (data, actions) => actions.order.capture().then(det => {
+            if (window.PALAnalytics) PALAnalytics.compra("Reporte GRI Express", 25, det && det.id);
             grantAccess();
             runFullReport();
           }),
@@ -1739,6 +1745,7 @@
     }
 
     // ═══════════════ INICIO ═══════════════
+    if (window.PALAnalytics) PALAnalytics.inicio("Reporte GRI Express");
     buildSteps();
     if (window.__importadoDeMaterialidad) save();
     renderWelcome();

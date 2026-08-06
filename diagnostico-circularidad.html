@@ -910,6 +910,7 @@
   </div>
 
   <script src="assets/lead-capture.js"></script>
+  <script src="assets/pal-analytics.js"></script>
   <script>
     // ═══════════════ FLUJOS ═══════════════
     const FLOWS = {
@@ -1291,6 +1292,7 @@
       if (!code) return;
       const h = await sha256(code);
       if (ACCESS_HASHES.has(h)) {
+        if (window.PALAnalytics) PALAnalytics.canje("Diagnóstico de Circularidad");
         grantAccess();
         feedbackEl.style.color = "#7be3c7";
         feedbackEl.textContent = "✓ Código válido. Generando su informe completo...";
@@ -1656,6 +1658,7 @@
     }
 
     function paywallHtml(oppCount) {
+      if (window.PALAnalytics) PALAnalytics.verPaywall("Diagnóstico de Circularidad", 9.99);
       return `<div class="unlock-banner" id="paywall">
         <h3>🔓 Desbloquee su informe completo y plan de acción</h3>
         <p>Su diagnóstico detectó <strong>${oppCount} oportunidades de circularidad</strong>. El informe completo incluye:</p>
@@ -1704,6 +1707,7 @@
       const summarySig = summarySignature(pct, opps, strengths);
 
       if (answered === QUESTIONS.length && !state.leadSent && window.PALLeadCapture) {
+        if (window.PALAnalytics) PALAnalytics.lead("Diagnóstico de Circularidad");
         state.leadSent = true;
         save();
         PALLeadCapture.send({
@@ -1903,13 +1907,15 @@
       holder.innerHTML = "";
       paypal.Buttons({
         style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
+        onClick: () => { if (window.PALAnalytics) PALAnalytics.iniciarPago("Diagnóstico de Circularidad", 9.99); },
         createOrder: (data, actions) => actions.order.create({
           purchase_units: [{
             description: "Diagnóstico de Oportunidades de Circularidad — Informe completo y plan de acción",
             amount: { value: PAY.price, currency_code: PAY.currency }
           }]
         }),
-        onApprove: (data, actions) => actions.order.capture().then(() => {
+        onApprove: (data, actions) => actions.order.capture().then(det => {
+          if (window.PALAnalytics) PALAnalytics.compra("Diagnóstico de Circularidad", 9.99, det && det.id);
           grantAccess();
           renderResults();
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1955,6 +1961,7 @@
     });
 
     // ═══════════════ INICIO ═══════════════
+    if (window.PALAnalytics) PALAnalytics.inicio("Diagnóstico de Circularidad");
     renderQuestions();
     updateSidebar();
     bindOrgInputs();

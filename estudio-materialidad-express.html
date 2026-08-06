@@ -991,6 +991,8 @@
 
   <div class="matriz-tooltip" id="matrizTooltip"></div>
 
+  <script src="assets/lead-capture.js"></script>
+  <script src="assets/pal-analytics.js"></script>
   <script>
     // ═══════════════ CATÁLOGO DE GRUPOS DE INTERÉS ═══════════════
     // Fuente de verdad: materialidad-express/banco-grupos-interes.json (copiado aquí a mano, sin build step).
@@ -1309,6 +1311,7 @@
       if (!code) return;
       const h = await sha256(code);
       if (ACCESS_HASHES.has(h)) {
+        if (window.PALAnalytics) PALAnalytics.canje("Estudio de Materialidad");
         grantAccess();
         feedbackEl.style.color = "#7be3c7";
         feedbackEl.textContent = "✓ Código válido. Generando su informe completo...";
@@ -1340,13 +1343,15 @@
       holder.innerHTML = "";
       paypal.Buttons({
         style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
+        onClick: () => { if (window.PALAnalytics) PALAnalytics.iniciarPago("Estudio de Materialidad", 29.99); },
         createOrder: (data, actions) => actions.order.create({
           purchase_units: [{
             description: "Estudio de Materialidad Exprés — Informe completo con IA",
             amount: { value: PAY.price, currency_code: PAY.currency }
           }]
         }),
-        onApprove: (data, actions) => actions.order.capture().then(() => {
+        onApprove: (data, actions) => actions.order.capture().then(det => {
+          if (window.PALAnalytics) PALAnalytics.compra("Estudio de Materialidad", 29.99, det && det.id);
           grantAccess();
           renderPaso8();
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2432,6 +2437,7 @@
     }
 
     function renderPaywallInforme() {
+      if (window.PALAnalytics) PALAnalytics.verPaywall("Estudio de Materialidad", 29.99);
       const pendientes = asuntosCriticosAltos().length;
       byId("informe-paywall").innerHTML = `<div class="unlock-banner" id="paywall">
         <h3>🔓 Desbloquee su informe completo con inteligencia artificial</h3>
@@ -2779,13 +2785,15 @@
       holder.innerHTML = "";
       paypal.Buttons({
         style: { layout: "vertical", color: "blue", shape: "rect", label: "pay" },
+        onClick: () => { if (window.PALAnalytics) PALAnalytics.iniciarPago("GRI Express (bundle materialidad)", 15); },
         createOrder: (data, actions) => actions.order.create({
           purchase_units: [{
             description: "Reporte GRI Express — precio preferencial para clientes del Estudio de Materialidad Exprés",
             amount: { value: "15.00", currency_code: PAY.currency }
           }]
         }),
-        onApprove: (data, actions) => actions.order.capture().then(() => {
+        onApprove: (data, actions) => actions.order.capture().then(det => {
+          if (window.PALAnalytics) PALAnalytics.compra("GRI Express (bundle materialidad)", 15, det && det.id);
           localStorage.setItem(GRI_ACCESS_KEY, "granted");
           renderGriUpsell();
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2798,6 +2806,7 @@
     }
 
     // ═══════════════ INICIO ═══════════════
+    if (window.PALAnalytics) PALAnalytics.inicio("Estudio de Materialidad");
     renderStepList();
     showSection(state.paso);
     bindEmpresaForm();
