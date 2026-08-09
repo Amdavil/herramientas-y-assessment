@@ -308,7 +308,8 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
         return _offline_extract(logger)
 
     # Seleccionar proveedor activo; si falla por billing/auth, pasar al siguiente
-    _BILLING_MARKERS = ("credit balance", "insufficient_quota", "billing", "quota", "unauthorized", "401", "403")
+    _BILLING_MARKERS = ("credit balance", "insufficient_quota", "billing", "quota", "unauthorized", "401", "403",
+                        "429", "too many requests", "rate limit", "resource_exhausted")
 
     def _is_billing_or_auth(exc: Exception) -> bool:
         return any(m in str(exc).lower() for m in _BILLING_MARKERS)
