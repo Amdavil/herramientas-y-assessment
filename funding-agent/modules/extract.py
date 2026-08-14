@@ -214,7 +214,10 @@ def _call_groq(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
             },
             timeout=120,
         )
-        if resp.status_code == 429:
+        # Groq devuelve 413 cuando la solicitud excedería su cuota de tokens por minuto,
+        # no porque el prompt sea grande (el nuestro son ~2K tokens sobre 131K de contexto).
+        # Es un límite de tasa, así que se trata igual que un 429: esperar y reintentar.
+        if resp.status_code in (429, 413):
             wait = float(resp.headers.get("retry-after", "20"))
             _time.sleep(wait + 3)
             continue
@@ -307,26 +310,32 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
     if not providers:
         return _offline_extract(logger)
 
-    # Seleccionar proveedor activo; si falla por billing/auth, pasar al siguiente
-    _BILLING_MARKERS = ("credit balance", "insufficient_quota", "billing", "quota", "unauthorized", "401", "403",
-                        "429", "too many requests", "rate limit", "resource_exhausted")
-
-    def _is_billing_or_auth(exc: Exception) -> bool:
-        return any(m in str(exc).lower() for m in _BILLING_MARKERS)
+    # Un proveedor puede caerse por muchos motivos: sin créditos, modelo retirado (404),
+    # límite de tasa (429/413), caída temporal. En todos los casos la respuesta correcta
+    # es la misma —probar el siguiente de la cadena—, así que no se filtra por tipo de error.
+    def _describe(exc: Exception) -> str:
+        """Mensaje corto pero diagnosticable: agrega el cuerpo de la respuesta HTTP si lo hay."""
+        detalle = str(exc)
+        resp = getattr(exc, "response", None)
+        if resp is not None:
+            try:
+                detalle = f"{detalle} | {resp.text[:300]}"
+            except Exception:  # noqa: BLE001
+                pass
+        return detalle[:400]
 
     def _pick_provider(batch_prompt: str) -> tuple[str, object, str]:
         """Intenta proveedores en orden; devuelve (nombre, call_fn, primera_respuesta)."""
+        errores: list[str] = []
         for pname, pfn in providers:
             try:
                 resp = pfn(batch_prompt)
                 logger.info("Proveedor IA activo: %s", pname)
                 return pname, pfn, resp
-            except Exception as e:
-                if _is_billing_or_auth(e):
-                    logger.warning("Proveedor %s sin créditos/acceso (%s) — probando siguiente...", pname, type(e).__name__)
-                else:
-                    raise
-        raise RuntimeError("Ningún proveedor IA disponible (revisa las API keys y créditos).")
+            except Exception as e:  # noqa: BLE001
+                logger.warning("Proveedor %s falló (%s) — probando siguiente...", pname, _describe(e))
+                errores.append(f"{pname} → {_describe(e)}")
+        raise RuntimeError("Ningún proveedor IA respondió. " + " || ".join(errores))
 
     base_prompt = EXTRACTION_PROMPT.format(tipos_apoyo=", ".join(TIPOS_APOYO))
     batches     = list(_chunks(search_results, batch_size))
@@ -344,9 +353,17 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
             if active_fn is None:
                 pname, active_fn, raw = _pick_provider(prompt)
             else:
-                raw = active_fn(prompt)
+                try:
+                    raw = active_fn(prompt)
+                except Exception as e:  # noqa: BLE001
+                    # El proveedor que venía sirviendo dejó de responder (p. ej. agotó su
+                    # cuota a mitad del lote): recorrer la cadena otra vez en lugar de dar
+                    # por perdidos todos los lotes restantes.
+                    logger.warning("El proveedor activo falló (%s) — reintentando la cadena...", _describe(e))
+                    active_fn = None
+                    pname, active_fn, raw = _pick_provider(prompt)
         except Exception as e:  # noqa: BLE001
-            logger.error("Lote %d/%d falló: %s", n, len(batches), e)
+            logger.error("Lote %d/%d falló: %s", n, len(batches), _describe(e))
             continue
         data = _parse_json(raw, logger)
         opps = data.get("oportunidades", []) or []
