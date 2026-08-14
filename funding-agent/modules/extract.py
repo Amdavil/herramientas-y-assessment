@@ -198,10 +198,16 @@ def _call_claude(client, model: str, max_tokens: int, prompt: str) -> str:
 
 
 def _call_groq(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
-    """Llama a Groq con reintentos automáticos si hay rate-limit (429).
-    Respeta el header Retry-After que Groq devuelve con el tiempo exacto."""
+    """Llama a Groq con reintentos automáticos si hay rate-limit (429/413).
+    Respeta el header Retry-After que Groq devuelve con el tiempo exacto.
+
+    El tier gratuito ('on_demand') permite 6000 tokens por minuto, y Groq cuenta
+    el prompt MÁS el max_tokens reservado. Con ~2200 tokens de prompt, pedir 4000
+    de respuesta daba 6566 y el servidor rechazaba cada llamada. De ahí el tope de
+    3000 y la espera de 60s: una llamada de ~5200 tokens por minuto sí cabe.
+    """
     import time as _time, requests as _req
-    _time.sleep(13)  # llama-3.1-8b-instant: 20K TPM → ~1 llamada/13s
+    _time.sleep(60)
     for attempt in range(3):
         resp = _req.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -209,7 +215,7 @@ def _call_groq(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
             json={
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": min(max_tokens, 4000),
+                "max_tokens": min(max_tokens, 3000),
                 "temperature": 0.1,
             },
             timeout=120,
@@ -299,7 +305,8 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
             providers.append(("Claude", lambda p, c=_client, m=_mn: _call_claude(c, m, max_tokens, p)))
         except ImportError:
             pass
-    # Gemini antes que Groq: 1M TPM vs 20K TPM — mucho más estable para uso diario
+    # Gemini antes que Groq: el tier gratuito de Groq son 6000 TPM (medido contra el
+    # servidor, no 20K como se creía), apenas una llamada por minuto para este prompt.
     if gemini_key:
         _mn = modelo.get("extraccion_gemini", "gemini-2.0-flash")
         providers.append(("Gemini", lambda p, k=gemini_key, m=_mn: _call_gemini(k, m, max_tokens, p)))
