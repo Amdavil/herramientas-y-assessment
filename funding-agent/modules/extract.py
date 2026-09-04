@@ -197,6 +197,71 @@ def _call_claude(client, model: str, max_tokens: int, prompt: str) -> str:
     return message.content[0].text
 
 
+# Modelos que el proveedor confirmó tener disponibles para esta API key. Se resuelve
+# una vez por corrida y se reutiliza, para no repetir la consulta en cada lote.
+_MODELO_RESUELTO: dict[str, str] = {}
+
+
+def _elegir_modelo(proveedor: str, preferido: str, disponibles: list[str],
+                   logger: logging.Logger) -> str:
+    """Devuelve el preferido si el proveedor lo ofrece; si no, el mejor sustituto.
+
+    Existe porque los proveedores gratuitos jubilan modelos sin aviso: en tres semanas
+    se cayeron gemini-2.0-flash, gemini-2.5-flash y llama-3.1-8b-instant, y cada vez
+    el radar se quedó sin informe hasta que alguien editó el config a mano.
+    """
+    if preferido in disponibles:
+        return preferido
+    # Preferir los pequeños y rápidos: basta para extraer JSON y son los más baratos.
+    for pista in ("flash-latest", "flash", "instant", "8b", "20b", "mini"):
+        for m in disponibles:
+            if pista in m.lower():
+                logger.warning("%s: el modelo '%s' no está disponible; se usa '%s'.",
+                               proveedor, preferido, m)
+                return m
+    if disponibles:
+        logger.warning("%s: el modelo '%s' no está disponible; se usa '%s'.",
+                       proveedor, preferido, disponibles[0])
+        return disponibles[0]
+    return preferido  # sin catálogo: intentar el configurado y dejar hablar al error
+
+
+def _modelo_groq(api_key: str, preferido: str, logger: logging.Logger) -> str:
+    if "groq" in _MODELO_RESUELTO:
+        return _MODELO_RESUELTO["groq"]
+    modelo = preferido
+    try:
+        import requests as _req
+        r = _req.get("https://api.groq.com/openai/v1/models",
+                     headers={"Authorization": f"Bearer {api_key}"}, timeout=30)
+        r.raise_for_status()
+        ids = [m["id"] for m in r.json().get("data", [])
+               if "whisper" not in m["id"] and "guard" not in m["id"]]
+        modelo = _elegir_modelo("Groq", preferido, ids, logger)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Groq: no se pudo consultar el catálogo (%s); se usa '%s'.", e, preferido)
+    _MODELO_RESUELTO["groq"] = modelo
+    return modelo
+
+
+def _modelo_gemini(api_key: str, preferido: str, logger: logging.Logger) -> str:
+    if "gemini" in _MODELO_RESUELTO:
+        return _MODELO_RESUELTO["gemini"]
+    modelo = preferido
+    try:
+        import requests as _req
+        r = _req.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}",
+                     timeout=30)
+        r.raise_for_status()
+        ids = [m["name"].removeprefix("models/") for m in r.json().get("models", [])
+               if "generateContent" in m.get("supportedGenerationMethods", [])]
+        modelo = _elegir_modelo("Gemini", preferido, ids, logger)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Gemini: no se pudo consultar el catálogo (%s); se usa '%s'.", e, preferido)
+    _MODELO_RESUELTO["gemini"] = modelo
+    return modelo
+
+
 def _call_groq(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
     """Llama a Groq con reintentos automáticos si hay rate-limit (429/413).
     Respeta el header Retry-After que Groq devuelve con el tiempo exacto.
@@ -248,14 +313,22 @@ def _call_gemini(api_key: str, model: str, max_tokens: int, prompt: str) -> str:
             "temperature": 0.1,
         },
     }
-    for attempt in range(3):
+    for attempt in range(4):
         resp = _req.post(url, json=body, timeout=120)
-        if resp.status_code == 429:
-            wait = float(resp.headers.get("retry-after", "15"))
+        # 5xx en el tier gratuito es sobrecarga pasajera de Google, no un error nuestro:
+        # el 28-ago tumbó 14 de 19 lotes. Se reintenta con espera creciente antes de
+        # dar el proveedor por caído.
+        if resp.status_code == 429 or resp.status_code >= 500:
+            wait = float(resp.headers.get("retry-after", 0) or 5 * (attempt + 1))
             _time.sleep(wait + 2)
             continue
         resp.raise_for_status()
-        return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+        partes = resp.json()["candidates"][0]["content"]["parts"]
+        # Los modelos con razonamiento devuelven la cadena de pensamiento como partes
+        # aparte; nos quedamos con el texto de respuesta, no con el pensamiento.
+        texto = "".join(p["text"] for p in partes
+                        if "text" in p and not p.get("thought"))
+        return texto or partes[0].get("text", "")
     resp.raise_for_status()
 
 
@@ -308,10 +381,10 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
     # Gemini antes que Groq: el tier gratuito de Groq son 6000 TPM (medido contra el
     # servidor, no 20K como se creía), apenas una llamada por minuto para este prompt.
     if gemini_key:
-        _mn = modelo.get("extraccion_gemini", "gemini-2.0-flash")
+        _mn = _modelo_gemini(gemini_key, modelo.get("extraccion_gemini", "gemini-flash-latest"), logger)
         providers.append(("Gemini", lambda p, k=gemini_key, m=_mn: _call_gemini(k, m, max_tokens, p)))
     if groq_key:
-        _mn = modelo.get("extraccion_groq", "llama-3.1-8b-instant")
+        _mn = _modelo_groq(groq_key, modelo.get("extraccion_groq", "llama-3.1-8b-instant"), logger)
         providers.append(("Groq", lambda p, k=groq_key, m=_mn: _call_groq(k, m, max_tokens, p)))
 
     if not providers:
@@ -384,4 +457,14 @@ def extract_opportunities(search_results: list[dict], config: dict, logger: logg
     resumen = _synthesize_summary(active_fn or (lambda p: ""), parciales, logger) if len(batches) > 1 else (parciales[0] if parciales else "")
 
     logger.info("Devolvió %d oportunidades y %d descartadas (total).", len(all_opps), len(all_desc))
+    # Si el modelo descartó todo, el informe sale vacío y el correo no se envía. Mostrar
+    # los motivos permite distinguir "no había nada bueno hoy" de "el modelo entendió mal
+    # las reglas", que desde fuera se ven idénticos.
+    if not all_opps and all_desc:
+        motivos: dict[str, int] = {}
+        for d in all_desc:
+            motivos[str(d.get("motivo", "sin motivo"))[:80]] = motivos.get(str(d.get("motivo", "sin motivo"))[:80], 0) + 1
+        resumen_motivos = "; ".join(f"{m} (x{c})" for m, c in
+                                    sorted(motivos.items(), key=lambda kv: -kv[1])[:5])
+        logger.warning("Se descartaron TODAS las candidatas. Motivos más frecuentes: %s", resumen_motivos)
     return {"oportunidades": all_opps, "descartadas": all_desc, "resumen_ejecutivo": resumen}
