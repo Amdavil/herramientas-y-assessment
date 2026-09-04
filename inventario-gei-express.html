@@ -1002,13 +1002,17 @@ function renderDashboard(c){
       <p class="hint" id="interpAlcance">${state.interpretacionIA?.alcance ? esc(state.interpretacionIA.alcance) : ""}</p>
     </div>
     <div class="chart-box"><h4>Distribución porcentual por alcance</h4><canvas id="chartDonut" width="700" height="260"></canvas></div>
-    <div class="chart-box"><h4>Top fuentes emisoras</h4><canvas id="chartTop" width="700" height="260"></canvas>
-      <p class="hint" id="interpTop">${state.interpretacionIA?.topFuentes ? esc(state.interpretacionIA.topFuentes) : ""}</p>
+    <div class="chart-box">
+      <h4>Top fuentes emisoras</h4>
+      ${hasAccess()
+        ? `<canvas id="chartTop" width="700" height="260"></canvas><p class="hint" id="interpTop">${state.interpretacionIA?.topFuentes ? esc(state.interpretacionIA.topFuentes) : ""}</p>`
+        : `<div id="topFuentesGate"></div>`}
     </div>
     <button class="btn secondary no-print" id="btnInterpretarIA" type="button">Interpretar gráficos con IA</button>
     <div id="dashboardGate" style="margin-top:12px;"></div>
   `);
   botonesNav(c, {});
+  if (!hasAccess()) renderGate(document.getElementById("topFuentesGate"), "El desglose por fuente individual (cuáles emiten más y cuánto) es parte del contenido completo del Inventario GEI Exprés.", ()=>render());
   setTimeout(()=>{
     dibujarBarras("chartAlcance", [
       {label:"Alcance 1", valor:totales[1]/1000, color:"#b54a4a"},
@@ -1020,6 +1024,7 @@ function renderDashboard(c){
       {label:"Alcance 2", valor:totales[2], color:"#2f75b5"},
       {label:"Alcance 3", valor:totales[3], color:"#6b5ca5"}
     ]);
+    if (!hasAccess()) return;
     const top = [...resultados].sort((a,b)=>b.kgCO2e-a.kgCO2e).slice(0,8)
       .map(r=>({label:r.nombre.length>26?r.nombre.slice(0,24)+"…":r.nombre, valor:r.kgCO2e/1000, color:"#1f4e79"}));
     dibujarBarras("chartTop", top, true);

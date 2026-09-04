@@ -2022,6 +2022,22 @@
         }
         matrizPuntosCache.push({ asunto: a, cx, cy, r });
       });
+
+      // Marca de agua mientras el estudio no está desbloqueado: la matriz se ve
+      // completa a propósito (es lo que engancha), pero no debe salir como
+      // entregable limpio de una captura de pantalla sin haber pagado.
+      if (!hasAccess()) {
+        ctx.save();
+        ctx.translate(marginLeft + plotW / 2, marginTop + plotH / 2);
+        ctx.rotate(-Math.PI / 10);
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = "#1f4e79";
+        ctx.font = "bold 26px Inter, Segoe UI, Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("VISTA PREVIA · projectability.net", 0, 0);
+        ctx.restore();
+      }
     }
 
     function matrizPuntoEnPosicion(mx, my) {
