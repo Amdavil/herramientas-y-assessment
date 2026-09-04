@@ -112,6 +112,25 @@ def main() -> int:
             "Revisa los logs de extracción: si todos los lotes fallaron, "
             "verifica que GROQ_API_KEY / ANTHROPIC_API_KEY estén configuradas correctamente."
         )
+        # Avisar al responsable: sin esto el fallo es mudo y se descubre días después.
+        if len(descartadas) == 0:
+            motivo = "Ningún proveedor de IA logró analizar los resultados."
+        else:
+            motivo = f"La IA revisó los resultados pero descartó las {len(descartadas)} candidatas."
+        motivos: dict[str, int] = {}
+        for d in descartadas:
+            clave = str(d.get("motivo", "sin motivo"))[:100]
+            motivos[clave] = motivos.get(clave, 0) + 1
+        detalle = (
+            f"- Resultados de búsqueda analizados: {len(search_results)}\n"
+            f"- Candidatas descartadas: {len(descartadas)}\n"
+            + ("- Motivos más frecuentes:\n"
+               + "".join(f"    · {m} (x{c})\n"
+                         for m, c in sorted(motivos.items(), key=lambda kv: -kv[1])[:5])
+               if motivos else
+               "- Sin motivos registrados: probablemente los proveedores de IA fallaron.\n")
+        )
+        email_draft.send_alert(motivo, detalle, logger, today, force_dry_run=args.simulate)
     else:
         attachments = [rep["md_path"], rep.get("pdf_path"), db["excel_path"]]
         email_draft.handle_email(stats, config, attachments, logger, today,

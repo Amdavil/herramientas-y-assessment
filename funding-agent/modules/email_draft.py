@@ -407,6 +407,51 @@ def _dry_run(msg: MIMEMultipart, config: dict, today: str, logger: logging.Logge
     return True
 
 
+def send_alert(motivo: str, detalle: str, logger: logging.Logger,
+               today: str | None = None, force_dry_run: bool = False) -> bool:
+    """Avisa que la corrida terminó sin informe, y por qué.
+
+    Sin esto el fallo es mudo: el workflow queda en verde, no llega correo, y nadie
+    se entera hasta que alguien nota la ausencia. Así pasaron tres viernes seguidos.
+    Va solo al responsable (ALERT_EMAIL), no al equipo: es una alerta de operación.
+    """
+    today = today or date.today().isoformat()
+    sender = get_env("GMAIL_SENDER_EMAIL") or get_env("GMAIL_USER") or ""
+    destino = (get_env("ALERT_EMAIL") or "").strip()
+    if not destino:  # sin configurar: al primero de la lista del equipo
+        destino = next((e.strip() for e in (get_env("TEAM_EMAILS") or "").split(",") if e.strip()), "")
+    password = get_env("GMAIL_APP_PASSWORD")
+
+    if not destino or not sender or not password or force_dry_run:
+        logger.warning("Aviso de fallo NO enviado (falta ALERT_EMAIL o credenciales). Motivo era: %s", motivo)
+        return False
+
+    cuerpo = (
+        f"El radar de Visión Circular corrió hoy ({today}) pero no generó informe.\n\n"
+        f"MOTIVO: {motivo}\n\n"
+        f"DETALLE:\n{detalle}\n\n"
+        "No se envió nada al equipo. Si esto se repite, revisa la corrida en GitHub Actions:\n"
+        "https://github.com/Amdavil/herramientas-y-assessment/actions/workflows/daily-funding-search.yml\n\n"
+        "— Radar Visión Circular (aviso automático)\n"
+    )
+    msg = MIMEMultipart("mixed")
+    msg["Subject"] = f"[Radar Visión Circular] Sin informe hoy — {today}"
+    msg["From"] = sender
+    msg["To"] = destino
+    msg.attach(MIMEText(cuerpo, "plain", "utf-8"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, password)
+            server.sendmail(sender, [destino], msg.as_string())
+        logger.info("Aviso de fallo enviado a: %s", destino)
+        return True
+    except Exception as e:  # noqa: BLE001
+        # El aviso es informativo: si falla, no debe tumbar la corrida.
+        logger.error("No se pudo enviar el aviso de fallo: %s", e)
+        return False
+
+
 def handle_email(stats: dict, config: dict, attachments: list[Path],
                  logger: logging.Logger, today: str | None = None,
                  force_dry_run: bool = False,

@@ -40,6 +40,7 @@ jobs:
           GMAIL_SENDER_EMAIL:  ${{ secrets.GMAIL_SENDER_EMAIL }}
           GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
           TEAM_EMAILS:         ${{ secrets.TEAM_EMAILS }}
+          ALERT_EMAIL:         ${{ secrets.ALERT_EMAIL }}
         run: python agent.py
 
       - name: Subir informe del día como artefacto
