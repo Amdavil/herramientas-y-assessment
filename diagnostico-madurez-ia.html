@@ -1,0 +1,1642 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diagnóstico de Madurez Digital e IA — Projectability</title>
+  <meta name="description" content="Evalúe qué tanto ha incorporado su empresa la transformación digital y la inteligencia artificial, desde la gobernanza hasta la operación, y obtenga un informe con valoración, cierre de brechas y recomendaciones.">
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #647084;
+      --line: #d9e1ea;
+      --soft: #f5f7fa;
+      --panel: #ffffff;
+      --navy: #1f4e79;
+      --blue: #2f75b5;
+      --teal: #16817a;
+      --green: #5f8d3e;
+      --amber: #c47f1b;
+      --red: #b54a4a;
+      --lav: #6b5ca5;
+      --focus: #0f766e;
+      --gold: #c8a951;
+      --shadow: 0 10px 30px rgba(23, 32, 51, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: #eef3f7;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: var(--blue); }
+    button.primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+    button.ghost { background: transparent; }
+
+    input[type=text], input[type=email], select {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      background: #fff;
+      color: var(--ink);
+      min-width: 0;
+      width: 100%;
+    }
+
+    .app { display: grid; grid-template-columns: 310px minmax(0, 1fr); min-height: 100vh; }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      background: #f9fbfd;
+      border-right: 1px solid var(--line);
+      padding: 20px 18px;
+    }
+
+    main { min-width: 0; padding: 22px; }
+
+    .brand { display: grid; gap: 8px; margin-bottom: 18px; }
+    .brand-logo { width: min(220px, 100%); height: auto; display: block; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+    .brand h1 { margin: 0; font-size: 20px; line-height: 1.2; }
+    .brand p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .status-box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .score-large { display: grid; grid-template-columns: 88px 1fr; align-items: center; gap: 12px; }
+
+    .gauge {
+      width: 88px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--blue) 0deg, #dce6ef 0deg);
+    }
+
+    .gauge strong { display: grid; place-items: center; width: 68px; aspect-ratio: 1; border-radius: 50%; background: #fff; font-size: 17px; }
+    .score-large small { color: var(--muted); display: block; line-height: 1.35; margin-top: 4px; }
+
+    .progress-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); }
+    .progress { height: 9px; background: #dbe5ef; border-radius: 999px; overflow: hidden; }
+    .progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--lav)); transition: width .2s ease; }
+
+    .side-counters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .side-counter { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; text-align: center; }
+    .side-counter strong { font-size: 22px; display: block; }
+    .side-counter span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .side-counter.td strong { color: var(--blue); }
+    .side-counter.ia strong { color: var(--lav); }
+
+    .dim-nav { display: grid; gap: 6px; }
+    .dim-nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; margin: 4px 0 2px; }
+
+    .dim-link {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      text-align: left;
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      background: #fff;
+    }
+
+    .dim-link small { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+    .dim-link.done small { color: var(--focus); font-weight: 700; }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab { min-width: 120px; }
+    .tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .intro-card {
+      background: linear-gradient(135deg, #eef5ff, #f3f0fb);
+      border: 1px solid #d6dff0;
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 16px;
+    }
+
+    .intro-card h2 { margin: 0 0 8px; font-size: 18px; color: var(--navy); }
+    .intro-card p { margin: 0 0 6px; font-size: 13.5px; color: var(--ink); line-height: 1.55; }
+    .intro-card .fine { color: var(--muted); font-size: 12px; }
+
+    .disclaimer-box {
+      background: #f0f5f9;
+      border: 1px solid #d5e2ec;
+      color: #33475c;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12.5px;
+      line-height: 1.55;
+      margin-top: 12px;
+    }
+
+    .org-grid { padding: 14px 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .org-grid label { display: grid; gap: 5px; font-size: 12px; color: var(--muted); }
+    .org-grid .wide { grid-column: 1 / -1; }
+
+    .flow-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 26px 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--line);
+      scroll-margin-top: 16px;
+    }
+
+    .flow-header .flow-icon { font-size: 22px; }
+    .flow-header h3 { margin: 0; font-size: 16px; color: var(--navy); }
+    .flow-header span { color: var(--muted); font-size: 12px; }
+
+    .question-list { display: grid; gap: 12px; }
+
+    .question-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; }
+
+    .question-head {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .code { font-weight: 800; color: var(--navy); }
+    .meta { display: grid; gap: 3px; min-width: 0; }
+    .meta strong { font-size: 15px; line-height: 1.25; }
+    .meta span { color: var(--muted); font-size: 12px; line-height: 1.25; }
+
+    .pill { border-radius: 999px; background: #e8eef5; padding: 5px 8px; color: var(--navy); font-size: 12px; white-space: nowrap; }
+    .pill.t-ia { background: rgba(107,92,165,.12); color: var(--lav); }
+    .pill-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .question-text { padding: 14px 18px; font-size: 15px; font-weight: 600; line-height: 1.5; background: #f0f6ff; border-bottom: 1px solid var(--line); }
+
+    .levels { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; padding: 12px 14px; }
+
+    .level {
+      min-height: 112px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      gap: 7px;
+      align-content: start;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .level:hover { border-color: var(--blue); background: #f7fbff; }
+    .level input { width: 18px; height: 18px; margin: 0; accent-color: var(--navy); }
+    .level strong { font-size: 13px; }
+    .level span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .level.selected { border-color: var(--focus); box-shadow: inset 0 0 0 2px rgba(15, 118, 110, .12); background: #f1fbf8; }
+
+    .finish-banner {
+      position: sticky;
+      bottom: 16px;
+      margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 12px 32px rgba(23,32,51,.18);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .finish-banner-text { display: grid; gap: 2px; min-width: 0; }
+    .finish-banner-text strong { font-size: 15px; }
+    .finish-banner-text span { font-size: 12px; color: var(--muted); }
+    .finish-banner.complete { background: linear-gradient(135deg, #eafaf3, #f1fbf8); border-color: var(--focus); }
+    .finish-banner.complete strong { color: var(--focus); }
+    .finish-banner #finishBtn { white-space: nowrap; padding: 11px 22px; font-weight: 700; }
+
+    /* ── RESULTADOS ── */
+    .dashboard { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      min-height: 112px;
+      display: grid;
+      align-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--navy), var(--blue)); }
+    .metric.m-td::before { background: linear-gradient(90deg, var(--blue), var(--teal)); }
+    .metric.m-ia::before { background: linear-gradient(90deg, var(--lav), var(--blue)); }
+    .metric.m-gap::before { background: linear-gradient(90deg, var(--amber), var(--red)); }
+    .metric span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+    .metric strong { font-size: 30px; letter-spacing: -.02em; }
+    .metric small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; margin-top: 4px; }
+
+    .report-grid { display: grid; grid-template-columns: minmax(340px, 1fr) minmax(340px, 1fr); gap: 16px; margin-bottom: 16px; }
+
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); min-width: 0; }
+    .panel h2 { margin: 0 0 6px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+    .panel > p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+    canvas { width: 100%; height: 380px; display: block; }
+
+    .radar-legend { display: flex; gap: 16px; justify-content: center; font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .radar-legend i { display: inline-block; width: 18px; height: 0; border-top: 3px solid var(--blue); vertical-align: middle; margin-right: 6px; }
+    .radar-legend i.target { border-top: 2px dashed var(--amber); }
+
+    .exec-summary-box {
+      background: linear-gradient(135deg, #f0f7ff, #f5f2fc);
+      border: 1px solid #d4dff0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .exec-summary-box .exec-level { font-size: 13px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .exec-summary-box p { font-size: 14px; line-height: 1.6; margin: 0 0 8px; }
+    .exec-summary-box p:last-child { margin-bottom: 0; }
+
+    /* Escala de madurez */
+    .scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 14px 0 4px; }
+    .scale-step { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fbfcfe; font-size: 12px; line-height: 1.35; color: var(--muted); }
+    .scale-step strong { display: block; color: var(--ink); font-size: 13px; margin-bottom: 2px; }
+    .scale-step.current { background: var(--navy); border-color: var(--navy); color: rgba(255,255,255,.85); }
+    .scale-step.current strong { color: #fff; }
+    .scale-step.target { border: 2px dashed var(--amber); }
+
+    /* Tabla de brechas */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+    th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { background: #f7fafc; color: var(--navy); font-size: 12px; }
+    td.num, th.num { text-align: center; white-space: nowrap; }
+
+    .gap-bar { position: relative; height: 10px; background: #e6edf4; border-radius: 999px; min-width: 90px; }
+    .gap-bar .cur { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--blue); }
+    .gap-bar .tgt { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--amber); border-radius: 2px; }
+
+    .state { font-size: 11px; font-weight: 800; border-radius: 999px; padding: 3px 9px; white-space: nowrap; text-transform: uppercase; letter-spacing: .3px; }
+    .state.s-crit { background: rgba(181,74,74,.12); color: var(--red); }
+    .state.s-alta { background: rgba(196,127,27,.14); color: var(--amber); }
+    .state.s-media { background: rgba(47,117,181,.12); color: var(--blue); }
+    .state.s-ok { background: rgba(22,129,122,.14); color: var(--focus); }
+
+    /* Alertas */
+    .alert-list { display: grid; gap: 10px; }
+    .alert { border: 1px solid #efd9b4; border-left: 5px solid var(--amber); background: #fffaf1; border-radius: 8px; padding: 12px 16px; font-size: 13.5px; line-height: 1.55; }
+    .alert.good { border-color: #cfe6dc; border-left-color: var(--teal); background: #f3fbf7; }
+    .alert strong { display: block; margin-bottom: 3px; }
+
+    /* Recomendaciones */
+    .dim-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .dim-filter button { min-height: 30px; padding: 4px 10px; font-size: 12px; border-radius: 999px; }
+    .dim-filter button.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+    .opp-list { display: grid; gap: 14px; }
+
+    .opp-card { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--blue); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+    .opp-card.sev-crit { border-left-color: var(--red); }
+    .opp-card.sev-alta { border-left-color: var(--amber); }
+
+    .opp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 18px 10px; flex-wrap: wrap; }
+    .opp-head h3 { margin: 0; font-size: 15.5px; line-height: 1.3; }
+    .opp-head .opp-flow { font-size: 12px; color: var(--muted); display: block; margin-top: 3px; }
+
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .badge { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+    .badge.b-crit { background: rgba(181,74,74,.12); color: var(--red); }
+    .badge.b-alta { background: rgba(196,127,27,.14); color: var(--amber); }
+    .badge.b-media { background: rgba(47,117,181,.12); color: var(--blue); }
+    .badge.b-imp { background: #eef1f5; color: var(--ink); }
+    .badge.b-hab { background: rgba(107,92,165,.14); color: var(--lav); }
+    .badge.b-quick { background: var(--teal); color: #fff; }
+
+    .opp-body { padding: 4px 18px 16px; display: grid; gap: 10px; }
+    .opp-body p { margin: 0; font-size: 13.5px; line-height: 1.55; }
+    .opp-body .lbl { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--navy); display: block; margin-bottom: 3px; }
+    .opp-steps { margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.6; }
+    .opp-steps li { margin-bottom: 3px; }
+
+    .gap-path { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
+    .gap-path > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; line-height: 1.45; background: #fbfcfe; }
+    .gap-path > div.to { background: #fffaf1; border-color: #efd9b4; }
+    .gap-path .arrow { border: 0; background: none; display: grid; place-items: center; font-size: 18px; color: var(--muted); padding: 0; }
+    .gap-path b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 3px; }
+
+    .opp-kpi { background: #f0f6ff; border: 1px solid #d4e2f2; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+
+    /* Matriz impacto × esfuerzo */
+    .matrix { display: grid; grid-template-columns: 90px repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 12px; }
+    .matrix .mx-corner, .matrix .mx-h { display: grid; place-items: center; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; font-size: 10.5px; padding: 6px 4px; text-align: center; }
+    .matrix .mx-cell { min-height: 84px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; background: #fbfcfe; }
+    .matrix .mx-cell.hot { background: #f1fbf8; border-color: rgba(15,118,110,.4); }
+    .matrix .mx-cell.warm { background: #fdf8ef; }
+    .mx-chip { background: var(--blue); color: #fff; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; line-height: 1.3; }
+    .mx-chip.crit { background: var(--red); }
+    .mx-chip.alta { background: var(--amber); }
+
+    /* Hoja de ruta */
+    .plan-phase { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 14px; background: #fff; }
+    .plan-phase-head { padding: 12px 18px; background: #f0f4f8; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .plan-phase-head strong { font-size: 14.5px; color: var(--navy); }
+    .plan-phase-head span { font-size: 12px; color: var(--muted); }
+    .plan-phase td { vertical-align: top; }
+
+    .empty { border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); padding: 24px; text-align: center; background: #fff; }
+
+    .strengths { display: grid; gap: 8px; }
+    .strength-item { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; background: #f4faf1; border: 1px solid #d8e8cf; border-radius: 8px; padding: 10px 14px; font-size: 13px; line-height: 1.45; }
+
+    .mb16 { margin-bottom: 16px; }
+    .print-only { display: none; }
+
+    @media (max-width: 1250px) {
+      .levels { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .report-grid { grid-template-columns: 1fr; }
+      .levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 700px) {
+      main { padding: 14px; }
+      .topbar { display: grid; grid-template-columns: 1fr; }
+      .actions { justify-content: stretch; }
+      .actions button, .tab { width: 100%; }
+      .dashboard { grid-template-columns: 1fr; }
+      .question-head { grid-template-columns: 1fr; }
+      .pill-group { justify-content: flex-start; }
+      .levels { grid-template-columns: 1fr; }
+      .level { min-height: 0; }
+      .org-grid { grid-template-columns: 1fr; }
+      .scale { grid-template-columns: 1fr; }
+      .gap-path { grid-template-columns: 1fr; }
+      .gap-path .arrow { transform: rotate(90deg); }
+      canvas { height: 300px; }
+      .matrix { grid-template-columns: 64px repeat(3, minmax(0, 1fr)); }
+      .gap-table-wrap { overflow-x: auto; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      aside, .topbar, .question-list, .intro-card, .finish-banner, .dim-filter, .no-print { display: none !important; }
+      main { padding: 0; }
+      .section:not(#resultados) { display: none !important; }
+      #resultados { display: block; }
+      .panel, .metric, .opp-card, .plan-phase, .alert { box-shadow: none; break-inside: avoid; }
+      .opp-card[hidden] { display: block !important; }
+      .print-only { display: block; }
+      canvas { height: 320px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <img class="brand-logo" src="assets/projectability-logo.jpg" alt="Projectability">
+        <h1>Diagnóstico de Madurez Digital e IA</h1>
+        <p>Qué tanto ha incorporado su empresa la transformación digital y la inteligencia artificial, desde la gobernanza hasta la operación.</p>
+      </div>
+
+      <div class="status-box">
+        <div class="score-large">
+          <div class="gauge" id="gauge"><strong id="scoreGauge">0</strong></div>
+          <div>
+            <strong id="maturityLabel">Sin diagnosticar</strong>
+            <small id="maturityText">Responda las preguntas para calcular su índice de madurez.</small>
+          </div>
+        </div>
+        <div>
+          <div class="progress-row">
+            <span>Avance</span>
+            <strong id="progressText">0 / 32</strong>
+          </div>
+          <div class="progress"><span id="progressBar"></span></div>
+        </div>
+        <div class="side-counters">
+          <div class="side-counter td"><strong id="sideTD">–</strong><span>Madurez digital</span></div>
+          <div class="side-counter ia"><strong id="sideIA">–</strong><span>Adopción de IA</span></div>
+        </div>
+      </div>
+
+      <div class="dim-nav" id="dimNav"></div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div class="tabs" role="tablist" aria-label="Vistas del diagnóstico">
+          <button class="tab active" data-view="diagnostico">Diagnóstico</button>
+          <button class="tab" data-view="resultados">Informe de resultados</button>
+        </div>
+        <div class="actions">
+          <button id="fillDemo" class="ghost" type="button">Simular respuestas</button>
+          <button id="clearAll" class="ghost" type="button">Limpiar</button>
+          <button id="printReport" class="primary" type="button">Imprimir informe</button>
+        </div>
+      </div>
+
+      <section id="diagnostico" class="section active">
+        <div class="intro-card">
+          <h2>🤖 ¿Cómo funciona?</h2>
+          <p><strong>1.</strong> Responda 32 preguntas agrupadas en 8 dimensiones, desde la estrategia y la gobernanza hasta el uso de la IA en la operación (15–20 minutos). Elija en cada una el nivel que describe mejor la realidad actual, no la deseada.</p>
+          <p><strong>2.</strong> Indique el nivel de madurez que su empresa quiere alcanzar en los próximos 18 meses: con él se calculan las brechas.</p>
+          <p><strong>3.</strong> Obtenga su informe: valoración global, índices de madurez digital y de adopción de IA, mapa de brechas por dimensión, alertas de coherencia, recomendaciones priorizadas y hoja de ruta por horizontes.</p>
+          <p class="fine">Herramienta de orientación elaborada por Projectability; no sustituye una consultoría ni una auditoría a profundidad.</p>
+          <p class="fine" style="margin-top:8px"><strong style="color:var(--amber)">🧪 Versión en prueba (beta), de uso gratuito.</strong> Estamos afinando preguntas e informe: si algo no le cuadra o echa algo de menos, escríbanos a <a href="mailto:projectability.pal@gmail.com?subject=Comentarios%20Diagn%C3%B3stico%20de%20Madurez%20Digital%20e%20IA" style="color:var(--teal);font-weight:600">projectability.pal@gmail.com</a>.</p>
+          <div class="disclaimer-box">
+            <strong>🔐 Tratamiento de datos:</strong> sus respuestas y los datos de su empresa se guardan <strong>únicamente en este navegador</strong> y no se envían a ningún servidor. Puede borrarlos en cualquier momento con el botón "Limpiar".
+          </div>
+        </div>
+
+        <div class="question-card mb16">
+          <div class="question-text" style="background:#fff">🏢 Datos de la organización <span style="font-weight:400;color:var(--muted);font-size:12.5px">(opcionales — personalizan el informe)</span></div>
+          <div class="org-grid">
+            <label>Su nombre<input type="text" id="orgPersona" placeholder="Ej. María Gómez"></label>
+            <label>Cargo<input type="text" id="orgCargo" placeholder="Ej. Gerente de operaciones"></label>
+            <label>Nombre de la empresa<input type="text" id="orgNombre" placeholder="Ej. Logística Andina SAS"></label>
+            <label>Sector<input type="text" id="orgSector" placeholder="Ej. manufactura, servicios, salud, comercio..."></label>
+            <label>Tamaño
+              <select id="orgTamano">
+                <option value="">Seleccione...</option>
+                <option>Microempresa (1–10 personas)</option>
+                <option>Pequeña (11–50 personas)</option>
+                <option>Mediana (51–200 personas)</option>
+                <option>Grande (más de 200 personas)</option>
+              </select>
+            </label>
+            <label>Nivel de madurez objetivo a 18 meses
+              <select id="orgTarget">
+                <option value="3">Nivel 3 · Experimentadora — pilotos con método</option>
+                <option value="4">Nivel 4 · Integradora — IA en procesos clave (recomendado)</option>
+                <option value="5">Nivel 5 · Transformadora — IA en el modelo de negocio</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div id="questionList" class="question-list"></div>
+
+        <div class="finish-banner" id="finishBanner">
+          <div class="finish-banner-text">
+            <strong id="finishBannerTitle">0 de 32 preguntas respondidas</strong>
+            <span id="finishBannerSubtitle">Responda todas las preguntas para obtener un informe completo.</span>
+          </div>
+          <button id="finishBtn" class="primary" type="button">Ver mi informe →</button>
+        </div>
+      </section>
+
+      <section id="resultados" class="section">
+        <div class="print-only">
+          <h1>Informe de Madurez Digital e IA — Projectability</h1>
+          <p id="printDate" style="color:#647084;font-size:13px"></p>
+        </div>
+        <div id="resultsBody"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ═══════════════ DIMENSIONES ═══════════════
+    // hab: dimensiones habilitadoras (se atienden primero en la hoja de ruta)
+    const DIMS = {
+      G: { icon: "🧭", name: "Estrategia y liderazgo", short: "Estrategia", desc: "Dirección, patrocinio e inversión", hab: true },
+      N: { icon: "⚖️", name: "Gobernanza, ética y riesgo de IA", short: "Gobernanza", desc: "Reglas de juego para usar IA con confianza", hab: true },
+      D: { icon: "🗄️", name: "Datos, tecnología y seguridad", short: "Datos y tecnología", desc: "La base sobre la que corre la IA", hab: true },
+      P: { icon: "🔍", name: "Procesos: problemas y reprocesos", short: "Procesos", desc: "Dónde se pierde tiempo y valor", hab: true },
+      H: { icon: "🧰", name: "Herramientas y casos de uso", short: "Herramientas", desc: "Cómo se evalúan, prueban y escalan", hab: false },
+      O: { icon: "⚙️", name: "IA en la operación", short: "IA en operación", desc: "Qué tanto la IA ya trabaja en el día a día", hab: false },
+      C: { icon: "👥", name: "Personas y cultura", short: "Personas", desc: "Capacidades y disposición del equipo", hab: false },
+      V: { icon: "📈", name: "Medición de valor y mejora continua", short: "Valor y mejora", desc: "Resultados, control y aprendizaje", hab: false }
+    };
+
+    const MATURITY = [
+      { n: 1, label: "Analógica", text: "La operación depende de trabajo manual y la IA aún no forma parte de la agenda. El primer paso no es comprar tecnología, sino entender dónde se pierde tiempo y valor y poner reglas mínimas antes de que la IA llegue sola." },
+      { n: 2, label: "Exploradora", text: "Hay interés y usos aislados, pero sin dirección ni reglas comunes. El riesgo principal es la adopción desordenada ('IA en la sombra'): personas usando herramientas con información de la empresa sin control ni medición." },
+      { n: 3, label: "Experimentadora", text: "Existen bases digitales y pruebas con IA. El reto es pasar de experimentos aislados a un portafolio priorizado, con gobierno, datos confiables y métricas de valor." },
+      { n: 4, label: "Integradora", text: "La IA ya opera en procesos clave con reglas y medición. El reto es escalar entre áreas, demostrar el retorno y fortalecer el monitoreo de las soluciones en producción." },
+      { n: 5, label: "Transformadora", text: "La IA es parte del modelo operativo y de decisión. El reto es sostener la ventaja: gobierno robusto, monitoreo continuo y reinvención permanente del modelo de negocio." }
+    ];
+
+    // ═══════════════ PREGUNTAS ═══════════════
+    // [código, dimensión, tipo (TD = transformación digital · IA = adopción de IA), aspecto, pregunta, opciones nivel 1 → 5]
+    const QUESTIONS = [
+      ["G1","G","IA","Visión y estrategia",
+        "¿La empresa tiene una estrategia de transformación digital e IA conectada con sus objetivos de negocio?",
+        ["No existe; la tecnología se decide caso a caso cuando algo falla.",
+         "Hay intención de la gerencia, pero no está escrita ni tiene metas.",
+         "Existe un plan digital, pero la IA aparece de forma genérica o aislada.",
+         "Estrategia documentada con objetivos, prioridades de IA y responsables.",
+         "La IA es parte del plan corporativo, con metas revisadas por la junta o el comité directivo."]],
+      ["G2","G","TD","Patrocinio directivo",
+        "¿Qué nivel de involucramiento tiene la alta dirección en las iniciativas digitales y de IA?",
+        ["Ninguno; se ve como un tema del área de sistemas.",
+         "Apoyo verbal, sin tiempo ni recursos asignados.",
+         "Un directivo impulsa algunas iniciativas puntuales.",
+         "Patrocinador ejecutivo formal que revisa avances periódicamente.",
+         "La dirección lidera con el ejemplo, usa IA y la incluye en las decisiones estratégicas."]],
+      ["G3","G","TD","Presupuesto e inversión",
+        "¿Cómo se financian los proyectos digitales y de IA?",
+        ["No hay presupuesto; solo gastos de mantenimiento tecnológico.",
+         "Gastos puntuales aprobados caso a caso, sin planeación.",
+         "Rubro anual de tecnología, sin línea específica para innovación o IA.",
+         "Presupuesto planificado para digital e IA, asignado con casos de negocio.",
+         "Portafolio de inversión con retorno esperado, revisado y reasignado según resultados."]],
+      ["G4","G","IA","Hoja de ruta de IA",
+        "¿Existe una hoja de ruta que priorice en el tiempo las iniciativas de IA?",
+        ["No; no se han identificado iniciativas de IA.",
+         "Hay una lista de ideas sin priorizar.",
+         "Se priorizaron algunas iniciativas, sin cronograma ni responsables.",
+         "Hoja de ruta con fases, responsables y recursos, en ejecución.",
+         "Portafolio vivo: se prioriza por valor y riesgo y se actualiza cada trimestre."]],
+
+      ["N1","N","IA","Política de uso de IA",
+        "¿Tiene reglas claras sobre qué herramientas de IA pueden usar los colaboradores y con qué información?",
+        ["No hay reglas; cada persona usa lo que quiere.",
+         "Hay recomendaciones informales o correos aislados.",
+         "Existe una política básica, poco conocida o sin control.",
+         "Política formal de uso aceptable, comunicada y con herramientas aprobadas.",
+         "Política aplicada con controles técnicos, capacitación obligatoria y revisión periódica."]],
+      ["N2","N","IA","Roles y responsables de IA",
+        "¿Quién decide y responde por el uso de la IA en la organización?",
+        ["Nadie tiene esa responsabilidad asignada.",
+         "El área de sistemas atiende el tema cuando surge.",
+         "Hay un líder informal o un grupo de interesados.",
+         "Rol o comité formal (negocio, TI, jurídico, riesgos) con funciones definidas.",
+         "Modelo de gobierno operando: decisiones documentadas, inventario de usos y rendición de cuentas."]],
+      ["N3","N","IA","Gestión de riesgos de IA",
+        "¿Se evalúan los riesgos de los usos de IA: resultados erróneos o inventados, sesgos, propiedad intelectual, dependencia de proveedores?",
+        ["No se han considerado.",
+         "Se conocen en términos generales, sin evaluación.",
+         "Se evalúan en algunos proyectos, sin un método común.",
+         "Evaluación de riesgos estandarizada antes de poner en marcha cada uso.",
+         "Riesgos monitoreados de forma continua, con controles, auditorías y planes de respuesta."]],
+      ["N4","N","TD","Cumplimiento y datos personales",
+        "¿Cómo asegura que el uso de datos y de IA cumpla con la protección de datos personales y la regulación aplicable?",
+        ["No se ha revisado.",
+         "Hay política de datos personales, pero no contempla la IA.",
+         "Se revisa jurídicamente en algunos casos puntuales.",
+         "Los usos de IA pasan por validación de privacidad y cumplimiento antes de implementarse.",
+         "Privacidad desde el diseño, registros actualizados y seguimiento activo a la regulación de IA."]],
+
+      ["D1","D","TD","Calidad y gobierno de datos",
+        "¿Qué tan confiables, completos y accesibles son los datos clave del negocio (clientes, productos, operación, finanzas)?",
+        ["Dispersos en archivos personales y papel; poco confiables.",
+         "Principalmente hojas de cálculo con duplicados e inconsistencias.",
+         "Sistemas principales con datos razonables, sin responsables ni reglas de calidad.",
+         "Datos maestros definidos, con responsables y reglas de calidad.",
+         "Gobierno de datos maduro: catálogo, calidad medida y datos listos para analítica e IA."]],
+      ["D2","D","TD","Sistemas e integración",
+        "¿Qué tan integrados están sus sistemas (ERP, CRM, contabilidad, operación)?",
+        ["Pocos sistemas; se trabaja manualmente o en papel.",
+         "Sistemas aislados; la información se transcribe de uno a otro.",
+         "Algunas integraciones; aún hay doble digitación frecuente.",
+         "Sistemas principales integrados y en la nube.",
+         "Arquitectura integrada con APIs y datos en tiempo real, lista para conectar servicios de IA."]],
+      ["D3","D","TD","Analítica para decidir",
+        "¿Cómo usa los datos para tomar decisiones?",
+        ["Las decisiones se basan en experiencia e intuición.",
+         "Informes manuales ocasionales en hojas de cálculo.",
+         "Reportes periódicos, con esfuerzo manual para consolidarlos.",
+         "Tableros automáticos con indicadores actualizados.",
+         "Analítica predictiva que anticipa escenarios y recomienda acciones."]],
+      ["D4","D","TD","Ciberseguridad",
+        "¿Cómo protege sus sistemas, sus datos y el uso de herramientas en la nube e IA?",
+        ["Protección mínima (antivirus), sin políticas.",
+         "Medidas básicas (contraseñas, copias de seguridad) sin gestión formal.",
+         "Políticas de seguridad definidas, aplicadas de forma parcial.",
+         "Gestión formal: control de accesos, doble factor, respaldos probados y evaluación de proveedores.",
+         "Seguridad monitoreada que incluye riesgos propios de la IA (fuga de datos, suplantación, manipulación de instrucciones)."]],
+
+      ["P1","P","TD","Mapeo de procesos",
+        "¿Tiene documentados y actualizados sus procesos principales?",
+        ["No; el conocimiento está en la cabeza de las personas.",
+         "Algunos procedimientos escritos, desactualizados.",
+         "Procesos clave documentados, sin revisión periódica.",
+         "Mapa de procesos completo, con responsables y actualizado.",
+         "Procesos gestionados con datos (medición de flujo o minería de procesos) y mejora continua."]],
+      ["P2","P","IA","Identificación de reprocesos",
+        "¿Identifica de forma sistemática dónde hay reprocesos, doble digitación, esperas, errores recurrentes o tareas repetitivas?",
+        ["No se identifican; se asumen como parte del trabajo.",
+         "Se conocen por quejas o anécdotas.",
+         "Se han identificado en algunas áreas, en ejercicios puntuales.",
+         "Se levantan periódicamente con los equipos y se registran.",
+         "Se miden de forma continua y alimentan directamente el portafolio de automatización e IA."]],
+      ["P3","P","IA","Medición de tiempos y costos",
+        "¿Conoce cuánto tiempo y dinero cuestan las tareas repetitivas de sus procesos?",
+        ["No se mide.",
+         "Estimaciones gruesas, sin datos.",
+         "Medido en uno o dos procesos.",
+         "Línea base de tiempos y costos en los procesos principales.",
+         "Medición continua que permite calcular el ahorro real de cada automatización."]],
+      ["P4","P","IA","Priorización de oportunidades de IA",
+        "¿Cómo decide qué problemas o procesos abordar con automatización o IA?",
+        ["No se ha planteado.",
+         "Por moda o por la herramienta que alguien conoció.",
+         "Por intuición de un líder, sin criterios explícitos.",
+         "Con criterios definidos (valor, viabilidad, datos, riesgo) aplicados a una lista de casos.",
+         "Método estándar de priorización con casos de negocio y revisión periódica del portafolio."]],
+
+      ["H1","H","IA","Inventario de herramientas",
+        "¿Sabe qué herramientas digitales y de IA usa hoy la organización, incluidas las gratuitas que usan los colaboradores por su cuenta?",
+        ["No se tiene idea.",
+         "Se conocen las licencias pagadas, no el uso individual.",
+         "Inventario parcial o desactualizado.",
+         "Inventario completo de herramientas y usos de IA, con responsable.",
+         "Inventario gestionado con costos, uso real, riesgos y renovación basada en valor."]],
+      ["H2","H","IA","Evaluación y selección",
+        "¿Cómo evalúa y selecciona una herramienta de IA antes de adoptarla?",
+        ["Se adopta sin evaluación.",
+         "Por recomendación o prueba gratuita informal.",
+         "Se comparan precio y funcionalidades.",
+         "Criterios formales: ajuste al problema, seguridad, privacidad, integración, costo total y soporte.",
+         "Evaluación formal más prueba de concepto con datos reales y métricas de éxito definidas."]],
+      ["H3","H","IA","Pilotos y pruebas de concepto",
+        "¿Cómo prueba las soluciones de IA antes de extenderlas?",
+        ["No se han hecho pruebas.",
+         "Pruebas informales individuales.",
+         "Pilotos sin objetivos ni métricas claras.",
+         "Pilotos con alcance, métricas de éxito y fecha de decisión.",
+         "Experimentación estándar: pilotos rápidos con decisión explícita de escalar, ajustar o cerrar."]],
+      ["H4","H","IA","Escalamiento de soluciones",
+        "¿Qué pasa con los pilotos o usos de IA que funcionan?",
+        ["No aplica: no hay pilotos.",
+         "Quedan como uso individual de quien los probó.",
+         "Algunos se amplían, sin plan de despliegue.",
+         "Los exitosos se escalan con plan (integración, capacitación, soporte).",
+         "Escalamiento sistemático, con soluciones reutilizables entre áreas."]],
+
+      ["O1","O","IA","IA en el trabajo diario",
+        "¿Qué tanto usan los colaboradores herramientas de IA generativa (asistentes para redactar, resumir, analizar, preparar documentos) en su trabajo?",
+        ["No se usan.",
+         "Uso esporádico y personal, sin herramientas corporativas.",
+         "Uso frecuente en algunas áreas o personas.",
+         "Herramientas corporativas disponibles y usadas por la mayoría de cargos administrativos.",
+         "IA integrada en los flujos de trabajo, con instrucciones, plantillas y agentes compartidos."]],
+      ["O2","O","IA","Clientes y área comercial",
+        "¿Usa IA en ventas, mercadeo o servicio al cliente (asistentes de atención, segmentación, propuestas, análisis de clientes)?",
+        ["No.",
+         "Pruebas aisladas (por ejemplo, redactar publicaciones).",
+         "Una aplicación en uso en un canal o proceso.",
+         "Varias aplicaciones integradas al CRM o a los canales de atención.",
+         "Experiencia del cliente potenciada por IA de extremo a extremo, medida y optimizada."]],
+      ["O3","O","IA","Procesos administrativos y financieros",
+        "¿Usa automatización o IA en procesos de soporte (facturación, cuentas por pagar, conciliaciones, nómina, compras, gestión documental)?",
+        ["Todo es manual.",
+         "Macros o plantillas básicas.",
+         "Algunas automatizaciones de flujo, sin IA.",
+         "Automatización con IA en procesos clave (lectura de documentos, clasificación, conciliación).",
+         "Procesos de soporte mayormente automatizados; las personas se dedican a excepciones y análisis."]],
+      ["O4","O","IA","Operación y cadena de valor",
+        "¿Usa IA en el núcleo de su operación (planeación de demanda, producción, logística, calidad, mantenimiento o prestación del servicio)?",
+        ["No.",
+         "Se ha explorado como idea.",
+         "Un piloto o aplicación puntual.",
+         "Aplicaciones en marcha con impacto medido en procesos críticos.",
+         "La IA optimiza decisiones operativas de forma continua (pronósticos, mantenimiento predictivo, calidad)."]],
+
+      ["C1","C","IA","Alfabetización en IA",
+        "¿Qué tanto entiende el equipo qué es la IA, qué puede hacer y cuáles son sus límites y riesgos?",
+        ["Desconocimiento general o temor.",
+         "Algunas personas curiosas, por cuenta propia.",
+         "Charlas o sensibilizaciones puntuales.",
+         "Programa de formación por niveles (general, usuarios avanzados, líderes).",
+         "Aprendizaje continuo con rutas por rol y evaluación práctica."]],
+      ["C2","C","TD","Habilidades digitales",
+        "¿Qué nivel de habilidades digitales tiene el equipo en general?",
+        ["Bajo; dificultades con herramientas básicas.",
+         "Básico; correo y ofimática.",
+         "Intermedio en la mayoría, con algunos perfiles avanzados.",
+         "Buen nivel general, con perfiles especializados (datos, automatización).",
+         "Alto; los equipos construyen sus propias automatizaciones y soluciones."]],
+      ["C3","C","TD","Gestión del cambio",
+        "¿Cómo acompaña a las personas cuando se introduce una nueva tecnología?",
+        ["No se acompaña; se instala y ya.",
+         "Se envía un instructivo.",
+         "Capacitación en el lanzamiento, sin seguimiento.",
+         "Plan de cambio: comunicación, capacitación, soporte y seguimiento a la adopción.",
+         "Gestión del cambio integrada, con agentes de cambio y medición de adopción real."]],
+      ["C4","C","IA","Cultura de experimentación",
+        "¿Los colaboradores proponen y prueban usos de IA para mejorar su propio trabajo?",
+        ["No; hay resistencia o temor a ser reemplazados.",
+         "Pocas personas, sin espacio ni reconocimiento.",
+         "Se permite, pero sin canal ni tiempo asignado.",
+         "Hay canal de ideas, tiempo asignado y 'campeones' de IA en las áreas.",
+         "Innovar con IA es parte del desempeño; los casos exitosos se reconocen y se replican."]],
+
+      ["V1","V","IA","Indicadores de valor",
+        "¿Mide los beneficios de sus iniciativas digitales y de IA (horas liberadas, costos, ingresos, calidad)?",
+        ["No se mide.",
+         "Se percibe el beneficio, sin datos.",
+         "Se mide en algunas iniciativas, sin línea base.",
+         "Indicadores definidos con línea base, antes y después.",
+         "Tablero de valor del portafolio, reportado a la dirección y usado para reasignar inversión."]],
+      ["V2","V","IA","Supervisión humana",
+        "¿Cómo se verifica que lo que produce la IA sea correcto antes de usarlo o entregarlo?",
+        ["No se revisa.",
+         "Depende del criterio de cada persona.",
+         "Se revisa en tareas sensibles, sin criterios definidos.",
+         "Reglas claras de revisión humana según el nivel de riesgo de la tarea.",
+         "Control de calidad sistemático: muestreos, registro de errores y mejora de instrucciones."]],
+      ["V3","V","IA","Monitoreo de soluciones",
+        "¿Se hace seguimiento al desempeño de las soluciones de IA una vez implementadas?",
+        ["No hay soluciones implementadas o no se monitorean.",
+         "Solo se atiende cuando alguien reporta un problema.",
+         "Revisiones ocasionales.",
+         "Monitoreo periódico de desempeño, costos y uso.",
+         "Monitoreo continuo con alertas, responsables y ciclo de mejora."]],
+      ["V4","V","TD","Aprendizaje organizacional",
+        "¿La organización captura y reutiliza lo aprendido en sus proyectos digitales y de IA?",
+        ["No; cada proyecto empieza de cero.",
+         "Queda en la experiencia de quienes participaron.",
+         "Se documentan algunos cierres de proyecto.",
+         "Lecciones aprendidas registradas y compartidas entre áreas.",
+         "Base de conocimiento viva (instrucciones, plantillas, casos) que acelera cada nueva iniciativa."]]
+    ].map(r => ({ code: r[0], dim: r[1], type: r[2], aspect: r[3], question: r[4], options: r[5] }));
+
+    // ═══════════════ CATÁLOGO DE RECOMENDACIONES ═══════════════
+    // impact / effort: 1 bajo · 2 medio · 3 alto
+    const RECS = {
+      G1: { title: "Formular la estrategia de transformación digital e IA", impact: 3, effort: 2,
+        desc: "Traducir los objetivos del negocio en una estrategia digital con un capítulo explícito de IA: qué problemas resolverá, en qué áreas, con qué metas y quién responde.",
+        benefit: "Evita la adopción por moda y concentra la inversión en los problemas que hoy destruyen más valor.",
+        steps: ["Listar los 3 a 5 objetivos estratégicos de la empresa para los próximos 2 años.",
+                "Identificar, para cada objetivo, dónde la digitalización o la IA podrían acelerar el resultado.",
+                "Documentar la estrategia en máximo 5 páginas con metas, responsables y horizonte, y aprobarla en el comité directivo."],
+        kpi: "Estrategia aprobada y % de iniciativas digitales y de IA alineadas a objetivos estratégicos." },
+      G2: { title: "Asignar un patrocinador ejecutivo de la transformación", impact: 3, effort: 1,
+        desc: "Designar a un miembro de la alta dirección como responsable visible de la agenda digital e IA, con tiempo, autoridad y seguimiento periódico.",
+        benefit: "Las transformaciones sin patrocinio directivo se estancan en pilotos; el patrocinio desbloquea recursos y decisiones entre áreas.",
+        steps: ["Designar formalmente al patrocinador y comunicarlo a toda la organización.",
+                "Incluir la agenda digital e IA como punto fijo del comité directivo mensual.",
+                "Pedir a cada directivo usar una herramienta de IA en su propio trabajo durante 30 días y compartir lo aprendido."],
+        kpi: "% de comités directivos con seguimiento a la agenda digital e IA." },
+      G3: { title: "Crear un fondo de inversión digital e IA con casos de negocio", impact: 2, effort: 2,
+        desc: "Separar un rubro anual para innovación digital e IA, asignado mediante casos de negocio simples y liberado por etapas según resultados.",
+        benefit: "Permite empezar con pilotos de bajo costo y escalar solo lo que demuestra valor, sin depender de aprobaciones improvisadas.",
+        steps: ["Estimar el gasto tecnológico actual y definir qué porcentaje se destinará a innovación e IA.",
+                "Crear una plantilla de caso de negocio de una página: problema, beneficio, costo, riesgo y métrica.",
+                "Liberar recursos por etapas (piloto → escalamiento), condicionados al cumplimiento de métricas."],
+        kpi: "% del presupuesto tecnológico destinado a innovación e IA y retorno del portafolio." },
+      G4: { title: "Construir la hoja de ruta de IA por fases", impact: 3, effort: 2,
+        desc: "Convertir las ideas sueltas en una hoja de ruta de 12 a 24 meses con fases (fundamentos, pilotos, escalamiento), responsables y recursos.",
+        benefit: "Da una secuencia lógica: primero los habilitadores (gobierno, datos, capacidades) y luego los casos de mayor valor.",
+        steps: ["Recoger en un taller con líderes de área los problemas y las ideas de IA existentes.",
+                "Priorizarlos con una matriz valor–viabilidad y elegir de 3 a 5 iniciativas.",
+                "Asignar responsables, fechas y recursos, y revisar la hoja de ruta cada trimestre."],
+        kpi: "% de hitos de la hoja de ruta cumplidos por trimestre." },
+
+      N1: { title: "Adoptar una política de uso aceptable de IA", impact: 3, effort: 1,
+        desc: "Definir qué herramientas de IA están aprobadas, qué información nunca debe ingresarse en ellas (datos personales, confidenciales o de clientes) y cómo se revisan sus resultados.",
+        benefit: "Es la medida de menor costo y mayor reducción de riesgo: frena la fuga de información por 'IA en la sombra' sin prohibir la innovación.",
+        steps: ["Redactar una política de 2 páginas: herramientas aprobadas, información prohibida, revisión humana y responsabilidades.",
+                "Habilitar versiones corporativas de las herramientas más usadas, con garantías de que no entrenan con sus datos.",
+                "Comunicar la política con ejemplos prácticos y obtener la aceptación de cada colaborador."],
+        kpi: "% de colaboradores que conocen y aceptaron la política de uso de IA." },
+      N2: { title: "Establecer el modelo de gobierno de IA", impact: 2, effort: 1,
+        desc: "Definir un responsable o comité de IA con participación de negocio, tecnología, jurídico y riesgos, encargado de aprobar, inventariar y supervisar los usos de IA.",
+        benefit: "Evita decisiones aisladas, acelera las aprobaciones con criterios claros y crea rendición de cuentas cuando algo falla.",
+        steps: ["Nombrar al responsable de IA y conformar un comité pequeño (3 a 5 personas) con reunión mensual.",
+                "Definir qué usos requieren aprobación del comité según su nivel de riesgo.",
+                "Crear el registro de usos de IA de la organización y mantenerlo actualizado."],
+        kpi: "% de usos de IA registrados y aprobados por el modelo de gobierno." },
+      N3: { title: "Implementar la evaluación de riesgos de IA", impact: 3, effort: 2,
+        desc: "Aplicar una evaluación estándar a cada uso de IA: exactitud de resultados, sesgos, confidencialidad, propiedad intelectual, dependencia del proveedor e impacto sobre las personas.",
+        benefit: "Permite avanzar rápido en usos de bajo riesgo y poner controles proporcionales en los de alto riesgo; es la base de marcos reconocidos como ISO/IEC 42001 y el NIST AI RMF.",
+        steps: ["Adoptar una lista de chequeo de riesgos de IA de una página que clasifique los usos en riesgo bajo, medio y alto.",
+                "Evaluar los usos de IA actuales y definir controles para los de riesgo medio y alto.",
+                "Incorporar la evaluación como requisito previo a todo piloto nuevo."],
+        kpi: "% de usos de IA con evaluación de riesgo vigente." },
+      N4: { title: "Integrar la IA al programa de protección de datos", impact: 2, effort: 2,
+        desc: "Actualizar la política de tratamiento de datos personales y los procedimientos de privacidad para cubrir los usos de IA: finalidades, autorizaciones, transmisiones a proveedores en la nube y derechos de los titulares.",
+        benefit: "Reduce el riesgo de sanciones de la autoridad de protección de datos (en Colombia, la SIC bajo la Ley 1581 de 2012) y genera confianza en clientes y colaboradores.",
+        steps: ["Identificar qué usos de IA procesan datos personales y con qué proveedores.",
+                "Revisar con asesoría jurídica autorizaciones, contratos de transmisión y avisos de privacidad.",
+                "Incluir la validación de privacidad como paso obligatorio antes de implementar soluciones de IA."],
+        kpi: "% de usos de IA con validación de privacidad aprobada." },
+
+      D1: { title: "Programa de calidad y gobierno de datos", impact: 3, effort: 2,
+        desc: "Definir los datos maestros del negocio (clientes, productos, proveedores), asignarles responsables y establecer reglas mínimas de calidad y captura.",
+        benefit: "La IA amplifica la calidad de los datos que recibe: con datos deficientes produce errores más rápido. Es el habilitador técnico número uno.",
+        steps: ["Identificar los 3 conjuntos de datos más críticos para la operación y a sus responsables.",
+                "Depurar duplicados e inconsistencias y fijar reglas de captura (campos obligatorios, formatos).",
+                "Medir mensualmente un indicador simple de calidad (completitud, duplicados)."],
+        kpi: "% de registros completos y sin duplicados en los datos maestros." },
+      D2: { title: "Integrar sistemas y eliminar la doble digitación", impact: 2, effort: 3,
+        desc: "Conectar los sistemas principales (ERP, CRM, facturación, operación) mediante integraciones nativas, APIs o plataformas de automatización, para que cada dato se capture una sola vez.",
+        benefit: "Elimina errores de transcripción y horas de trabajo manual, y crea la base para que la IA acceda a información actualizada.",
+        steps: ["Mapear qué información se transcribe manualmente entre sistemas y cuánto tiempo consume.",
+                "Priorizar las 2 integraciones con más horas ahorradas y evaluar los conectores disponibles.",
+                "Implementar la primera integración y medir el tiempo liberado."],
+        kpi: "Horas mensuales de doble digitación eliminadas." },
+      D3: { title: "Tableros de gestión y analítica para decidir", impact: 2, effort: 2,
+        desc: "Automatizar los indicadores clave del negocio en tableros actualizados, como paso previo a la analítica predictiva con IA.",
+        benefit: "Libera el tiempo que hoy se dedica a consolidar informes y acelera las decisiones con información oportuna.",
+        steps: ["Definir los 8 a 10 indicadores que la dirección revisa cada mes.",
+                "Construir un tablero conectado a las fuentes con una herramienta de inteligencia de negocios.",
+                "Usar el tablero en el comité mensual en reemplazo de los informes manuales."],
+        kpi: "% de indicadores directivos disponibles en tableros automáticos." },
+      D4: { title: "Fortalecer la ciberseguridad para la era de la IA", impact: 3, effort: 2,
+        desc: "Establecer controles básicos y específicos para IA: doble factor, gestión de accesos, respaldos probados, evaluación de proveedores en la nube y protección frente a fugas de datos y fraudes con suplantación.",
+        benefit: "La IA también potencia los ataques (correos de fraude, voces y videos falsos); sin controles, cada nueva herramienta amplía la superficie de riesgo.",
+        steps: ["Activar la autenticación de doble factor en el correo y los sistemas críticos.",
+                "Verificar que las copias de seguridad se restauran correctamente y depurar los permisos de acceso.",
+                "Capacitar al equipo en fraudes potenciados por IA y definir protocolos de verificación de pagos."],
+        kpi: "% de cuentas críticas con doble factor y pruebas de restauración exitosas por año." },
+
+      P1: { title: "Documentar el mapa de procesos", impact: 2, effort: 1,
+        desc: "Levantar y documentar los procesos principales (entradas, pasos, responsables, sistemas y salidas) como punto de partida de cualquier automatización.",
+        benefit: "No se puede automatizar bien lo que no se entiende: el mapa revela pasos innecesarios que conviene eliminar antes de aplicar tecnología.",
+        steps: ["Elegir los 5 procesos que más impactan al cliente o al costo.",
+                "Diagramarlos con las personas que los ejecutan, no solo con los jefes.",
+                "Publicar los diagramas y definir quién los mantiene actualizados."],
+        kpi: "% de procesos principales documentados y vigentes." },
+      P2: { title: "Identificación sistemática de reprocesos y desperdicios", impact: 3, effort: 1,
+        desc: "Realizar talleres periódicos con los equipos para detectar reprocesos, doble digitación, esperas, errores recurrentes y tareas repetitivas candidatas a automatización o IA.",
+        benefit: "Es la fuente de los casos de IA de mayor retorno: los problemas los conocen quienes hacen el trabajo, no los proveedores de tecnología.",
+        steps: ["Realizar un taller de 2 horas por área con una pregunta guía: ¿qué tarea repite, corrige o espera más?",
+                "Registrar cada hallazgo con su frecuencia, tiempo y consecuencia.",
+                "Consolidar un banco de oportunidades y actualizarlo cada semestre."],
+        kpi: "Reprocesos identificados y % convertidos en iniciativas de mejora." },
+      P3: { title: "Línea base de tiempos y costos de proceso", impact: 2, effort: 1,
+        desc: "Medir cuánto tiempo y costo consumen las tareas repetitivas de los procesos priorizados, para dimensionar el beneficio de automatizarlas.",
+        benefit: "Convierte las ideas en casos de negocio: sin línea base no es posible demostrar ahorros ni priorizar con objetividad.",
+        steps: ["Seleccionar las 10 tareas repetitivas más mencionadas en el banco de oportunidades.",
+                "Medir durante 2 a 4 semanas su frecuencia y duración (registro simple o muestreo).",
+                "Calcular el costo anual de cada tarea (horas × costo por hora)."],
+        kpi: "Horas anuales invertidas en tareas repetitivas (línea base y reducción)." },
+      P4: { title: "Método de priorización de casos de uso de IA", impact: 3, effort: 1,
+        desc: "Evaluar cada oportunidad con criterios explícitos —valor para el negocio, viabilidad técnica, disponibilidad de datos, riesgo y facilidad de adopción— antes de invertir.",
+        benefit: "Evita elegir la herramienta de moda y concentra el esfuerzo en casos con retorno rápido y riesgo controlado.",
+        steps: ["Definir 5 criterios con puntaje de 1 a 5 y sus pesos.",
+                "Calificar el banco de oportunidades en un taller conjunto entre negocio y tecnología.",
+                "Seleccionar 2 o 3 casos de alto valor y alta viabilidad para pilotear."],
+        kpi: "% de iniciativas de IA aprobadas con puntaje de priorización documentado." },
+
+      H1: { title: "Inventario de herramientas y usos de IA", impact: 2, effort: 1,
+        desc: "Levantar qué herramientas digitales y de IA se usan (pagadas y gratuitas, corporativas y personales), para qué, por quién y con qué información.",
+        benefit: "Hace visible la 'IA en la sombra', detecta licencias duplicadas o subutilizadas y es insumo obligatorio para gestionar riesgos.",
+        steps: ["Aplicar una encuesta anónima de 5 preguntas sobre las herramientas de IA usadas y para qué.",
+                "Cruzar los resultados con las licencias pagadas y los gastos con tarjeta corporativa.",
+                "Consolidar el inventario con responsable, costo y nivel de riesgo de cada herramienta."],
+        kpi: "Inventario actualizado y % de herramientas con responsable asignado." },
+      H2: { title: "Criterios formales de evaluación de herramientas", impact: 2, effort: 1,
+        desc: "Adoptar una ficha de evaluación de herramientas de IA: ajuste al problema, seguridad y privacidad (dónde se guardan los datos y si se usan para entrenar), integración, costo total, soporte y dependencia del proveedor.",
+        benefit: "Reduce compras fallidas y riesgos contractuales, y acelera las decisiones con criterios conocidos por todos.",
+        steps: ["Construir la ficha de evaluación con TI, jurídico y un área usuaria.",
+                "Exigir la ficha para toda herramienta nueva, incluidas las gratuitas de uso corporativo.",
+                "Revisar con la ficha las 3 herramientas de IA más usadas hoy."],
+        kpi: "% de herramientas de IA adoptadas con ficha de evaluación." },
+      H3: { title: "Pilotos de IA con métricas de éxito", impact: 3, effort: 2,
+        desc: "Estructurar cada prueba como un piloto acotado: problema, usuarios, duración (4 a 8 semanas), línea base, métrica de éxito y fecha de decisión.",
+        benefit: "Convierte la experimentación en aprendizaje medible y evita el 'purgatorio de pilotos' que nunca se deciden.",
+        steps: ["Elegir el caso priorizado de mayor valor y viabilidad.",
+                "Definir la ficha del piloto con métrica de éxito y umbral de decisión.",
+                "Ejecutar, medir y tomar una decisión explícita: escalar, ajustar o cerrar."],
+        kpi: "% de pilotos con decisión tomada a tiempo y % escalados." },
+      H4: { title: "Ruta de escalamiento de soluciones exitosas", impact: 3, effort: 3,
+        desc: "Definir cómo un piloto exitoso pasa a producción: integración con sistemas, soporte, capacitación, monitoreo y replicación en otras áreas.",
+        benefit: "El valor de la IA se captura al escalar, no en el piloto; las soluciones reutilizables multiplican el retorno de cada inversión.",
+        steps: ["Definir una lista de chequeo de salida a producción (seguridad, soporte, capacitación, monitoreo).",
+                "Escalar el piloto exitoso con un plan de despliegue por fases.",
+                "Documentar la solución como plantilla replicable en otras áreas."],
+        kpi: "Soluciones de IA en producción y número de áreas que las usan." },
+
+      O1: { title: "Productividad con IA generativa para todo el equipo", impact: 3, effort: 1,
+        desc: "Habilitar asistentes de IA corporativos y seguros para los cargos administrativos y de conocimiento, con una biblioteca de instrucciones y plantillas por rol.",
+        benefit: "Es la victoria temprana más rápida: libera horas semanales por persona en redacción, resúmenes, análisis y preparación de documentos.",
+        steps: ["Habilitar una herramienta corporativa aprobada para un grupo piloto de 10 a 20 personas.",
+                "Construir con ellos una biblioteca de 20 instrucciones para sus tareas más frecuentes.",
+                "Medir las horas ahorradas a los 60 días y extender al resto de la organización."],
+        kpi: "% de colaboradores activos semanalmente y horas ahorradas reportadas." },
+      O2: { title: "IA en la relación con el cliente", impact: 3, effort: 2,
+        desc: "Aplicar IA en los puntos de contacto con el cliente: asistente de preguntas frecuentes con traspaso a humanos, apoyo a propuestas comerciales, análisis de satisfacción y segmentación.",
+        benefit: "Mejora los tiempos de respuesta y la conversión, y libera al equipo comercial para relaciones de mayor valor.",
+        steps: ["Analizar las consultas más frecuentes de los clientes y los tiempos de respuesta actuales.",
+                "Pilotear un asistente para preguntas frecuentes con traspaso a humano, o una herramienta de apoyo a propuestas.",
+                "Medir satisfacción, tiempo de respuesta y conversión antes y después."],
+        kpi: "Tiempo promedio de respuesta al cliente y tasa de conversión comercial." },
+      O3: { title: "Automatización inteligente de procesos de soporte", impact: 3, effort: 2,
+        desc: "Combinar automatización de flujos con IA para leer documentos (facturas, órdenes, contratos), clasificar, conciliar y registrar información en los procesos administrativos y financieros.",
+        benefit: "Reduce costos operativos y errores, acorta los cierres contables y libera al equipo para análisis y control.",
+        steps: ["Elegir un proceso de alto volumen y reglas claras (por ejemplo, la radicación de facturas de proveedores).",
+                "Implementar la extracción de datos con IA y la validación humana de las excepciones.",
+                "Medir tiempo por documento y tasa de error, y replicar en el siguiente proceso."],
+        kpi: "Costo por transacción y % de transacciones procesadas sin intervención manual." },
+      O4: { title: "IA en el núcleo de la operación", impact: 3, effort: 3,
+        desc: "Aplicar IA a decisiones críticas de la cadena de valor según el sector: pronóstico de demanda, planeación, mantenimiento predictivo, control de calidad con visión artificial u optimización logística.",
+        benefit: "Es donde la IA genera la ventaja competitiva más difícil de copiar: menos inventario, menos paradas, menos desperdicio y mejor servicio.",
+        steps: ["Identificar la decisión operativa con mayor costo de error (sobreinventario, fallas, rechazos).",
+                "Verificar que existan datos históricos suficientes y de calidad para modelarla.",
+                "Desarrollar un piloto con un aliado tecnológico y medirlo contra la línea base."],
+        kpi: "Mejora del indicador operativo objetivo (precisión del pronóstico, paradas, rechazos)." },
+
+      C1: { title: "Programa de alfabetización en IA por niveles", impact: 3, effort: 1,
+        desc: "Formar a toda la organización en fundamentos de IA (qué es, usos, límites, riesgos y uso responsable) y profundizar por niveles para usuarios avanzados y líderes.",
+        benefit: "Reduce el temor y el mal uso al mismo tiempo; la formación práctica es uno de los mayores impulsores de la adopción efectiva.",
+        steps: ["Realizar una sesión general de fundamentos y uso responsable de IA para todo el equipo.",
+                "Diseñar talleres prácticos por área con casos de su propio trabajo.",
+                "Formar a los líderes en identificar oportunidades y gestionar equipos que trabajan con IA."],
+        kpi: "% del equipo formado por nivel y resultado en evaluación práctica." },
+      C2: { title: "Desarrollo de habilidades digitales", impact: 2, effort: 2,
+        desc: "Diagnosticar y cerrar las brechas de habilidades digitales básicas, y desarrollar perfiles especializados (análisis de datos, automatización) dentro del equipo.",
+        benefit: "Sin una base digital sólida la IA no se adopta; contar con perfiles internos especializados reduce la dependencia de proveedores.",
+        steps: ["Aplicar una autoevaluación breve de habilidades digitales por cargo.",
+                "Diseñar rutas de formación con cursos existentes (muchos gratuitos) según la brecha.",
+                "Identificar 2 o 3 personas con potencial para formarse en datos y automatización."],
+        kpi: "Nivel promedio de habilidades digitales por cargo (antes y después)." },
+      C3: { title: "Metodología de gestión del cambio tecnológico", impact: 2, effort: 1,
+        desc: "Acompañar cada implementación con comunicación del porqué, capacitación práctica, soporte cercano y seguimiento a la adopción real.",
+        benefit: "La mayoría de proyectos tecnológicos fracasan por adopción, no por tecnología; la gestión del cambio protege la inversión.",
+        steps: ["Definir una plantilla de plan de cambio (mensajes, capacitación, soporte, medición).",
+                "Aplicarla en la próxima implementación digital o de IA.",
+                "Medir el uso real a los 30, 60 y 90 días y actuar sobre los rezagos."],
+        kpi: "% de usuarios activos a los 90 días de cada implementación." },
+      C4: { title: "Red de campeones de IA en las áreas", impact: 2, effort: 1,
+        desc: "Designar campeones de IA en cada área, con tiempo asignado, un canal para compartir ideas y reconocimiento visible a quienes mejoran su trabajo con IA.",
+        benefit: "Multiplica la adopción desde abajo y convierte el temor al reemplazo en protagonismo.",
+        steps: ["Invitar a un voluntario por área a ser campeón de IA, con 2 a 4 horas semanales asignadas.",
+                "Abrir un canal para compartir casos de uso y resultados.",
+                "Reconocer cada mes los mejores casos y replicarlos entre áreas."],
+        kpi: "Casos de uso propuestos e implementados por las áreas." },
+
+      V1: { title: "Tablero de valor de la transformación digital e IA", impact: 3, effort: 1,
+        desc: "Definir para cada iniciativa indicadores de valor con línea base (horas liberadas, costos, ingresos, calidad, satisfacción) y consolidarlos en un tablero para la dirección.",
+        benefit: "Demuestra el retorno, sostiene el patrocinio directivo y permite reasignar la inversión hacia lo que funciona.",
+        steps: ["Definir de 1 a 3 indicadores de valor con su línea base para cada iniciativa en marcha.",
+                "Consolidar los resultados en un tablero trimestral.",
+                "Usar el tablero para decidir qué escalar, ajustar o cerrar."],
+        kpi: "Valor económico anual capturado por las iniciativas digitales y de IA." },
+      V2: { title: "Reglas de supervisión humana según el riesgo", impact: 3, effort: 1,
+        desc: "Definir qué resultados de IA requieren revisión humana, quién la hace y con qué criterios, según el riesgo de la tarea (uso interno, entregables a clientes, decisiones sobre personas).",
+        benefit: "La IA comete errores con apariencia convincente; una revisión proporcional evita daños reputacionales, legales y económicos sin frenar la productividad.",
+        steps: ["Clasificar los usos de IA en tres niveles de riesgo.",
+                "Definir para cada nivel el tipo de revisión (ninguna, muestreo, revisión total) y su responsable.",
+                "Registrar los errores detectados para mejorar instrucciones y controles."],
+        kpi: "Errores de IA detectados antes de llegar al cliente frente a errores reportados después." },
+      V3: { title: "Monitoreo del desempeño de soluciones de IA", impact: 2, effort: 2,
+        desc: "Hacer seguimiento periódico a la calidad de resultados, el uso, los costos y los incidentes de cada solución de IA en producción, con responsables y alertas.",
+        benefit: "Los modelos y las herramientas cambian y se degradan con el tiempo; el monitoreo evita que un deterioro silencioso afecte la operación.",
+        steps: ["Definir para cada solución 3 métricas: calidad de resultados, uso y costo.",
+                "Asignar un responsable y una frecuencia de revisión.",
+                "Establecer umbrales de alerta y un procedimiento ante incidentes."],
+        kpi: "% de soluciones de IA con monitoreo activo y tiempo de respuesta a incidentes." },
+      V4: { title: "Base de conocimiento y lecciones aprendidas", impact: 2, effort: 1,
+        desc: "Documentar y compartir lo aprendido en cada iniciativa: instrucciones que funcionan, plantillas, errores, proveedores evaluados y resultados.",
+        benefit: "Cada nueva iniciativa arranca más rápido y a menor costo, y el conocimiento deja de depender de personas individuales.",
+        steps: ["Crear un repositorio compartido de casos de IA con una plantilla simple.",
+                "Hacer un cierre de lecciones aprendidas de 30 minutos al terminar cada piloto.",
+                "Revisar el repositorio cada semestre y promover las mejores prácticas."],
+        kpi: "Casos documentados y número de veces que se reutilizan." }
+    };
+
+    const STORAGE_KEY = "diagnostico-madurez-ia-v1";
+    const EMPTY_ORG = { persona: "", cargo: "", nombre: "", sector: "", tamano: "", target: 4 };
+
+    // ═══════════════ ESTADO ═══════════════
+    let state;
+    try { state = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { state = null; }
+    if (!state || typeof state !== "object") state = { answers: {}, org: { ...EMPTY_ORG } };
+    state.answers = state.answers || {};
+    state.org = { ...EMPTY_ORG, ...(state.org || {}) };
+
+    const byId = id => document.getElementById(id);
+    const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const fmt1 = n => n.toFixed(1).replace(".", ",");
+
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* el diagnóstico funciona igual sin persistencia */ }
+    }
+
+    function bindOrgInputs() {
+      const map = { orgPersona: "persona", orgCargo: "cargo", orgNombre: "nombre", orgSector: "sector", orgTamano: "tamano" };
+      Object.entries(map).forEach(([id, key]) => {
+        const el = byId(id);
+        el.value = state.org[key] || "";
+        el.oninput = el.onchange = e => { state.org[key] = e.target.value; save(); };
+      });
+      const t = byId("orgTarget");
+      t.value = String(state.org.target || 4);
+      t.onchange = e => { state.org.target = Number(e.target.value); save(); };
+    }
+
+    // ═══════════════ CÁLCULOS ═══════════════
+    const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+    const toIndex = v => v === null ? null : Math.round(((v - 1) / 4) * 100);
+
+    function answeredCount() { return QUESTIONS.filter(q => state.answers[q.code]).length; }
+
+    function valuesWhere(pred) { return QUESTIONS.filter(pred).map(q => state.answers[q.code]).filter(Boolean); }
+
+    function globalIndex() { return toIndex(avg(valuesWhere(() => true))); }
+    function typeIndex(type) { return toIndex(avg(valuesWhere(q => q.type === type))); }
+
+    function dimAvg(d) { return avg(valuesWhere(q => q.dim === d)); }
+
+    function dimScores() {
+      const target = state.org.target;
+      return Object.keys(DIMS).map(d => {
+        const qs = QUESTIONS.filter(q => q.dim === d);
+        const a = dimAvg(d);
+        return { d, ...DIMS[d], avg: a, answered: valuesWhere(q => q.dim === d).length, total: qs.length, gap: a === null ? null : Math.max(0, target - a) };
+      });
+    }
+
+    function maturityOf(index) {
+      if (index === null) return null;
+      const n = index < 20 ? 1 : index < 40 ? 2 : index < 60 ? 3 : index < 80 ? 4 : 5;
+      return MATURITY[n - 1];
+    }
+
+    function severityOf(gap) {
+      if (gap >= 3) return { key: "crit", label: "Brecha crítica", rank: 0 };
+      if (gap === 2) return { key: "alta", label: "Brecha alta", rank: 1 };
+      return { key: "media", label: "Brecha media", rank: 2 };
+    }
+
+    function dimState(gap) {
+      if (gap === null) return { key: "", label: "Sin datos" };
+      if (gap < 0.5) return { key: "ok", label: "En objetivo" };
+      if (gap < 1.25) return { key: "media", label: "Brecha media" };
+      if (gap < 2.25) return { key: "alta", label: "Brecha alta" };
+      return { key: "crit", label: "Brecha crítica" };
+    }
+
+    function detectGaps() {
+      const target = state.org.target;
+      const gaps = [];
+      const strengths = [];
+      QUESTIONS.forEach(q => {
+        const lvl = state.answers[q.code];
+        if (!lvl) return;
+        if (lvl >= target) {
+          if (lvl >= 4) strengths.push({ ...q, level: lvl });
+          return;
+        }
+        const gap = target - lvl;
+        gaps.push({ ...q, ...RECS[q.code], level: lvl, target, gap, sev: severityOf(gap), hab: DIMS[q.dim].hab });
+      });
+      gaps.sort((a, b) =>
+        (a.sev.rank - b.sev.rank) ||
+        ((b.hab ? 1 : 0) - (a.hab ? 1 : 0)) ||
+        (b.impact - a.impact) ||
+        (a.effort - b.effort)
+      );
+      return { gaps, strengths };
+    }
+
+    // Alertas de coherencia entre dimensiones
+    function coherenceAlerts() {
+      const A = d => dimAvg(d);
+      const has = (...ds) => ds.every(d => A(d) !== null);
+      const out = [];
+      if (has("O", "N") && A("O") >= 3 && A("N") <= 2.25)
+        out.push({ title: "⚠️ Adopción sin gobierno", text: "La IA ya se usa en la operación, pero las reglas de juego son débiles. Es el escenario de mayor riesgo: información confidencial en herramientas no aprobadas, decisiones basadas en resultados erróneos y datos personales sin control. Priorice la política de uso y la gestión de riesgos antes de seguir escalando." });
+      if (has("H", "P") && A("H") >= 3 && A("P") <= 2.25)
+        out.push({ title: "⚠️ Herramientas buscando un problema", text: "La empresa evalúa y prueba herramientas con más madurez de la que tiene para identificar y medir sus problemas. Sin un banco de reprocesos y una línea base, las herramientas se eligen por moda y su beneficio no se puede demostrar." });
+      if (has("O", "D") && A("O") >= 3 && A("D") <= 2.25)
+        out.push({ title: "⚠️ IA sobre datos frágiles", text: "Los usos de IA avanzan más rápido que la calidad, integración y seguridad de los datos. La IA amplifica los errores de sus fuentes: fortalezca los datos maestros y la ciberseguridad para que los resultados sean confiables." });
+      if (has("G", "C") && A("G") >= 3.5 && A("C") <= 2.25)
+        out.push({ title: "⚠️ Ambición sin capacidades", text: "La dirección tiene una visión clara, pero el equipo no cuenta con la formación ni el acompañamiento para ejecutarla. Sin alfabetización y gestión del cambio, la estrategia se quedará en el papel." });
+      if (has("V") && (A("H") >= 3 || A("O") >= 3) && A("V") <= 2.25)
+        out.push({ title: "⚠️ Inversión sin retorno visible", text: "Hay herramientas y usos de IA en marcha, pero no se mide su valor ni se supervisa la calidad de sus resultados. Sin evidencia de retorno el patrocinio se debilita y los errores pasan inadvertidos." });
+      if (has("G", "O") && A("G") <= 2 && A("O") >= 3)
+        out.push({ title: "⚠️ IA de abajo hacia arriba, sin dirección", text: "Los equipos adoptan IA por iniciativa propia mientras la estrategia y el patrocinio directivo son débiles. Es una energía valiosa que conviene canalizar con una hoja de ruta antes de que se fragmente." });
+      const td = typeIndex("TD"), ia = typeIndex("IA");
+      if (td !== null && ia !== null) {
+        if (ia - td >= 20)
+          out.push({ title: "⚠️ La IA va por delante de la base digital", text: `La adopción de IA (${ia}/100) supera a la madurez digital (${td}/100). Refuerce procesos, datos, sistemas y seguridad para que los usos de IA sean sostenibles.` });
+        else if (td - ia >= 25)
+          out.push({ good: true, title: "✅ Base digital lista para acelerar la IA", text: `La madurez digital (${td}/100) está bien por encima de la adopción de IA (${ia}/100). Su empresa tiene la plataforma necesaria: el mayor retorno está en priorizar y pilotear casos de uso de IA de alto valor.` });
+      }
+      return out;
+    }
+
+    // ═══════════════ RENDER: DIAGNÓSTICO ═══════════════
+    function renderQuestions() {
+      const list = byId("questionList");
+      let html = "";
+      let current = null;
+      QUESTIONS.forEach(q => {
+        if (q.dim !== current) {
+          current = q.dim;
+          const d = DIMS[q.dim];
+          html += `<div class="flow-header" id="dim-${q.dim}"><span class="flow-icon">${d.icon}</span><div><h3>${esc(d.name)}</h3><span>${esc(d.desc)}</span></div></div>`;
+        }
+        const ans = state.answers[q.code];
+        html += `<div class="question-card" data-code="${q.code}">
+          <div class="question-head">
+            <div class="code">${q.code}</div>
+            <div class="meta">
+              <strong>${esc(q.aspect)}</strong>
+              <span>${DIMS[q.dim].icon} ${esc(DIMS[q.dim].name)}</span>
+            </div>
+            <div class="pill-group">
+              <span class="pill ${q.type === "IA" ? "t-ia" : ""}">${q.type === "IA" ? "Adopción de IA" : "Madurez digital"}</span>
+              <span class="pill status">${ans ? "Nivel " + ans : "Pendiente"}</span>
+            </div>
+          </div>
+          <div class="question-text">${esc(q.question)}</div>
+          <div class="levels">
+            ${[1, 2, 3, 4, 5].map(v => `
+              <label class="level ${ans === v ? "selected" : ""}">
+                <input type="radio" name="q-${q.code}" value="${v}" ${ans === v ? "checked" : ""}>
+                <strong>Nivel ${v}</strong>
+                <span>${esc(q.options[v - 1])}</span>
+              </label>`).join("")}
+          </div>
+        </div>`;
+      });
+      list.innerHTML = html;
+
+      list.querySelectorAll("input[type=radio]").forEach(input => {
+        input.addEventListener("change", () => {
+          const code = input.name.slice(2);
+          state.answers[code] = Number(input.value);
+          save();
+          const card = list.querySelector(`[data-code="${code}"]`);
+          card.querySelectorAll(".level").forEach(l => l.classList.toggle("selected", l.querySelector("input").checked));
+          card.querySelector(".pill.status").textContent = "Nivel " + input.value;
+          updateSidebar();
+        });
+      });
+    }
+
+    function renderDimNav() {
+      const nav = byId("dimNav");
+      nav.innerHTML = `<div class="dim-nav-title">Dimensiones</div>` + dimScores().map(s =>
+        `<button type="button" class="dim-link ${s.answered === s.total ? "done" : ""}" data-dim="${s.d}">
+          <span>${s.icon}</span><span>${esc(s.name)}</span><small>${s.answered === s.total ? "✓" : s.answered + "/" + s.total}</small>
+        </button>`).join("");
+      nav.querySelectorAll(".dim-link").forEach(b => b.addEventListener("click", () => {
+        switchView("diagnostico");
+        const el = byId("dim-" + b.dataset.dim);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }));
+    }
+
+    function updateSidebar() {
+      const answered = answeredCount();
+      const total = QUESTIONS.length;
+      const idx = globalIndex();
+      byId("progressText").textContent = `${answered} / ${total}`;
+      byId("progressBar").style.width = `${(answered / total) * 100}%`;
+      byId("scoreGauge").textContent = idx === null ? "0" : idx;
+      byId("gauge").style.background = `conic-gradient(var(--blue) ${((idx || 0) / 100) * 360}deg, #dce6ef 0deg)`;
+      const m = maturityOf(idx);
+      byId("maturityLabel").textContent = m ? `Nivel ${m.n} · ${m.label}` : "Sin diagnosticar";
+      byId("maturityText").textContent = m ? "Índice de madurez sobre 100." : "Responda las preguntas para calcular su índice de madurez.";
+      const td = typeIndex("TD"), ia = typeIndex("IA");
+      byId("sideTD").textContent = td === null ? "–" : td;
+      byId("sideIA").textContent = ia === null ? "–" : ia;
+      renderDimNav();
+
+      const banner = byId("finishBanner");
+      if (answered === total) {
+        banner.classList.add("complete");
+        byId("finishBannerTitle").textContent = `✓ Diagnóstico completo: índice ${idx}/100 · Nivel ${m.n} ${m.label}`;
+        byId("finishBannerSubtitle").textContent = "Su informe con brechas y recomendaciones está listo.";
+      } else {
+        banner.classList.remove("complete");
+        byId("finishBannerTitle").textContent = `${answered} de ${total} preguntas respondidas`;
+        byId("finishBannerSubtitle").textContent = "Responda todas las preguntas para obtener un informe completo.";
+      }
+    }
+
+    // ═══════════════ RENDER: RESULTADOS ═══════════════
+    const IMPACT_TXT = { 1: "Impacto moderado", 2: "Impacto medio", 3: "Impacto alto" };
+    const EFFORT_TXT = { 1: "Esfuerzo bajo", 2: "Esfuerzo medio", 3: "Esfuerzo alto" };
+    const HORIZON = {
+      1: { label: "0–90 días · Fundamentos y victorias tempranas", desc: "Bajo esfuerzo e inversión mínima. Empiece por los habilitadores." },
+      2: { label: "3–12 meses · Pilotos y consolidación", desc: "Requieren coordinación entre áreas, pilotos o inversión moderada." },
+      3: { label: "12–24 meses · Escalamiento y transformación", desc: "Iniciativas estructurales que cambian la forma de operar." }
+    };
+
+    function radarDraw(canvasId, scores, target) {
+      const canvas = byId(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2 + 6, R = Math.min(W, H) / 2 - 100;
+      const n = scores.length;
+      const angle = i => (Math.PI * 2 * i) / n - Math.PI / 2;
+      const pt = (i, v) => [cx + R * (v / 5) * Math.cos(angle(i)), cy + R * (v / 5) * Math.sin(angle(i))];
+
+      ctx.strokeStyle = "#d9e1ea";
+      ctx.lineWidth = 1;
+      ctx.font = "22px Inter, Segoe UI, Arial";
+      for (let ring = 1; ring <= 5; ring++) {
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const [x, y] = pt(i % n, ring);
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#94a0b2";
+      ctx.textAlign = "left";
+      for (let ring = 1; ring <= 5; ring++) ctx.fillText(ring, cx + 6, cy - (R * ring) / 5 + 20);
+
+      scores.forEach((s, i) => {
+        const a = angle(i);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+        ctx.strokeStyle = "#d9e1ea";
+        ctx.stroke();
+        const lx = cx + (R + 18) * Math.cos(a), ly = cy + (R + 26) * Math.sin(a);
+        ctx.textAlign = Math.abs(Math.cos(a)) < .3 ? "center" : Math.cos(a) > 0 ? "left" : "right";
+        ctx.fillStyle = "#33475c";
+        const words = s.short.split(" ");
+        if (words.length > 1 && Math.abs(Math.cos(a)) > .3) {
+          const mid = Math.ceil(words.length / 2);
+          ctx.fillText(`${s.icon} ${words.slice(0, mid).join(" ")}`, lx, ly - 4);
+          ctx.fillText(words.slice(mid).join(" "), lx, ly + 22);
+        } else {
+          ctx.fillText(`${s.icon} ${s.short}`, lx, ly + 8);
+        }
+      });
+
+      // Objetivo (línea punteada)
+      ctx.beginPath();
+      scores.forEach((s, i) => { const [x, y] = pt(i, target); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+      ctx.closePath();
+      ctx.setLineDash([10, 8]);
+      ctx.strokeStyle = "#c47f1b";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Estado actual
+      ctx.beginPath();
+      scores.forEach((s, i) => { const [x, y] = pt(i, Math.max(.15, s.avg || 0)); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+      ctx.closePath();
+      ctx.fillStyle = "rgba(47,117,181,.18)";
+      ctx.strokeStyle = "#2f75b5";
+      ctx.lineWidth = 2.5;
+      ctx.fill();
+      ctx.stroke();
+      scores.forEach((s, i) => {
+        const [x, y] = pt(i, Math.max(.15, s.avg || 0));
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#2f75b5";
+        ctx.fill();
+      });
+    }
+
+    function gapTableHtml(scores, target) {
+      return `<div class="gap-table-wrap"><table>
+        <thead><tr><th>Dimensión</th><th class="num">Actual</th><th class="num">Meta</th><th style="width:28%">Avance hacia la meta</th><th class="num">Estado</th></tr></thead>
+        <tbody>${scores.map(s => {
+          const st = dimState(s.gap);
+          return `<tr>
+            <td>${s.icon} ${esc(s.name)}</td>
+            <td class="num"><strong>${s.avg === null ? "–" : fmt1(s.avg)}</strong></td>
+            <td class="num">${target}</td>
+            <td><div class="gap-bar">
+              <span class="cur" style="width:${s.avg === null ? 0 : (s.avg / 5) * 100}%"></span>
+              <span class="tgt" style="left:calc(${(target / 5) * 100}% - 2px)"></span>
+            </div></td>
+            <td class="num">${st.key ? `<span class="state s-${st.key}">${st.label}</span>` : "–"}</td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table></div>`;
+    }
+
+    function scaleHtml(m, target) {
+      return `<div class="scale">${MATURITY.map(s =>
+        `<div class="scale-step ${s.n === m.n ? "current" : ""} ${s.n === target && s.n !== m.n ? "target" : ""}">
+          <strong>${s.n} · ${s.label}</strong>${s.n === m.n ? "Usted está aquí" : s.n === target ? "Su meta a 18 meses" : ""}
+        </div>`).join("")}</div>`;
+    }
+
+    function execSummaryHtml(idx, m, scores, gaps, alerts) {
+      const org = state.org.nombre.trim() || "la organización";
+      const td = typeIndex("TD"), ia = typeIndex("IA");
+      const valid = scores.filter(s => s.avg !== null);
+      const best = valid.reduce((a, b) => (b.avg > a.avg ? b : a), valid[0]);
+      const worst = valid.reduce((a, b) => (b.avg < a.avg ? b : a), valid[0]);
+      const count = k => gaps.filter(g => g.sev.key === k).length;
+      const quick = gaps.filter(g => g.effort === 1 && g.impact >= 2).length;
+      const paras = [];
+
+      paras.push(`Con un índice de <strong>${idx}/100</strong>, ${esc(org)} se ubica en el <strong>Nivel ${m.n} · ${m.label}</strong>. ${esc(m.text)}`);
+
+      if (td !== null && ia !== null) {
+        if (Math.abs(td - ia) < 10) paras.push(`La madurez digital (${td}/100) y la adopción de IA (${ia}/100) avanzan a un ritmo similar: conviene cerrar las brechas de ambas en paralelo, empezando por los habilitadores.`);
+        else if (td > ia) paras.push(`La base digital (${td}/100) está más desarrollada que la adopción de IA (${ia}/100): existe una plataforma sobre la cual acelerar casos de uso de IA.`);
+        else paras.push(`La adopción de IA (${ia}/100) va por delante de la base digital (${td}/100): conviene reforzar procesos, datos y sistemas para que los usos de IA sean sostenibles.`);
+      }
+
+      if (best && worst && best.d !== worst.d) {
+        paras.push(`Su dimensión más fuerte es <strong>${esc(best.name)}</strong> (${fmt1(best.avg)}/5) y la de mayor brecha es <strong>${esc(worst.name)}</strong> (${fmt1(worst.avg)}/5). Frente a la meta de nivel ${state.org.target}, el diagnóstico identifica <strong>${gaps.length} brechas</strong>: ${count("crit")} críticas, ${count("alta")} altas y ${count("media")} medias. ${quick} de las recomendaciones son victorias tempranas de bajo esfuerzo.`);
+      }
+
+      const warn = alerts.filter(a => !a.good);
+      if (warn.length) paras.push(`<strong>Atención:</strong> se detectan ${warn.length === 1 ? "un patrón de riesgo" : warn.length + " patrones de riesgo"} en la forma como se está adoptando la tecnología (${warn.map(a => esc(a.title.replace(/^⚠️\s*/, ""))).join("; ")}). Vea el detalle en las alertas de coherencia.`);
+
+      return paras.map(p => `<p>${p}</p>`).join("");
+    }
+
+    function recCardHtml(g) {
+      const nextLevel = Math.min(g.level + 1, g.target);
+      return `<div class="opp-card sev-${g.sev.key}" data-dim="${g.dim}">
+        <div class="opp-head">
+          <div>
+            <h3>${esc(g.title)}</h3>
+            <span class="opp-flow">${DIMS[g.dim].icon} ${esc(DIMS[g.dim].name)} · ${esc(g.aspect)} (${g.code})</span>
+          </div>
+          <div class="badges">
+            <span class="badge b-${g.sev.key}">${g.sev.label}</span>
+            ${g.hab ? '<span class="badge b-hab">Habilitador</span>' : ""}
+            <span class="badge b-imp">${IMPACT_TXT[g.impact]}</span>
+            <span class="badge b-imp">${EFFORT_TXT[g.effort]}</span>
+            ${g.effort === 1 && g.impact >= 2 ? '<span class="badge b-quick">⚡ Victoria temprana</span>' : ""}
+          </div>
+        </div>
+        <div class="opp-body">
+          <div class="gap-path">
+            <div><b>Hoy · Nivel ${g.level}</b>${esc(g.options[g.level - 1])}</div>
+            <div class="arrow">➜</div>
+            <div class="to"><b>${nextLevel === g.target ? "Meta" : "Siguiente paso"} · Nivel ${nextLevel}</b>${esc(g.options[nextLevel - 1])}</div>
+          </div>
+          <p><span class="lbl">Recomendación</span>${esc(g.desc)}</p>
+          <p><span class="lbl">Por qué importa</span>${esc(g.benefit)}</p>
+          <div><span class="lbl">Primeros pasos</span>
+            <ol class="opp-steps">${g.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
+          </div>
+          <div class="opp-kpi">📏 <strong>Indicador de cierre de brecha:</strong> ${esc(g.kpi)}</div>
+        </div>
+      </div>`;
+    }
+
+    function matrixHtml(gaps) {
+      const cell = (imp, eff) => {
+        const items = gaps.filter(g => g.impact === imp && g.effort === eff);
+        const cls = imp === 3 && eff === 1 ? "hot" : (imp >= 2 && eff <= 2 ? "warm" : "");
+        return `<div class="mx-cell ${cls}">${items.map(g => `<span class="mx-chip ${g.sev.key === "media" ? "" : g.sev.key}" title="${esc(g.title)}">${g.code} · ${esc(g.title.length > 32 ? g.title.slice(0, 32) + "…" : g.title)}</span>`).join("")}</div>`;
+      };
+      return `<div class="matrix">
+        <div class="mx-corner">Impacto ↓<br>Esfuerzo →</div>
+        <div class="mx-h">Esfuerzo bajo</div><div class="mx-h">Esfuerzo medio</div><div class="mx-h">Esfuerzo alto</div>
+        <div class="mx-h">Impacto alto</div>${cell(3,1)}${cell(3,2)}${cell(3,3)}
+        <div class="mx-h">Impacto medio</div>${cell(2,1)}${cell(2,2)}${cell(2,3)}
+        <div class="mx-h">Impacto moderado</div>${cell(1,1)}${cell(1,2)}${cell(1,3)}
+      </div>`;
+    }
+
+    function roadmapHtml(gaps) {
+      return [1, 2, 3].map(eff => {
+        const items = gaps.filter(g => g.effort === eff);
+        if (!items.length) return "";
+        const h = HORIZON[eff];
+        return `<div class="plan-phase">
+          <div class="plan-phase-head"><strong>${h.label}</strong><span>${h.desc}</span></div>
+          <div class="gap-table-wrap"><table>
+            <thead><tr><th style="width:36%">Iniciativa</th><th>Primer paso</th><th style="width:26%">Indicador</th></tr></thead>
+            <tbody>${items.map(g => `<tr>
+              <td><strong>${esc(g.title)}</strong><br><span style="color:var(--muted);font-size:12px">${DIMS[g.dim].icon} ${esc(DIMS[g.dim].short)} · ${g.sev.label}${g.hab ? " · Habilitador" : ""}</span></td>
+              <td>${esc(g.steps[0])}</td>
+              <td>${esc(g.kpi)}</td>
+            </tr>`).join("")}</tbody>
+          </table></div>
+        </div>`;
+      }).join("");
+    }
+
+    function renderResults() {
+      const body = byId("resultsBody");
+      const answered = answeredCount();
+      const dateTxt = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+      byId("printDate").textContent = "Generado el " + dateTxt;
+
+      if (!answered) {
+        body.innerHTML = `<div class="empty">Aún no hay respuestas. Complete el diagnóstico para generar su informe de madurez digital e IA.</div>`;
+        return;
+      }
+
+      const target = state.org.target;
+      const idx = globalIndex();
+      const m = maturityOf(idx);
+      const td = typeIndex("TD"), ia = typeIndex("IA");
+      const scores = dimScores();
+      const { gaps, strengths } = detectGaps();
+      const alerts = coherenceAlerts();
+      const o = state.org;
+
+      const headerBits = [o.sector && `Sector: ${esc(o.sector)}`, o.tamano && esc(o.tamano), o.persona && `Diligenciado por ${esc(o.persona)}${o.cargo ? ", " + esc(o.cargo) : ""}`, dateTxt].filter(Boolean);
+
+      let html = `
+        <div class="panel mb16">
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700">Informe de madurez digital e IA</div>
+          <div style="font-size:20px;font-weight:800;color:var(--navy);margin:2px 0 4px">${esc(o.nombre.trim() || "Su organización")}</div>
+          <div style="font-size:13px;color:var(--muted)">${headerBits.join(" · ")}</div>
+          ${answered < QUESTIONS.length ? `<div class="alert" style="margin-top:12px"><strong>Informe parcial</strong>Respondió ${answered} de ${QUESTIONS.length} preguntas. Los resultados solo consideran lo respondido; complete el diagnóstico para una valoración confiable.</div>` : ""}
+        </div>
+
+        <div class="dashboard">
+          <div class="metric">
+            <span>Índice global</span>
+            <strong>${idx}<span style="font-size:15px;text-transform:none;letter-spacing:0">/100</span></strong>
+            <small>Nivel ${m.n} · ${m.label}</small>
+          </div>
+          <div class="metric m-td">
+            <span>Madurez digital</span>
+            <strong>${td === null ? "–" : td}</strong>
+            <small>Estrategia, datos, procesos, personas</small>
+          </div>
+          <div class="metric m-ia">
+            <span>Adopción de IA</span>
+            <strong>${ia === null ? "–" : ia}</strong>
+            <small>Gobierno, uso, escalamiento y valor de la IA</small>
+          </div>
+          <div class="metric m-gap">
+            <span>Brechas a cerrar</span>
+            <strong>${gaps.length}</strong>
+            <small>${gaps.filter(g => g.sev.key === "crit").length} críticas · meta nivel ${target}</small>
+          </div>
+        </div>
+
+        <div class="panel mb16">
+          <h2>🧾 Valoración general</h2>
+          <div class="exec-summary-box" style="margin:10px 0 0">
+            <div class="exec-level">Nivel ${m.n} · ${m.label} · Índice ${idx}/100</div>
+            ${execSummaryHtml(idx, m, scores, gaps, alerts)}
+          </div>
+          ${scaleHtml(m, target)}
+        </div>
+
+        <div class="report-grid">
+          <div class="panel">
+            <h2>📡 Perfil de madurez por dimensión</h2>
+            <p>Nivel promedio de cada dimensión (1 a 5) frente a su meta. La distancia entre las dos líneas es la brecha a cerrar.</p>
+            <canvas id="dimRadar" width="760" height="620"></canvas>
+            <div class="radar-legend"><span><i></i>Situación actual</span><span><i class="target"></i>Meta nivel ${target}</span></div>
+          </div>
+          <div class="panel">
+            <h2>📏 Mapa de brechas</h2>
+            <p>Promedio por dimensión, desde la gobernanza hasta la operación. La marca naranja indica la meta.</p>
+            ${gapTableHtml(scores, target)}
+          </div>
+        </div>`;
+
+      if (alerts.length) {
+        html += `<div class="panel mb16">
+          <h2>🔗 Alertas de coherencia</h2>
+          <p>Patrones que surgen al cruzar dimensiones. Indican desequilibrios en la forma como se está adoptando la tecnología.</p>
+          <div class="alert-list">${alerts.map(a => `<div class="alert ${a.good ? "good" : ""}"><strong>${esc(a.title)}</strong>${esc(a.text)}</div>`).join("")}</div>
+        </div>`;
+      }
+
+      html += `<div class="panel mb16">
+        <h2>💪 Fortalezas</h2>
+        <p>Prácticas en nivel 4 o 5 que ya cumplen la meta. Consérvelas y úselas como punto de apoyo para las demás.</p>
+        ${strengths.length
+          ? `<div class="strengths">${strengths.map(s => `<div class="strength-item"><span>✅</span><span><strong>${esc(s.aspect)}</strong> (${DIMS[s.dim].short}, nivel ${s.level}) — ${esc(s.options[s.level - 1])}</span></div>`).join("")}</div>`
+          : `<div class="empty">Aún no hay prácticas en nivel 4 o superior que cumplan la meta. Cada brecha cerrada se convertirá en una fortaleza.</div>`}
+      </div>`;
+
+      if (!gaps.length) {
+        html += `<div class="panel mb16"><h2>🏆 Sin brechas frente a la meta</h2><p>Todas sus respuestas alcanzan el nivel ${target}. ${target < 5 ? "Considere elevar la meta para identificar las siguientes oportunidades." : "Nivel sobresaliente: el reto es sostenerlo."}</p></div>`;
+      } else {
+        const dimsWithGaps = Object.keys(DIMS).filter(d => gaps.some(g => g.dim === d));
+        html += `<div class="panel mb16">
+          <h2>🎯 Cierre de brechas y recomendaciones</h2>
+          <p>${gaps.length} recomendaciones ordenadas por severidad de la brecha, carácter habilitador, impacto y esfuerzo. Cada una muestra dónde está hoy y cuál es el siguiente nivel a alcanzar.</p>
+          <div class="dim-filter" id="dimFilter">
+            <button type="button" class="active" data-dim="all">Todas (${gaps.length})</button>
+            ${dimsWithGaps.map(d => `<button type="button" data-dim="${d}">${DIMS[d].icon} ${esc(DIMS[d].short)} (${gaps.filter(g => g.dim === d).length})</button>`).join("")}
+          </div>
+          <div class="opp-list" id="recList">${gaps.map(recCardHtml).join("")}</div>
+        </div>
+
+        <div class="panel mb16">
+          <h2>🧭 Matriz de priorización impacto–esfuerzo</h2>
+          <p>Empiece por la esquina superior izquierda: impacto alto con esfuerzo bajo. Rojo = brecha crítica · naranja = alta · azul = media.</p>
+          ${matrixHtml(gaps)}
+        </div>
+
+        <div class="panel mb16">
+          <h2>🗓️ Hoja de ruta por horizontes</h2>
+          <p>Secuencia sugerida: dentro de cada horizonte, los habilitadores (estrategia, gobernanza, datos y procesos) van primero, porque sostienen todo lo demás. Ajuste los plazos a la capacidad real de su equipo.</p>
+          ${roadmapHtml(gaps)}
+        </div>`;
+      }
+
+      html += `<div class="panel no-print" style="text-align:center">
+          <h2 style="justify-content:center">📄 Su informe está listo</h2>
+          <p>Descárguelo en PDF con el botón "Imprimir informe" (elija "Guardar como PDF" como destino).</p>
+          <p style="margin-top:8px">¿Quiere acompañamiento para cerrar las brechas? Escríbanos a
+            <a href="mailto:projectability.pal@gmail.com?subject=Acompa%C3%B1amiento%20madurez%20digital%20e%20IA" style="color:var(--teal);font-weight:600">projectability.pal@gmail.com</a></p>
+        </div>
+        <div class="print-only" style="margin-top:14px;color:#647084;font-size:11.5px;line-height:1.5">
+          Informe generado por el Diagnóstico de Madurez Digital e IA de Projectability (projectability.net).
+          Documento de orientación basado en la autoevaluación diligenciada por la organización; no constituye una auditoría
+          ni sustituye una consultoría a profundidad. Los beneficios descritos son típicos del tipo de iniciativa y
+          varían según el sector, el tamaño y el contexto de cada empresa.
+        </div>`;
+
+      body.innerHTML = html;
+      radarDraw("dimRadar", scores, target);
+
+      const filter = byId("dimFilter");
+      if (filter) {
+        filter.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+          filter.querySelectorAll("button").forEach(x => x.classList.toggle("active", x === b));
+          byId("recList").querySelectorAll(".opp-card").forEach(c => { c.hidden = b.dataset.dim !== "all" && c.dataset.dim !== b.dataset.dim; });
+        }));
+      }
+    }
+
+    // ═══════════════ NAVEGACIÓN ═══════════════
+    function switchView(view) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.view === view));
+      document.querySelectorAll(".section").forEach(s => s.classList.toggle("active", s.id === view));
+      if (view === "resultados") { renderResults(); window.scrollTo({ top: 0 }); }
+    }
+
+    document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchView(t.dataset.view)));
+    byId("finishBtn").addEventListener("click", () => switchView("resultados"));
+    byId("printReport").addEventListener("click", () => {
+      switchView("resultados");
+      setTimeout(() => window.print(), 300);
+    });
+
+    byId("fillDemo").addEventListener("click", () => {
+      // Perfil verosímil: un nivel base por empresa y variación por dimensión y pregunta
+      const base = 1.6 + Math.random() * 2;
+      const dimShift = {};
+      Object.keys(DIMS).forEach(d => { dimShift[d] = (Math.random() - .5) * 1.6; });
+      QUESTIONS.forEach(q => {
+        const v = Math.round(base + dimShift[q.dim] + (Math.random() - .5) * 1.4);
+        state.answers[q.code] = Math.min(5, Math.max(1, v));
+      });
+      save();
+      renderQuestions();
+      updateSidebar();
+    });
+
+    byId("clearAll").addEventListener("click", () => {
+      if (!confirm("¿Borrar todas las respuestas y los datos de este diagnóstico?")) return;
+      state = { answers: {}, org: { ...EMPTY_ORG } };
+      save();
+      bindOrgInputs();
+      renderQuestions();
+      updateSidebar();
+      switchView("diagnostico");
+    });
+
+    // ═══════════════ INICIO ═══════════════
+    bindOrgInputs();
+    renderQuestions();
+    updateSidebar();
+  </script>
+</body>
+</html>
