@@ -850,21 +850,13 @@
           <p><strong>3.</strong> Desbloquee por <strong>USD $9.99</strong> el informe completo: cada oportunidad con su beneficio, primeros pasos y KPI, la matriz de priorización impacto–esfuerzo y el plan de acción por horizontes.</p>
           <p class="fine">Herramienta de orientación elaborada por Projectability; no sustituye una asesoría a profundidad.</p>
           <div class="disclaimer-box">
-            <strong>🔐 Tratamiento de datos:</strong> mientras responde, sus respuestas quedan <strong>únicamente en este navegador</strong>. El sector de su empresa (campo opcional) se envía de forma transitoria a nuestro servicio de IA únicamente para personalizar la lectura ejecutiva de su informe. <strong>Al completar el diagnóstico</strong>, sus 24 respuestas, el resultado (índice de circularidad, oportunidades y fortalezas detectadas) y los datos que haya diligenciado (nombre, correo, empresa, sector) se envían a Projectability y quedan registrados como respaldo de su informe y para poder contactarlo con fines comerciales o de acompañamiento — nunca se comparten con terceros. Al usar esta herramienta usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
+            <strong>🔐 Sus datos no salen de aquí:</strong> puede diligenciar el diagnóstico completo <strong>sin registrarse y sin dejar ningún dato de contacto</strong>. Sus respuestas y los datos de su empresa se guardan <strong>únicamente en este navegador</strong> y no se envían a Projectability. Si desbloquea el informe completo, el sector de su empresa (campo opcional) viaja de forma transitoria a nuestro servicio de IA solo para redactar la lectura ejecutiva. Consultas sobre datos: <a href="mailto:projectability.pal@gmail.com">projectability.pal@gmail.com</a>.
           </div>
         </div>
 
         <div class="question-card" style="margin-bottom:16px">
-          <div class="question-text" style="background:#fff">🏢 Cuéntenos brevemente de usted y su empresa <span style="font-weight:400;color:var(--muted);font-size:12.5px">(opcional — personaliza su informe y nos permite contactarlo si lo solicita)</span></div>
+          <div class="question-text" style="background:#fff">🏢 Datos de su empresa <span style="font-weight:400;color:var(--muted);font-size:12.5px">(opcionales — solo personalizan su informe; no le pedimos nombre ni correo)</span></div>
           <div style="padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <label style="display:grid;gap:5px;font-size:12px;color:var(--muted)">
-              Su nombre
-              <input type="text" id="orgPersona" placeholder="Ej. María Gómez">
-            </label>
-            <label style="display:grid;gap:5px;font-size:12px;color:var(--muted)">
-              Correo
-              <input type="email" id="orgCorreo" placeholder="nombre@empresa.com">
-            </label>
             <label style="display:grid;gap:5px;font-size:12px;color:var(--muted)">
               Nombre de la empresa
               <input type="text" id="orgNombre" placeholder="Ej. Textiles Andinos SAS">
@@ -1323,12 +1315,8 @@
     }
 
     function bindOrgInputs() {
-      byId("orgPersona").value = state.org.persona || "";
-      byId("orgCorreo").value = state.org.correo || "";
       byId("orgNombre").value = state.org.nombre || "";
       byId("orgSector").value = state.org.sector || "";
-      byId("orgPersona").addEventListener("input", e => { state.org.persona = e.target.value; save(); });
-      byId("orgCorreo").addEventListener("input", e => { state.org.correo = e.target.value; save(); });
       byId("orgNombre").addEventListener("input", e => { state.org.nombre = e.target.value; state.aiSummary = null; save(); });
       byId("orgSector").addEventListener("input", e => { state.org.sector = e.target.value; state.aiSummary = null; save(); });
 
@@ -1706,24 +1694,7 @@
       const unlocked = hasAccess();
       const summarySig = summarySignature(pct, opps, strengths);
 
-      if (answered === QUESTIONS.length && !state.leadSent && window.PALLeadCapture) {
-        if (window.PALAnalytics) PALAnalytics.lead("Diagnóstico de Circularidad");
-        state.leadSent = true;
-        save();
-        PALLeadCapture.send({
-          herramienta: "Diagnóstico de Circularidad",
-          nombre: state.org.persona.trim(),
-          empresa: state.org.nombre.trim(),
-          correo: state.org.correo.trim(),
-          sector: state.org.sector.trim(),
-          resumen: `Índice de circularidad: ${pct}% · ${m.label} · ${opps.length} oportunidades detectadas (${opps.filter(o => o.priority === "alta").length} de prioridad alta) · ${strengths.length} fortalezas`,
-          respuestas: JSON.stringify(state.answers),
-          oportunidades: opps.map(o => `${o.code} (${o.priority}) — ${o.title}`).join(" | "),
-          fortalezas: strengths.map(s => `${s.code} — ${s.title}`).join(" | ")
-        });
-      }
-
-      const hasHeaderInfo = state.org.nombre.trim() || state.org.persona.trim() || (typeof state.org.logo === "string" && state.org.logo.startsWith("data:image"));
+      const hasHeaderInfo = state.org.nombre.trim() || (typeof state.org.logo === "string" && state.org.logo.startsWith("data:image"));
       const reportHeaderHtml = hasHeaderInfo ? `
         <div class="panel" style="margin-bottom:16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
           ${typeof state.org.logo === "string" && state.org.logo.startsWith("data:image")
@@ -1731,7 +1702,6 @@
             : ""}
           <div>
             ${state.org.nombre.trim() ? `<div style="font-size:17px;font-weight:800;color:var(--navy)">${esc(state.org.nombre.trim())}</div>` : ""}
-            ${state.org.persona.trim() ? `<div style="font-size:13px;color:var(--muted)">Diligenciado por ${esc(state.org.persona.trim())}</div>` : ""}
           </div>
         </div>` : "";
 

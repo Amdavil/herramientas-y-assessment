@@ -1167,7 +1167,7 @@
             <strong>Claridad metodológica importante:</strong> este reporte se elabora bajo la opción <strong>"con referencia a los Estándares GRI"</strong> (GRI 1: Fundamentos 2021), adecuada para organizaciones que inician su camino de reporte. No constituye un reporte "de conformidad con" los Estándares GRI (que exige la totalidad de contenidos obligatorios), ni ha sido verificado por un tercero independiente. Es una base sólida y honesta para licitaciones, clientes corporativos y mejora continua — y así lo declara en su texto.
           </div>
           <div class="disclaimer-box" style="background:#f0f5f9;border-color:#d5e2ec;color:#33475c">
-            <strong>🔐 Tratamiento de datos:</strong> mientras diligencia el cuestionario, la información que usted ingresa (incluido el logo) queda <strong>únicamente en este navegador</strong>. Los textos descriptivos que escriba se envían de forma segura y transitoria a nuestro servicio de redacción con inteligencia artificial con el único fin de generar su reporte; no se almacenan ni se usan para otros propósitos. <strong>Al completar el cuestionario</strong>, todas sus respuestas (perfil, gobernanza, materialidad y contenidos por tema) quedan registradas en Projectability como respaldo de su reporte, junto con el nombre del responsable de sostenibilidad, el nombre de la organización y el correo de contacto, para poder ofrecerle acompañamiento o seguimiento comercial — nunca se comparten con terceros. Al continuar, usted declara estar autorizado por su organización para suministrar esta información y acepta este tratamiento, conforme a la Ley 1581 de 2012 (Colombia). Para consultas, solicitudes de acceso, actualización o eliminación de sus datos: <a href="mailto:projectability.pal@gmail.com" style="color:var(--teal)">projectability.pal@gmail.com</a>.
+            <strong>🔐 Sus datos no salen de aquí:</strong> puede diligenciar el cuestionario completo <strong>sin registrarse</strong>. Todo lo que ingresa (incluidos el logo y el correo de contacto que exige el GRI 2-3 dentro del reporte) queda <strong>únicamente en este navegador</strong> y no se envía a Projectability. Los textos descriptivos que escriba se envían de forma segura y transitoria a nuestro servicio de redacción con inteligencia artificial con el único fin de generar su reporte; no se almacenan ni se usan para otros propósitos. Si realiza el pago, solo registramos la transacción como constancia de su compra. Consultas sobre sus datos, conforme a la Ley 1581 de 2012 (Colombia): <a href="mailto:projectability.pal@gmail.com" style="color:var(--teal)">projectability.pal@gmail.com</a>.
           </div>
           ${window.__importadoDeMaterialidad
             ? `<div class="resume-note">✅ Importamos el perfil, los grupos de interés y los temas materiales de su Estudio de Materialidad Exprés — revíselos y complete lo que falta.</div>
@@ -1464,20 +1464,6 @@
       dock.style.display = "block";
       renderFinishDock();
 
-      if (!state.leadSent && window.PALLeadCapture) {
-        state.leadSent = true;
-        save();
-        if (window.PALAnalytics) PALAnalytics.lead("Reporte GRI Express");
-        PALLeadCapture.send({
-          herramienta: "Reporte GRI Express",
-          nombre: state.answers["gob_responsable"] || "",
-          empresa: state.answers["org_nombre"] || "",
-          correo: state.answers["cierre_contacto"] || "",
-          sector: state.answers["org_sector"] || "",
-          resumen: `Cuestionario completo · ${(state.answers["mat_temas"] || []).length} temas materiales seleccionados`,
-          respuestas: JSON.stringify(state.answers)
-        });
-      }
     }
 
     function runFullReport() {
