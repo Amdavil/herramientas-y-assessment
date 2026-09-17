@@ -1,6 +1,6 @@
 /**
  * Embudo de venta — mide el recorrido completo en las herramientas de pago de
- * Projectability (Reporte GRI Express, Inventario GEI Express, Estudio de
+ * Projectability (Reporte GRI Express, Radar de Carbono, Estudio de
  * Materialidad, Diagnóstico de Circularidad).
  *
  * Responde tres preguntas que hoy no se pueden responder:

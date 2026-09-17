@@ -11,7 +11,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:7801", // pruebas locales — Reporte GRI Express
   "http://localhost:7799", // pruebas locales — Diagnóstico de Circularidad
   "http://localhost:7802", // pruebas locales — Estudio de Materialidad Exprés
-  "http://localhost:7803", // pruebas locales — Inventario GEI Exprés
+  "http://localhost:7803", // pruebas locales — Radar de Carbono
   "http://localhost:7805", // pruebas locales — Deliflor Bloom Lab
   "http://localhost:7810"  // pruebas locales — Deliflor Bloom Lab (repo propio)
 ];

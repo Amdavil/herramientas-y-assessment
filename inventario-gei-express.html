@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inventario GEI Exprés</title>
+<title>Radar de Carbono — Inventario de emisiones GEI | Projectability</title>
+<meta name="description" content="Construya el inventario de emisiones de gases de efecto invernadero de su organización (Alcance 1, 2 y 3 simplificado) bajo GHG Protocol e ISO 14064-1, con tablero, plan de gestión e informe con IA.">
 <style>
   :root {
     --ink: #172033;
@@ -138,8 +139,8 @@
 <body>
 <div class="app">
   <header class="top">
-    <h1>Inventario GEI Exprés</h1>
-    <p>Herramienta guiada para construir tu inventario de emisiones de gases de efecto invernadero (GHG Protocol / ISO 14064-1)</p>
+    <h1>Radar de Carbono</h1>
+    <p>Ubique y mida las emisiones de gases de efecto invernadero de su organización: inventario guiado de Alcance 1, 2 y 3 simplificado, bajo GHG Protocol e ISO 14064-1</p>
   </header>
 
   <div id="disclaimerBox" class="disclaimer">
@@ -244,7 +245,7 @@ async function tryAccessCode(raw, feedbackEl, onSuccess){
   if (!code) return;
   const h = await sha256(code);
   if (ACCESS_HASHES.has(h)) {
-    if (window.PALAnalytics) PALAnalytics.canje("Inventario GEI Express");
+    if (window.PALAnalytics) PALAnalytics.canje("Radar de Carbono");
     grantAccess();
     feedbackEl.style.color = "var(--green)";
     feedbackEl.textContent = "✓ Código válido. Desbloqueando…";
@@ -276,15 +277,15 @@ function mountPayPal(onApprove){
   holder.innerHTML = "";
   paypal.Buttons({
     style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
-    onClick: ()=>{ if (window.PALAnalytics) PALAnalytics.iniciarPago("Inventario GEI Express", 29.99); },
+    onClick: ()=>{ if (window.PALAnalytics) PALAnalytics.iniciarPago("Radar de Carbono", 29.99); },
     createOrder: (data, actions) => actions.order.create({
       purchase_units: [{
-        description: "Inventario GEI Exprés — Informe completo con IA",
+        description: "Radar de Carbono — Informe completo con IA",
         amount: { value: PAY.price, currency_code: PAY.currency }
       }]
     }),
     onApprove: (data, actions) => actions.order.capture().then(det=>{
-      if (window.PALAnalytics) PALAnalytics.compra("Inventario GEI Express", 29.99, det && det.id);
+      if (window.PALAnalytics) PALAnalytics.compra("Radar de Carbono", 29.99, det && det.id);
       grantAccess();
       onApprove();
     }),
@@ -297,7 +298,7 @@ function mountPayPal(onApprove){
 
 // Inserta un bloque de pago/código de acceso dentro de `container`. `onUnlock` se llama al desbloquear.
 function renderGate(container, mensaje, onUnlock){
-  if (window.PALAnalytics) PALAnalytics.verPaywall("Inventario GEI Express", 29.99);
+  if (window.PALAnalytics) PALAnalytics.verPaywall("Radar de Carbono", 29.99);
   const div = document.createElement("div");
   div.className = "panel no-print";
   div.innerHTML = `
@@ -540,7 +541,7 @@ function botonesNav(container, {atras, adelante, textoAdelante, disabledAdelante
 /* --- Paso 0: Bienvenida --- */
 function renderBienvenida(c){
   panel(c, `
-    <h2>Bienvenido a tu Inventario GEI Exprés</h2>
+    <h2>Bienvenido al Radar de Carbono</h2>
     <p>Esta herramienta te guía paso a paso para construir el inventario de emisiones de gases de efecto invernadero de tu organización, bajo el enfoque del GHG Protocol y la ISO 14064-1.</p>
     <p><strong>Tiempo estimado:</strong> 30–50 minutos para Alcance 1 y 2. El Alcance 3 en esta versión cubre solo 3 categorías simplificadas (viajes, desplazamiento de empleados, residuos), pensadas como una primera aproximación.</p>
     <p><strong>Lo que esta herramienta NO es:</strong> no es un inventario verificado, certificado ni auditado. Es un cálculo asistido y trazable a partir de la información y los factores de emisión que tú aportas o seleccionas.</p>
@@ -732,7 +733,7 @@ function renderFuentes(c){
     const cont = document.getElementById("sugerenciasFuentes");
     if (!hasAccess()) {
       cont.innerHTML = "";
-      renderGate(cont, "Las sugerencias de fuentes con IA son parte del contenido completo del Inventario GEI Exprés.", ()=>render());
+      renderGate(cont, "Las sugerencias de fuentes con IA son parte del contenido completo del Radar de Carbono.", ()=>render());
       return;
     }
     btn.disabled = true;
@@ -1012,7 +1013,7 @@ function renderDashboard(c){
     <div id="dashboardGate" style="margin-top:12px;"></div>
   `);
   botonesNav(c, {});
-  if (!hasAccess()) renderGate(document.getElementById("topFuentesGate"), "El desglose por fuente individual (cuáles emiten más y cuánto) es parte del contenido completo del Inventario GEI Exprés.", ()=>render());
+  if (!hasAccess()) renderGate(document.getElementById("topFuentesGate"), "El desglose por fuente individual (cuáles emiten más y cuánto) es parte del contenido completo del Radar de Carbono.", ()=>render());
   setTimeout(()=>{
     dibujarBarras("chartAlcance", [
       {label:"Alcance 1", valor:totales[1]/1000, color:"#b54a4a"},
@@ -1033,7 +1034,7 @@ function renderDashboard(c){
   document.getElementById("btnInterpretarIA").onclick = async ()=>{
     const btn = document.getElementById("btnInterpretarIA");
     if (!hasAccess()) {
-      renderGate(document.getElementById("dashboardGate"), "La interpretación de gráficos con IA es parte del contenido completo del Inventario GEI Exprés.", ()=>render());
+      renderGate(document.getElementById("dashboardGate"), "La interpretación de gráficos con IA es parte del contenido completo del Radar de Carbono.", ()=>render());
       return;
     }
     btn.disabled = true;
@@ -1144,7 +1145,7 @@ function renderPlanGestion(c){
   panel(c, `<h2>9. Plan de gestión de emisiones</h2>
     <p class="hint">Jerarquía: medir → evitar → reducir → sustituir → compensar. La compensación no reemplaza la reducción y solo debe aplicarse a emisiones residuales.</p>`);
   if (!hasAccess()) {
-    renderGate(c, "El plan de gestión de emisiones (acciones priorizadas, sugerencias de IA y seguimiento) es parte del contenido completo del Inventario GEI Exprés.", ()=>render());
+    renderGate(c, "El plan de gestión de emisiones (acciones priorizadas, sugerencias de IA y seguimiento) es parte del contenido completo del Radar de Carbono.", ()=>render());
     botonesNav(c, {textoAdelante:"Ver informe final →"});
     return;
   }
@@ -1306,7 +1307,7 @@ function renderInforme(c){
       <p style="font-size:1.1rem; font-weight:700; color:var(--navy);">${esc(o.nombre)||"(Organización sin nombre)"}</p>
       <p class="hint">Periodo: ${esc(o.periodo)||"—"} · Año base: ${esc(o.anioBase)||"—"}</p>
       <p class="hint">Fecha de generación: ${fechaGeneracion}</p>
-      <p class="hint">Elaborado con apoyo de Inventario GEI Exprés — Projectability / Soluciones PAL S.A.S.</p>
+      <p class="hint">Elaborado con apoyo de Radar de Carbono — Projectability / Soluciones PAL S.A.S.</p>
     </div>
     <div class="disclaimer">${document.getElementById("disclaimerBox").innerHTML}</div>
 
@@ -1493,7 +1494,7 @@ function exportarExcel(o, resultados, totales, totalOrg, calidad, factoresUsados
 }
 
 /* ============================== INIT ============================== */
-if (window.PALAnalytics) PALAnalytics.inicio("Inventario GEI Express");
+if (window.PALAnalytics) PALAnalytics.inicio("Radar de Carbono");
 render();
 
 })();
