@@ -134,6 +134,16 @@
     body { background: #fff; }
     .panel { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
   }
+
+  /* Vista previa del informe: se ve, no se usa — se desbloquea al pagar */
+  .preview-wrap { position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+  .preview-wrap .preview-inner { filter: blur(5px); user-select: none; pointer-events: none; max-height: 560px; overflow: hidden; padding: 18px; }
+  .preview-wrap::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 180px;
+    background: linear-gradient(180deg, rgba(255,255,255,0), #fff 85%); pointer-events: none; }
+  .preview-ribbon { position: absolute; top: 12px; right: -40px; transform: rotate(38deg); background: #c47f1b; color: #fff;
+    font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; padding: 5px 46px; z-index: 3; pointer-events: none; }
+  .muestra-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(22,129,122,.14); color: #16817a;
+    font-size: 12px; font-weight: 700; border-radius: 999px; padding: 5px 14px; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -1020,15 +1030,13 @@ function renderDashboard(c){
     <div class="chart-box"><h4>Distribución porcentual por alcance</h4><canvas id="chartDonut" width="700" height="260"></canvas></div>
     <div class="chart-box">
       <h4>Top fuentes emisoras</h4>
-      ${hasAccess()
-        ? `<canvas id="chartTop" width="700" height="260"></canvas><p class="hint" id="interpTop">${state.interpretacionIA?.topFuentes ? esc(state.interpretacionIA.topFuentes) : ""}</p>`
-        : `<div id="topFuentesGate"></div>`}
+      <canvas id="chartTop" width="700" height="260"></canvas>
+      <p class="hint" id="interpTop">${state.interpretacionIA?.topFuentes ? esc(state.interpretacionIA.topFuentes) : ""}</p>
     </div>
     <button class="btn secondary no-print" id="btnInterpretarIA" type="button">Interpretar gráficos con IA</button>
     <div id="dashboardGate" style="margin-top:12px;"></div>
   `);
   botonesNav(c, {});
-  if (!hasAccess()) renderGate(document.getElementById("topFuentesGate"), "Sección bloqueada: el desglose fuente por fuente, con cuáles concentran sus emisiones y cuánto pesa cada una.", ()=>render());
   setTimeout(()=>{
     dibujarBarras("chartAlcance", [
       {label:"Alcance 1", valor:totales[1]/1000, color:"#b54a4a"},
@@ -1040,7 +1048,6 @@ function renderDashboard(c){
       {label:"Alcance 2", valor:totales[2], color:"#2f75b5"},
       {label:"Alcance 3", valor:totales[3], color:"#6b5ca5"}
     ]);
-    if (!hasAccess()) return;
     const top = [...resultados].sort((a,b)=>b.kgCO2e-a.kgCO2e).slice(0,8)
       .map(r=>({label:r.nombre.length>26?r.nombre.slice(0,24)+"…":r.nombre, valor:r.kgCO2e/1000, color:"#1f4e79"}));
     dibujarBarras("chartTop", top, true);
@@ -1159,11 +1166,6 @@ function dibujarDonut(canvasId, datos){
 function renderPlanGestion(c){
   panel(c, `<h2>9. Plan de gestión de emisiones</h2>
     <p class="hint">Jerarquía: medir → evitar → reducir → sustituir → compensar. La compensación no reemplaza la reducción y solo debe aplicarse a emisiones residuales.</p>`);
-  if (!hasAccess()) {
-    renderGate(c, "Sección bloqueada: el plan de reducción con acciones priorizadas, plazos, responsables y seguimiento.", ()=>render());
-    botonesNav(c, {textoAdelante:"Ver informe final →"});
-    return;
-  }
   const resultados = calcularResultados().filter(r=>r.kgCO2e>0).sort((a,b)=>b.kgCO2e-a.kgCO2e);
   const totalOrg = resultados.reduce((s,r)=>s+r.kgCO2e,0);
   const criticas = resultados.slice(0,5);
@@ -1182,8 +1184,9 @@ function renderPlanGestion(c){
     html += `<div class="warn-box">Aún no hay resultados calculados. Completa los pasos anteriores para generar el plan.</div>`;
   } else {
     html += `<p><strong>Fuentes priorizadas</strong> (mayor participación en el total):</p>
-    <button class="btn secondary no-print" id="btnPlanIA" type="button">Sugerir plan con IA</button>
-    <div id="planIAStatus" class="hint" style="margin-top:8px;"></div>`;
+    <button class="btn secondary no-print" id="btnPlanIA" type="button">✨ Sugerir el plan con IA</button>
+    <div id="planIAStatus" class="hint" style="margin-top:8px;"></div>
+    <div id="planGate"></div>`;
   }
   panel(c, html);
 
@@ -1191,6 +1194,10 @@ function renderPlanGestion(c){
     document.getElementById("btnPlanIA").onclick = async ()=>{
       const btn = document.getElementById("btnPlanIA");
       const status = document.getElementById("planIAStatus");
+      if (!hasAccess()) {
+        renderGate(document.getElementById("planGate"), "Sección bloqueada: las acciones de reducción sugeridas por IA para sus fuentes críticas. El plan lo puede llenar usted mismo gratis.", ()=>render());
+        return;
+      }
       btn.disabled = true;
       status.textContent = "Consultando a PAL sobre acciones de gestión…";
       try {
@@ -1296,26 +1303,6 @@ function renderInforme(c){
   const porPlazo = {corto:[], mediano:[], largo:[]};
   state.plan.acciones.forEach(a=>{ if (porPlazo[a.plazo]) porPlazo[a.plazo].push(a); });
 
-  if (!hasAccess()) {
-    panel(c, `
-      <div style="text-align:center; padding: 20px 0;">
-        <h2>Inventario de Emisiones de Gases de Efecto Invernadero</h2>
-        <p style="font-size:1.1rem; font-weight:700; color:var(--navy);">${esc(o.nombre)||"(Organización sin nombre)"}</p>
-        <p class="hint">Periodo: ${esc(o.periodo)||"—"} · Año base: ${esc(o.anioBase)||"—"}</p>
-      </div>
-      <div class="totales-grid">
-        <div class="total-tile"><div class="num">${(totales[1]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 1</div></div>
-        <div class="total-tile"><div class="num">${(totales[2]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 2</div></div>
-        <div class="total-tile"><div class="num">${(totales[3]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 3</div></div>
-        <div class="total-tile"><div class="num">${(totalOrg/1000).toFixed(2)}</div><div class="lbl">tCO₂e Total</div></div>
-      </div>
-      <p class="hint">Calidad del inventario: ${calidad.etiqueta} (${calidad.score}/5)</p>
-    `);
-    renderGate(c, "Sección bloqueada: el informe completo (resumen ejecutivo con IA, metodología, análisis, plan de reducción, recomendaciones y anexos) y las descargas en PDF y Excel.", ()=>render());
-    botonesNav(c, {adelante:false});
-    return;
-  }
-
   let html = `
     <div style="text-align:center; padding: 30px 0;">
       <h2 style="font-size:1.6rem;">Inventario de Emisiones de Gases de Efecto Invernadero</h2>
@@ -1391,6 +1378,42 @@ function renderInforme(c){
     ${Object.values(factoresUsados).map(f=>`<tr><td>${esc(f.nombre)}</td><td>${f.valor} kgCO2e/${esc(f.unidad)}</td><td>${esc(f.fuenteFactor)}</td><td>${esc(f.confiabilidad)}</td></tr>`).join("")}
     </tbody></table>
   `;
+  if (!hasAccess()) {
+    panel(c, `
+      <div class="muestra-tag">🎁 Muestra gratuita de su informe</div>
+      <div style="text-align:center; padding: 6px 0 18px;">
+        <h2 style="font-size:1.5rem;">Inventario de Emisiones de Gases de Efecto Invernadero</h2>
+        <p style="font-size:1.1rem; font-weight:700; color:var(--navy);">${esc(o.nombre)||"(Organización sin nombre)"}</p>
+        <p class="hint">Periodo: ${esc(o.periodo)||"—"} · Año base: ${esc(o.anioBase)||"—"} · ${fechaGeneracion}</p>
+      </div>
+      <div class="totales-grid">
+        <div class="total-tile"><div class="num">${(totales[1]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 1</div></div>
+        <div class="total-tile"><div class="num">${(totales[2]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 2</div></div>
+        <div class="total-tile"><div class="num">${(totales[3]/1000).toFixed(2)}</div><div class="lbl">tCO₂e Alcance 3</div></div>
+        <div class="total-tile"><div class="num">${(totalOrg/1000).toFixed(2)}</div><div class="lbl">tCO₂e Total</div></div>
+      </div>
+      <p class="hint">Calidad del inventario: ${calidad.etiqueta} (${calidad.score}/5)</p>
+      <h2>Resumen ejecutivo</h2>
+      <p>La organización ${esc(o.nombre)||"evaluada"} registró un total de <strong>${(totalOrg/1000).toFixed(2)} tCO₂e</strong> en el periodo ${esc(o.periodo)||"reportado"}, distribuidas en Alcance 1 (${(totales[1]/1000).toFixed(2)} tCO₂e), Alcance 2 (${(totales[2]/1000).toFixed(2)} tCO₂e)${state.alcancesSeleccionados[3]?` y Alcance 3 simplificado (${(totales[3]/1000).toFixed(2)} tCO₂e)`:""}. El ${alcanceMax} concentra la mayor participación. La calidad general del inventario se calificó como <strong>${calidad.etiqueta}</strong> (${calidad.score}/5).</p>
+      ${conResultado.length ? `<p><strong>Principal fuente emisora:</strong> ${esc(conResultado[0].nombre)}, con ${(conResultado[0].kgCO2e/1000).toFixed(2)} tCO₂e (${(conResultado[0].kgCO2e/totalOrg*100).toFixed(1)}% del total).</p>` : ""}
+    `);
+
+    const teaser = html
+      .replace(/<button[\s\S]*?<\/button>/g, "")
+      .replace(/ id="[^"]*"/g, "");
+    const prev = document.createElement("div");
+    prev.className = "panel no-print";
+    prev.innerHTML = `
+      <h2>Así se ve su informe completo</h2>
+      <p class="hint">Es su propio informe, con sus datos: metodología y límites declarados, resultados detallados por alcance y por fuente, plan de reducción, recomendaciones por plazo y el anexo de factores de emisión con su trazabilidad. Se desbloquea completo y descargable en PDF y Excel.</p>
+      <div class="preview-wrap"><div class="preview-ribbon">VISTA PREVIA</div><div class="preview-inner">${teaser}</div></div>
+    `;
+    c.appendChild(prev);
+    renderGate(c, "Sección bloqueada: el informe completo redactado, con la lectura estratégica con IA, y las descargas en PDF y Excel.", ()=>render());
+    botonesNav(c, {adelante:false});
+    return;
+  }
+
   panel(c, html);
 
   document.getElementById("btnInformeIA").onclick = async ()=>{
