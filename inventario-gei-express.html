@@ -302,17 +302,32 @@ function renderGate(container, mensaje, onUnlock){
   const div = document.createElement("div");
   div.className = "panel no-print";
   div.innerHTML = `
-    <h3>Desbloquea esta sección</h3>
-    <p class="hint">${esc(mensaje)}</p>
-    <p style="font-weight:700; color:var(--navy); font-size:1.1rem;">${PAY.priceLabel} — pago único</p>
+    <h3 style="margin-top:0;">📄 Su informe de huella de carbono, listo para presentar — por ${PAY.priceLabel}</h3>
+    <p style="font-size:1.02rem; line-height:1.6; margin-bottom:12px;">
+      Ya hizo lo difícil: cargó sus datos y calculó sus emisiones. Por un <strong>pago único de ${PAY.priceLabel}</strong>
+      le entregamos el documento completo, redactado y listo para llevar a su gerencia, a su cliente o a una licitación.
+    </p>
+    <ul style="margin:0 0 14px; padding-left:20px; line-height:1.75;">
+      <li><strong>Informe ejecutivo redactado con IA</strong> a partir de sus propios números: resumen, lectura estratégica y recomendaciones de corto, mediano y largo plazo.</li>
+      <li><strong>Dónde está su huella:</strong> desglose fuente por fuente, con cuáles concentran las emisiones y cuánto pesa cada una.</li>
+      <li><strong>Plan de reducción priorizado:</strong> acciones con plazo, responsable y seguimiento — no solo el número, sino qué hacer con él.</li>
+      <li><strong>Documento descargable</strong> en PDF y exportación de sus datos a Excel, con metodología, supuestos y anexos trazables.</li>
+      <li><strong>Acceso inmediato y permanente</strong> en este navegador, sin suscripción ni cobros recurrentes.</li>
+    </ul>
+    <p style="font-weight:800; color:var(--navy); font-size:1.35rem; margin:0 0 4px;">${PAY.priceLabel} <span style="font-size:.9rem; font-weight:600; color:var(--muted);">· pago único</span></p>
+    <p class="hint" style="margin:0 0 12px;">Pague con tarjeta o PayPal y el informe se desbloquea al instante.</p>
     <div id="paypalButtons" style="max-width:320px;"></div>
+    <p class="hint" style="margin-top:12px;">🔒 ${esc(mensaje)}</p>
     <div style="margin-top:16px; border-top:1px dashed var(--line); padding-top:14px;">
-      <label>¿Tienes un código de acceso?</label>
+      <label>¿Ya tiene un código de acceso?</label>
       <div style="display:flex; gap:8px;">
         <input type="text" id="codeInput" placeholder="Código de acceso" style="flex:1;">
         <button class="btn secondary" id="codeBtn" type="button">Validar</button>
       </div>
       <p id="codeFeedback" class="hint" style="margin-top:6px;"></p>
+      <p class="hint" style="margin-top:8px;">¿Prefiere transferencia o Nequi? Escríbanos a
+        <a href="mailto:projectability.pal@gmail.com?subject=Acceso%20Radar%20de%20Carbono">projectability.pal@gmail.com</a>
+        y le enviamos su código apenas confirmemos el pago.</p>
     </div>
   `;
   container.appendChild(div);
@@ -733,7 +748,7 @@ function renderFuentes(c){
     const cont = document.getElementById("sugerenciasFuentes");
     if (!hasAccess()) {
       cont.innerHTML = "";
-      renderGate(cont, "Las sugerencias de fuentes con IA son parte del contenido completo del Radar de Carbono.", ()=>render());
+      renderGate(cont, "Sección bloqueada: las sugerencias de fuentes de emisión con IA, para no dejar por fuera nada de su operación.", ()=>render());
       return;
     }
     btn.disabled = true;
@@ -1013,7 +1028,7 @@ function renderDashboard(c){
     <div id="dashboardGate" style="margin-top:12px;"></div>
   `);
   botonesNav(c, {});
-  if (!hasAccess()) renderGate(document.getElementById("topFuentesGate"), "El desglose por fuente individual (cuáles emiten más y cuánto) es parte del contenido completo del Radar de Carbono.", ()=>render());
+  if (!hasAccess()) renderGate(document.getElementById("topFuentesGate"), "Sección bloqueada: el desglose fuente por fuente, con cuáles concentran sus emisiones y cuánto pesa cada una.", ()=>render());
   setTimeout(()=>{
     dibujarBarras("chartAlcance", [
       {label:"Alcance 1", valor:totales[1]/1000, color:"#b54a4a"},
@@ -1034,7 +1049,7 @@ function renderDashboard(c){
   document.getElementById("btnInterpretarIA").onclick = async ()=>{
     const btn = document.getElementById("btnInterpretarIA");
     if (!hasAccess()) {
-      renderGate(document.getElementById("dashboardGate"), "La interpretación de gráficos con IA es parte del contenido completo del Radar de Carbono.", ()=>render());
+      renderGate(document.getElementById("dashboardGate"), "Sección bloqueada: la lectura de sus gráficos con IA, que explica qué significan sus resultados.", ()=>render());
       return;
     }
     btn.disabled = true;
@@ -1145,7 +1160,7 @@ function renderPlanGestion(c){
   panel(c, `<h2>9. Plan de gestión de emisiones</h2>
     <p class="hint">Jerarquía: medir → evitar → reducir → sustituir → compensar. La compensación no reemplaza la reducción y solo debe aplicarse a emisiones residuales.</p>`);
   if (!hasAccess()) {
-    renderGate(c, "El plan de gestión de emisiones (acciones priorizadas, sugerencias de IA y seguimiento) es parte del contenido completo del Radar de Carbono.", ()=>render());
+    renderGate(c, "Sección bloqueada: el plan de reducción con acciones priorizadas, plazos, responsables y seguimiento.", ()=>render());
     botonesNav(c, {textoAdelante:"Ver informe final →"});
     return;
   }
@@ -1296,7 +1311,7 @@ function renderInforme(c){
       </div>
       <p class="hint">Calidad del inventario: ${calidad.etiqueta} (${calidad.score}/5)</p>
     `);
-    renderGate(c, "El informe completo (resumen ejecutivo redactado con IA, metodología, análisis, plan de gestión, recomendaciones y anexos) y las exportaciones a PDF/Excel se desbloquean con el acceso completo.", ()=>render());
+    renderGate(c, "Sección bloqueada: el informe completo (resumen ejecutivo con IA, metodología, análisis, plan de reducción, recomendaciones y anexos) y las descargas en PDF y Excel.", ()=>render());
     botonesNav(c, {adelante:false});
     return;
   }
@@ -1312,7 +1327,7 @@ function renderInforme(c){
     <div class="disclaimer">${document.getElementById("disclaimerBox").innerHTML}</div>
 
     <h2>Resumen ejecutivo</h2>
-    <button class="btn secondary no-print" id="btnInformeIA" type="button" style="margin-bottom:10px;">${state.informeIA ? "Regenerar redacción con IA" : "Redactar resumen y lectura estratégica con IA"}</button>
+    <button class="btn secondary no-print" id="btnInformeIA" type="button" style="margin-bottom:10px;">${state.informeIA ? "✨ Volver a redactar mi informe con IA" : "✨ Redactar mi informe ejecutivo con IA"}</button>
     <div id="informeIAStatus" class="hint no-print"></div>
     <div id="resumenEjecutivoTexto">
     <p>${state.informeIA?.resumen_ejecutivo ? esc(state.informeIA.resumen_ejecutivo) : `La organización ${esc(o.nombre)||"evaluada"} registró un total de <strong>${(totalOrg/1000).toFixed(2)} tCO₂e</strong> en el periodo ${esc(o.periodo)||"reportado"}, distribuidas en Alcance 1 (${(totales[1]/1000).toFixed(2)} tCO₂e), Alcance 2 (${(totales[2]/1000).toFixed(2)} tCO₂e)${state.alcancesSeleccionados[3]?` y Alcance 3 simplificado (${(totales[3]/1000).toFixed(2)} tCO₂e)`:""}. El ${alcanceMax} concentra la mayor participación. La calidad general del inventario se calificó como <strong>${calidad.etiqueta}</strong> (${calidad.score}/5), según cobertura de soporte documental, uso de factores oficiales y documentación de supuestos.`}</p>
