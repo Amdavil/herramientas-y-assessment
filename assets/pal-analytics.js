@@ -80,7 +80,8 @@
   function track(evento, params) {
     try {
       ensureGtag();
-      global.gtag("event", evento, Object.assign({}, origen, params || {}));
+      var promo = (global.PALPromo && global.PALPromo.activa()) ? "si" : "no";
+      global.gtag("event", evento, Object.assign({}, origen, { promo: promo }, params || {}));
     } catch (e) { /* nunca bloquear por esto */ }
   }
 

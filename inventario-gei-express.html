@@ -162,6 +162,7 @@
   <div id="stepContainer"></div>
 </div>
 
+<script src="assets/promo.js"></script>
 <script src="assets/lead-capture.js"></script>
 <script src="assets/pal-analytics.js"></script>
 <script>
@@ -242,7 +243,10 @@ const ACCESS_HASHES = new Set([
 ]);
 const ACCESS_KEY = "gei-access-v1";
 
-function hasAccess(){ return localStorage.getItem(ACCESS_KEY) === "granted"; }
+// Promoción de lanzamiento: mientras PALPromo.activa() sea verdadero, todo el contenido
+// de pago está abierto. Si promo.js no carga, vale false y el cobro sigue como siempre.
+function promoActiva() { try { return !!(window.PALPromo && window.PALPromo.activa()); } catch (e) { return false; } }
+function hasAccess(){ return promoActiva() || localStorage.getItem(ACCESS_KEY) === "granted"; }
 function grantAccess(){ localStorage.setItem(ACCESS_KEY, "granted"); }
 
 async function sha256(text){

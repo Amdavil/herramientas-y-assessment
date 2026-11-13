@@ -991,6 +991,7 @@
 
   <div class="matriz-tooltip" id="matrizTooltip"></div>
 
+  <script src="assets/promo.js"></script>
   <script src="assets/lead-capture.js"></script>
   <script src="assets/pal-analytics.js"></script>
   <script>
@@ -1298,7 +1299,10 @@
     ]);
     const ACCESS_KEY = "materialidad-access-v1";
 
-    function hasAccess() { return localStorage.getItem(ACCESS_KEY) === "granted"; }
+    // Promoción de lanzamiento: mientras PALPromo.activa() sea verdadero, todo el contenido
+    // de pago está abierto. Si promo.js no carga, vale false y el cobro sigue como siempre.
+    function promoActiva() { try { return !!(window.PALPromo && window.PALPromo.activa()); } catch (e) { return false; } }
+    function hasAccess() { return promoActiva() || localStorage.getItem(ACCESS_KEY) === "granted"; }
     function grantAccess() { localStorage.setItem(ACCESS_KEY, "granted"); }
 
     async function sha256(text) {
@@ -2760,7 +2764,7 @@
       window.open("reporte-gri-express.html?desde=materialidad", "_blank", "noopener");
     }
 
-    function hasAccessGRI() { return localStorage.getItem(GRI_ACCESS_KEY) === "granted"; }
+    function hasAccessGRI() { return promoActiva() || localStorage.getItem(GRI_ACCESS_KEY) === "granted"; }
 
     function renderGriUpsell() {
       const el = byId("gri-bundle-upsell");
