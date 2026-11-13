@@ -37,6 +37,7 @@
 
   /** Franja informativa dentro de la herramienta (solo mientras la promoción está activa). */
   function pintarBarra() {
+    if (global.PAL_PROMO_SIN_BARRA) return; // projectability.net pinta su propio aviso
     if (!activa() || !global.document || global.document.getElementById("pal-promo-bar")) return;
     try {
       var css = global.document.createElement("style");
